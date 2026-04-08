@@ -354,7 +354,11 @@ export async function saveOnboarding(userId: string, input: BetaOnboardingInput)
       },
       { onConflict: "id" }
     ),
-    client.from("user_onboarding").upsert(onboardingPayload, { onConflict: "user_id" }),
+    upsertWithSchemaFallback(
+      () => client.from("user_onboarding"),
+      onboardingPayload,
+      { onConflict: "user_id" }
+    ),
     client.from("user_preferences").upsert(
       {
         user_id: userId,
@@ -373,7 +377,8 @@ export async function saveOnboarding(userId: string, input: BetaOnboardingInput)
 export async function saveDeepProfile(userId: string, input: DeepProfileInput) {
   const client = requireSupabaseClient();
 
-  const result = await client.from("user_deep_profile").upsert(
+  const result = await upsertWithSchemaFallback(
+    () => client.from("user_deep_profile"),
     {
       user_id: userId,
       weak_area: input.weakArea,
@@ -1127,6 +1132,37 @@ function readStringArray(value: Json) {
 
 function isRecord(value: unknown): value is Record<string, Json> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+async function upsertWithSchemaFallback(
+  getTable: () => any,
+  payload: Record<string, unknown>,
+  options: { onConflict: string }
+) {
+  let workingPayload = { ...payload };
+  const tried = new Set<string>();
+
+  while (true) {
+    const result: { error: { message: string } | null } = await getTable().upsert(
+      workingPayload,
+      options
+    );
+    const message = result.error?.message ?? "";
+
+    if (!result.error) {
+      return result;
+    }
+
+    const missingColumnMatch = message.match(/Could not find the '([^']+)' column/i);
+    const missingColumn = missingColumnMatch?.[1];
+
+    if (!missingColumn || !(missingColumn in workingPayload) || tried.has(missingColumn)) {
+      return result;
+    }
+
+    tried.add(missingColumn);
+    delete workingPayload[missingColumn];
+  }
 }
 
 function throwIfSupabaseError(error: { message: string } | null) {
