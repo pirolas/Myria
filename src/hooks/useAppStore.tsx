@@ -12,7 +12,7 @@ import type {
   UserPreferences
 } from "@/types/domain";
 
-const STORAGE_KEY = "myria.app-state.v1";
+const STORAGE_KEY = "mirya.app-state.v1";
 const LEGACY_STORAGE_KEY = "lieve.app-state.v1";
 
 const defaultProgress: ProgressState = {

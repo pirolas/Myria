@@ -209,7 +209,7 @@ export function getProgramCompletionCount(
 
 export function getPersonalPathCopy(preferences: UserPreferences | null) {
   if (!preferences) {
-    return "Myria ti propone un percorso breve e progressivo, pensato per farti iniziare con calma.";
+    return "Mirya ti propone un percorso breve e progressivo, pensato per farti iniziare con calma.";
   }
 
   const goal = goalLabels[preferences.goal].toLowerCase();
@@ -218,7 +218,7 @@ export function getPersonalPathCopy(preferences: UserPreferences | null) {
       ? "con un inizio molto morbido"
       : "con un ritmo delicato ma attivo";
 
-  return `Myria ha costruito il tuo percorso su ${goal}, ${preferences.daysPerWeek} giorni a settimana e sessioni da ${preferences.preferredMinutes} minuti, ${intro}.`;
+  return `Mirya ha costruito il tuo percorso su ${goal}, ${preferences.daysPerWeek} giorni a settimana e sessioni da ${preferences.preferredMinutes} minuti, ${intro}.`;
 }
 
 export function getPersonalExerciseNote(
@@ -245,7 +245,7 @@ export function getPersonalExerciseNote(
       exercise.category === "ripartenza_dolce");
 
   const focusLine = focusMatch
-    ? "Questo esercizio e molto coerente con il focus che hai scelto in Myria."
+    ? "Questo esercizio e molto coerente con il focus che hai scelto in Mirya."
     : "Anche quando non e il focus principale, questo movimento aiuta a rendere il corpo piu stabile e presente.";
 
   return `${gentleLine} ${focusLine}`;

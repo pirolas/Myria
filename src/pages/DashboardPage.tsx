@@ -14,11 +14,11 @@ import {
   getNextObjective,
   getPlanHorizonCopy,
   getWeeklyCompletedSessions
-} from "@/lib/myria";
-import { useMyriaApp } from "@/hooks/useMyriaApp";
+} from "@/lib/mirya";
+import { useMiryaApp } from "@/hooks/useMiryaApp";
 
 export function DashboardPage() {
-  const { data, progress, status } = useMyriaApp();
+  const { data, progress, status } = useMiryaApp();
 
   if (status === "loading" && !data) {
     return <DashboardLoadingState />;
@@ -32,7 +32,7 @@ export function DashboardPage() {
     return (
       <div className="page-enter space-y-6">
         <section className="surface-strong px-5 py-6">
-          <div className="eyebrow">Stiamo preparando Myria</div>
+          <div className="eyebrow">Stiamo preparando Mirya</div>
           <h1 className="mt-3 font-serif text-[2rem] leading-tight text-ink">
             Il tuo percorso e quasi pronto.
           </h1>
@@ -64,7 +64,7 @@ export function DashboardPage() {
   const todayChecklist = [
     `Apri il timer e segui ${data.todayPlanDay.workout.steps.length} step gia pronti.`,
     "Muoviti con calma: il focus oggi e qualita del gesto, non intensita.",
-    "Alla fine lascia un feedback breve, cosi Myria adatta i prossimi giorni."
+    "Alla fine lascia un feedback breve, cosi Mirya adatta i prossimi giorni."
   ];
 
   return (
@@ -138,7 +138,7 @@ export function DashboardPage() {
         <SectionHeading
           eyebrow="Guida rapida"
           title="Per oggi il percorso e questo"
-          description="Myria ti accompagna in modo lineare. Non devi decidere tu la sequenza."
+          description="Mirya ti accompagna in modo lineare. Non devi decidere tu la sequenza."
         />
 
         <div className="mt-5 space-y-3">
@@ -286,7 +286,7 @@ function DashboardLoadingState() {
   return (
     <div className="page-enter space-y-4">
       <section className="surface-strong px-5 py-6">
-        <div className="eyebrow">Myria si sta preparando</div>
+        <div className="eyebrow">Mirya si sta preparando</div>
         <h1 className="mt-3 font-serif text-[2rem] leading-tight text-ink">
           Stiamo caricando il tuo spazio guidato.
         </h1>

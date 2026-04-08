@@ -19,7 +19,7 @@ import {
   minuteOptions,
   trainingDayOptions
 } from "@/data/content";
-import { useMyriaApp } from "@/hooks/useMyriaApp";
+import { useMiryaApp } from "@/hooks/useMiryaApp";
 import type {
   BetaOnboardingInput,
   Goal,
@@ -66,7 +66,7 @@ function findLabel<TValue extends string | number | boolean>(
 
 export function OnboardingPage() {
   const navigate = useNavigate();
-  const { data, completeOnboarding, status, error } = useMyriaApp();
+  const { data, completeOnboarding, status, error } = useMiryaApp();
   const [form, setForm] = useState<BetaOnboardingInput>(() =>
     buildInitialInput(data?.onboarding)
   );
@@ -87,7 +87,7 @@ export function OnboardingPage() {
           eyebrow: "Punto di partenza",
           title: "Come ti senti rispetto al movimento in questo momento?",
           description:
-            "Basta una fotografia onesta del presente. Myria si adatta da qui."
+            "Basta una fotografia onesta del presente. Mirya si adatta da qui."
         },
         {
           key: "goal",
@@ -115,7 +115,7 @@ export function OnboardingPage() {
           eyebrow: "Energia",
           title: "Com'e la tua energia media in questo periodo?",
           description:
-            "Questo aiuta Myria a dosare volume, intensita e recupero."
+            "Questo aiuta Mirya a dosare volume, intensita e recupero."
         },
         {
           key: "gentle",
@@ -127,7 +127,7 @@ export function OnboardingPage() {
         {
           key: "limitations",
           eyebrow: "Attenzioni utili",
-          title: "Ci sono zone o situazioni che vuoi far tenere presenti a Myria?",
+          title: "Ci sono zone o situazioni che vuoi far tenere presenti a Mirya?",
           description:
             "Segnalaci solo cio che puo aiutare il piano a restare semplice e rispettoso."
         },
@@ -404,7 +404,7 @@ export function OnboardingPage() {
             </div>
             <div className="mt-2 text-sm font-semibold text-ink">{currentSummary}</div>
             <p className="mt-2 text-sm leading-6 text-muted">
-              Myria usera questa informazione per dosare ritmo, focus e progressione.
+              Mirya usera questa informazione per dosare ritmo, focus e progressione.
             </p>
           </div>
 

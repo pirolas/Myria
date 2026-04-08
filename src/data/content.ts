@@ -12,12 +12,12 @@ import type {
 } from "@/types/domain";
 
 export const brand = {
-  name: "Myria",
+  name: "Mirya",
   tagline: "Tonifica con calma. Sentiti piu presente nel tuo corpo.",
   shortPitch:
     "Un percorso guidato che ti dice cosa fare oggi, in base a te, con sessioni brevi e sostenibili.",
   longPitch:
-    "Myria trasforma la tonificazione a casa in un percorso semplice, elegante e personale. Tu entri, l'app ti guida."
+    "Mirya trasforma la tonificazione a casa in un percorso semplice, elegante e personale. Tu entri, l'app ti guida."
 };
 
 export const trainingDayOptions: PreferenceOption<number>[] = [

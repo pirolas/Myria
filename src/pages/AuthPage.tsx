@@ -21,7 +21,7 @@ export function AuthPage() {
     () =>
       mode === "signup"
         ? {
-            title: "Crea il tuo spazio Myria",
+            title: "Crea il tuo spazio Mirya",
             description:
               "Apri il tuo account per ricevere un percorso guidato e personale."
           }
@@ -132,7 +132,7 @@ export function AuthPage() {
             </div>
             <p className="mt-3 text-sm leading-7 text-muted">
               Inserisci `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` nelle env
-              del frontend. Senza queste chiavi Myria non puo creare account,
+              del frontend. Senza queste chiavi Mirya non puo creare account,
               salvare progressi o generare piani personalizzati.
             </p>
           </section>
@@ -151,7 +151,7 @@ export function AuthPage() {
               </Button>
 
               <p className="text-sm leading-6 text-muted">
-                Il modo piu rapido per entrare in Myria e ritrovare subito il tuo
+                Il modo piu rapido per entrare in Mirya e ritrovare subito il tuo
                 percorso personale.
               </p>
             </div>
@@ -214,7 +214,7 @@ export function AuthPage() {
                   ? "Un attimo..."
                   : mode === "signup"
                     ? "Entra nella beta"
-                    : "Accedi a Myria"}
+                    : "Accedi a Mirya"}
               </Button>
             </div>
 

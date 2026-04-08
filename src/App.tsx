@@ -1,7 +1,7 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
-import { MyriaAppProvider, useMyriaApp } from "@/hooks/useMyriaApp";
+import { MiryaAppProvider, useMiryaApp } from "@/hooks/useMiryaApp";
 import { ActiveWorkoutPage } from "@/pages/ActiveWorkoutPage";
 import { AuthPage } from "@/pages/AuthPage";
 import { DashboardPage } from "@/pages/DashboardPage";
@@ -14,7 +14,7 @@ import { WelcomePage } from "@/pages/WelcomePage";
 
 function RootEntry() {
   const { status: authStatus } = useAuth();
-  const { data, status: appStatus } = useMyriaApp();
+  const { data, status: appStatus } = useMiryaApp();
 
   if (
     authStatus === "loading" ||
@@ -22,7 +22,7 @@ function RootEntry() {
       !data &&
       (appStatus === "idle" || appStatus === "loading" || appStatus === "saving"))
   ) {
-    return <FullScreenStatus message="Stiamo preparando il tuo spazio Myria..." />;
+    return <FullScreenStatus message="Stiamo preparando il tuo spazio Mirya..." />;
   }
 
   if (authStatus === "missing_config" || authStatus === "signed_out") {
@@ -56,7 +56,7 @@ function RequireSignedIn() {
 }
 
 function RequireOnboarding() {
-  const { data, status } = useMyriaApp();
+  const { data, status } = useMiryaApp();
   const location = useLocation();
 
   if (!data && (status === "idle" || status === "loading" || status === "saving")) {
@@ -100,7 +100,7 @@ function FullScreenStatus({ message }: { message: string }) {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-[440px] items-center px-4">
       <div className="surface-strong w-full px-5 py-6">
-        <div className="eyebrow">Myria</div>
+        <div className="eyebrow">Mirya</div>
         <div className="mt-3 font-serif text-[1.9rem] leading-tight text-ink">
           {message}
         </div>
@@ -112,9 +112,9 @@ function FullScreenStatus({ message }: { message: string }) {
 export default function App() {
   return (
     <AuthProvider>
-      <MyriaAppProvider>
+      <MiryaAppProvider>
         <AppRoutes />
-      </MyriaAppProvider>
+      </MiryaAppProvider>
     </AuthProvider>
   );
 }

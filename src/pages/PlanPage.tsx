@@ -1,11 +1,11 @@
 import { CheckCircle2, ChevronRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { useMyriaApp } from "@/hooks/useMyriaApp";
+import { useMiryaApp } from "@/hooks/useMiryaApp";
 import { toDateKey } from "@/lib/date";
 
 export function PlanPage() {
-  const { data } = useMyriaApp();
+  const { data } = useMiryaApp();
 
   if (!data?.activePlan) {
     return null;

@@ -9,12 +9,12 @@ import {
   limitationLabels
 } from "@/data/content";
 import { useAuth } from "@/hooks/useAuth";
-import { useMyriaApp } from "@/hooks/useMyriaApp";
+import { useMiryaApp } from "@/hooks/useMiryaApp";
 
 export function ProfilePage() {
   const navigate = useNavigate();
   const { signOutUser } = useAuth();
-  const { data, regeneratePlan, setTimerSoundEnabled, status } = useMyriaApp();
+  const { data, regeneratePlan, setTimerSoundEnabled, status } = useMiryaApp();
 
   if (!data?.onboarding) {
     return null;
@@ -162,7 +162,7 @@ export function ProfilePage() {
             disabled={status === "saving"}
             icon={<LogOut size={18} />}
           >
-            Esci da Myria
+            Esci da Mirya
           </Button>
         </div>
       </section>

@@ -3,13 +3,13 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { feelingLabels } from "@/data/content";
 import { exercises } from "@/data/workouts";
 import { getMonthGrid, toDateKey } from "@/lib/date";
-import { getWeeklyBars } from "@/lib/myria";
-import { useMyriaApp } from "@/hooks/useMyriaApp";
+import { getWeeklyBars } from "@/lib/mirya";
+import { useMiryaApp } from "@/hooks/useMiryaApp";
 
 const weekdayLabels = ["L", "M", "M", "G", "V", "S", "D"];
 
 export function ProgressPage() {
-  const { data, progress } = useMyriaApp();
+  const { data, progress } = useMiryaApp();
 
   if (!data) {
     return null;
@@ -196,7 +196,7 @@ export function ProgressPage() {
             </ul>
           ) : (
             <p className="mt-3 text-sm leading-6 text-muted">
-              Nessun esercizio segnalato per ora. Se qualcosa non e comodo, Myria lo
+              Nessun esercizio segnalato per ora. Se qualcosa non e comodo, Mirya lo
               terra presente nel piano successivo.
             </p>
           )}

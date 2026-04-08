@@ -10,7 +10,7 @@ import {
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { energyAfterWorkoutOptions, feelingOptions } from "@/data/content";
-import { useMyriaApp } from "@/hooks/useMyriaApp";
+import { useMiryaApp } from "@/hooks/useMiryaApp";
 import { useWorkoutPlayer } from "@/hooks/useWorkoutPlayer";
 import { ExerciseFigure } from "@/components/workouts/ExerciseFigure";
 import type { Feeling, TrainingPlanDay } from "@/types/domain";
@@ -24,7 +24,7 @@ export function ActiveWorkoutPage() {
     completeSession,
     setTimerSoundEnabled,
     status
-  } = useMyriaApp();
+  } = useMiryaApp();
   const planDay = useMemo(
     () => data?.weekPlan.find((item) => item.id === planDayId) ?? null,
     [data?.weekPlan, planDayId]
@@ -147,7 +147,7 @@ export function ActiveWorkoutPage() {
             Tutto e pronto per partire
           </div>
           <p className="mt-3 text-sm leading-7 text-muted">
-            Da qui in poi Myria tiene il ritmo per te. Tu devi solo iniziare e
+            Da qui in poi Mirya tiene il ritmo per te. Tu devi solo iniziare e
             seguire uno step alla volta.
           </p>
 

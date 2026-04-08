@@ -21,7 +21,7 @@ export function WelcomePage() {
             <div className="flex items-center justify-between gap-3">
               <div className="eyebrow">Beta guidata</div>
               <div className="rounded-full bg-white/85 px-3 py-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-accent-deep">
-                Myria
+                Mirya
               </div>
             </div>
 
@@ -40,7 +40,7 @@ export function WelcomePage() {
                     Non devi capire tu come allenarti.
                   </div>
                   <p className="mt-2 text-sm leading-6 text-muted">
-                    Myria costruisce il tuo percorso iniziale, ti mostra il focus
+                    Mirya costruisce il tuo percorso iniziale, ti mostra il focus
                     della fase e ti accompagna seduta dopo seduta.
                   </p>
                 </div>

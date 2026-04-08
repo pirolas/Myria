@@ -2,10 +2,10 @@ import { ArrowRight, ShieldAlert, Timer } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { useMyriaApp } from "@/hooks/useMyriaApp";
+import { useMiryaApp } from "@/hooks/useMiryaApp";
 
 export function TodayWorkoutPage() {
-  const { data } = useMyriaApp();
+  const { data } = useMiryaApp();
 
   if (!data?.todayPlanDay) {
     return <Navigate to="/dashboard" replace />;
@@ -70,7 +70,7 @@ export function TodayWorkoutPage() {
         <SectionHeading
           eyebrow="Come funziona"
           title="Per oggi ti basta seguire questo flusso"
-          description="Myria resta semplice anche mentre ti alleni: un passo alla volta, senza schermate affollate."
+          description="Mirya resta semplice anche mentre ti alleni: un passo alla volta, senza schermate affollate."
         />
 
         <div className="mt-5 space-y-3">

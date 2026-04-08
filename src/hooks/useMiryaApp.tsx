@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode
 } from "react";
-import { buildProgressSnapshot } from "@/lib/myria";
+import { buildProgressSnapshot } from "@/lib/mirya";
 import { useAuth } from "@/hooks/useAuth";
 import {
   completeWorkoutSession,
@@ -26,10 +26,10 @@ import type {
   WorkoutFeedbackInput
 } from "@/types/domain";
 
-type MyriaStatus = "idle" | "loading" | "ready" | "saving" | "error";
+type MiryaStatus = "idle" | "loading" | "ready" | "saving" | "error";
 
-interface MyriaAppContextValue {
-  status: MyriaStatus;
+interface MiryaAppContextValue {
+  status: MiryaStatus;
   data: DashboardModel | null;
   error: string | null;
   progress: ReturnType<typeof buildProgressSnapshot>;
@@ -45,11 +45,11 @@ interface MyriaAppContextValue {
   ) => Promise<void>;
 }
 
-const MyriaAppContext = createContext<MyriaAppContextValue | undefined>(undefined);
+const MiryaAppContext = createContext<MiryaAppContextValue | undefined>(undefined);
 
-export function MyriaAppProvider({ children }: { children: ReactNode }) {
+export function MiryaAppProvider({ children }: { children: ReactNode }) {
   const { status: authStatus, user } = useAuth();
-  const [status, setStatus] = useState<MyriaStatus>("idle");
+  const [status, setStatus] = useState<MiryaStatus>("idle");
   const [data, setData] = useState<DashboardModel | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -97,7 +97,7 @@ export function MyriaAppProvider({ children }: { children: ReactNode }) {
     }
   }, [authStatus, refresh, user]);
 
-  const value = useMemo<MyriaAppContextValue>(
+  const value = useMemo<MiryaAppContextValue>(
     () => ({
       status,
       data,
@@ -214,15 +214,15 @@ export function MyriaAppProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <MyriaAppContext.Provider value={value}>{children}</MyriaAppContext.Provider>
+    <MiryaAppContext.Provider value={value}>{children}</MiryaAppContext.Provider>
   );
 }
 
-export function useMyriaApp() {
-  const context = useContext(MyriaAppContext);
+export function useMiryaApp() {
+  const context = useContext(MiryaAppContext);
 
   if (!context) {
-    throw new Error("useMyriaApp deve essere usato dentro MyriaAppProvider.");
+    throw new Error("useMiryaApp deve essere usato dentro MiryaAppProvider.");
   }
 
   return context;

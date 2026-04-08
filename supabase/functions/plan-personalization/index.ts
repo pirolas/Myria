@@ -369,7 +369,7 @@ async function tryAiPlanner(context: PlannerContext) {
       model: Deno.env.get("AI_MODEL") ?? "planner-beta",
       input: context,
       system:
-        "Sei il planner controllato di Myria. Restituisci solo JSON conforme allo schema richiesto, senza testo libero.",
+        "Sei il planner controllato di Mirya. Restituisci solo JSON conforme allo schema richiesto, senza testo libero.",
       schema: {
         current_phase: "string",
         phase_label: "string",
