@@ -12,7 +12,11 @@ interface PlannerInvocationResponse {
   source: "ai" | "fallback";
 }
 
-async function resolveAccessToken() {
+async function resolveAccessToken(providedToken?: string | null) {
+  if (providedToken) {
+    return providedToken;
+  }
+
   const client = requireSupabaseClient();
   const {
     data: { session }
@@ -91,15 +95,18 @@ async function resolvePlannerError(error: unknown) {
   return new Error("Non siamo riusciti a generare il piano in questo momento.");
 }
 
-export async function generatePersonalizedPlan(trigger: PlannerTrigger) {
+export async function generatePersonalizedPlan(
+  trigger: PlannerTrigger,
+  accessToken?: string | null
+) {
   const client = requireSupabaseClient();
-  const accessToken = await resolveAccessToken();
+  const resolvedAccessToken = await resolveAccessToken(accessToken);
   const { data, error } = await client.functions.invoke<PlannerInvocationResponse>(
     "plan-personalization",
     {
       body: { trigger },
       headers: {
-        Authorization: `Bearer ${accessToken}`
+        Authorization: `Bearer ${resolvedAccessToken}`
       }
     }
   );

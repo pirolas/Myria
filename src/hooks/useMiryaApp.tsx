@@ -61,7 +61,7 @@ interface MiryaAppContextValue {
 const MiryaAppContext = createContext<MiryaAppContextValue | undefined>(undefined);
 
 export function MiryaAppProvider({ children }: { children: ReactNode }) {
-  const { status: authStatus, user } = useAuth();
+  const { status: authStatus, session, user } = useAuth();
   const [status, setStatus] = useState<MiryaStatus>("idle");
   const [data, setData] = useState<DashboardModel | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -127,7 +127,10 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
         setError(null);
 
         try {
-          await generatePersonalizedPlan("onboarding_completed");
+          await generatePersonalizedPlan(
+            "onboarding_completed",
+            session?.access_token ?? null
+          );
           await refresh();
         } catch (plannerError) {
           setError(
@@ -149,7 +152,10 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
 
         try {
           await saveOnboarding(user.id, input);
-          await generatePersonalizedPlan("onboarding_completed");
+          await generatePersonalizedPlan(
+            "onboarding_completed",
+            session?.access_token ?? null
+          );
           await refresh();
         } catch (submitError) {
           setError(
@@ -172,7 +178,10 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
         try {
           await saveDeepProfile(user.id, input);
           if (data?.userAccess?.canUsePremiumFeatures) {
-            await generatePersonalizedPlan("deep_profile_completed");
+            await generatePersonalizedPlan(
+              "deep_profile_completed",
+              session?.access_token ?? null
+            );
           }
           await refresh();
         } catch (submitError) {
@@ -199,7 +208,10 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
             saveDeepProfile(user.id, deepInput)
           ]);
           if (data?.userAccess?.canUsePremiumFeatures) {
-            await generatePersonalizedPlan("deep_profile_completed");
+            await generatePersonalizedPlan(
+              "deep_profile_completed",
+              session?.access_token ?? null
+            );
           }
           await refresh();
         } catch (submitError) {
@@ -225,7 +237,10 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
 
         try {
           await saveReassessment(user.id, input);
-          await generatePersonalizedPlan("reassessment_completed");
+          await generatePersonalizedPlan(
+            "reassessment_completed",
+            session?.access_token ?? null
+          );
           await refresh();
         } catch (submitError) {
           setError(
@@ -251,7 +266,7 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
         setError(null);
 
         try {
-          await generatePersonalizedPlan(trigger);
+          await generatePersonalizedPlan(trigger, session?.access_token ?? null);
           await refresh();
         } catch (plannerError) {
           setError(
@@ -333,7 +348,10 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
         try {
           await completeWorkoutSession(user.id, sessionId, planDay, feedback);
           if (data?.userAccess?.canUsePremiumFeatures) {
-            await generatePersonalizedPlan("post_workout_feedback");
+            await generatePersonalizedPlan(
+              "post_workout_feedback",
+              session?.access_token ?? null
+            );
           }
           await refresh();
         } catch (sessionError) {
@@ -347,7 +365,7 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
         }
       }
     }),
-    [data, error, refresh, status, user]
+    [data, error, refresh, session, status, user]
   );
 
   return (
