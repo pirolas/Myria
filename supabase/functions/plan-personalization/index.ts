@@ -93,6 +93,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
 };
 
+const OPENAI_TIMEOUT_MS = 15000;
+
 const exerciseCatalog = {
   "ponte-glutei": {
     title: "Ponte glutei",
@@ -427,6 +429,8 @@ async function tryOpenAIPlan(input: Record<string, unknown>): Promise<PlannerOut
 
   const model = Deno.env.get("OPENAI_MODEL") ?? "gpt-5-mini";
   const context = buildPlannerContext(input);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -434,8 +438,10 @@ async function tryOpenAIPlan(input: Record<string, unknown>): Promise<PlannerOut
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`
     },
+    signal: controller.signal,
     body: JSON.stringify({
       model,
+      max_completion_tokens: 2200,
       response_format: {
         type: "json_schema",
         json_schema: planSchema
@@ -452,7 +458,12 @@ async function tryOpenAIPlan(input: Record<string, unknown>): Promise<PlannerOut
         }
       ]
     })
-  }).catch(() => null);
+  }).catch((error) => {
+    console.error("OpenAI planner fetch failed", error instanceof Error ? error.message : error);
+    return null;
+  });
+
+  clearTimeout(timeout);
 
   if (!response?.ok) {
     console.error("OpenAI planner error", await response?.text?.().catch(() => ""));
