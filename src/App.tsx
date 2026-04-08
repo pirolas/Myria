@@ -8,7 +8,10 @@ import { DashboardPage } from "@/pages/DashboardPage";
 import { DeepProfilePage } from "@/pages/DeepProfilePage";
 import { OnboardingPage } from "@/pages/OnboardingPage";
 import { PlanPage } from "@/pages/PlanPage";
+import { PlanReadyPage } from "@/pages/PlanReadyPage";
 import { PlanStoryPage } from "@/pages/PlanStoryPage";
+import { PlanUpdatePage } from "@/pages/PlanUpdatePage";
+import { PaywallPage } from "@/pages/PaywallPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { ProgressPage } from "@/pages/ProgressPage";
 import { ReassessmentPage } from "@/pages/ReassessmentPage";
@@ -73,6 +76,20 @@ function RequireOnboarding() {
   return <Outlet />;
 }
 
+function RequireWorkoutAccess() {
+  const { data, status } = useMiryaApp();
+
+  if (!data && (status === "idle" || status === "loading" || status === "saving")) {
+    return <FullScreenStatus message="Stiamo caricando il tuo percorso..." />;
+  }
+
+  if (data?.userAccess?.status === "free_locked") {
+    return <Navigate to="/premium" replace />;
+  }
+
+  return <Outlet />;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -85,14 +102,19 @@ function AppRoutes() {
         <Route element={<RequireOnboarding />}>
           <Route element={<AppShell />}>
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/today" element={<TodayWorkoutPage />} />
-            <Route path="/session/:planDayId" element={<ActiveWorkoutPage />} />
+            <Route element={<RequireWorkoutAccess />}>
+              <Route path="/today" element={<TodayWorkoutPage />} />
+              <Route path="/session/:planDayId" element={<ActiveWorkoutPage />} />
+            </Route>
             <Route path="/plan" element={<PlanPage />} />
+            <Route path="/plan/ready" element={<PlanReadyPage />} />
             <Route path="/plan/story" element={<PlanStoryPage />} />
+            <Route path="/plan/update" element={<PlanUpdatePage />} />
             <Route path="/progress" element={<ProgressPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/profile/deep" element={<DeepProfilePage />} />
             <Route path="/reassessment" element={<ReassessmentPage />} />
+            <Route path="/premium" element={<PaywallPage />} />
           </Route>
         </Route>
       </Route>

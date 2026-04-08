@@ -165,7 +165,7 @@ export function OnboardingPage() {
     }
 
     await completeOnboarding(form);
-    navigate("/plan/story", { replace: true });
+    navigate("/plan/ready", { replace: true });
   };
 
   return (

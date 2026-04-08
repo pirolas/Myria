@@ -90,7 +90,10 @@ export function ActiveWorkoutPage() {
         stopReason,
         skippedExerciseIds: player.skippedExerciseIds
       });
-      navigate("/progress", { replace: true });
+      const shouldOpenPremium =
+        data?.userAccess?.status === "free_trial" &&
+        data.userAccess.freeSessionsUsed + 1 >= data.userAccess.freeSessionsLimit;
+      navigate(shouldOpenPremium ? "/premium" : "/progress", { replace: true });
     } catch (completeError) {
       setLocalError(
         completeError instanceof Error

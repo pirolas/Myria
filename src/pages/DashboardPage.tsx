@@ -13,6 +13,7 @@ import { goalLabels } from "@/data/content";
 import {
   getNextObjective,
   getPlanHorizonCopy,
+  getTrialStatusCopy,
   getWeeklyCompletedSessions
 } from "@/lib/mirya";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
@@ -136,6 +137,38 @@ export function DashboardPage() {
           <p className="mt-3 text-center text-sm leading-6 text-muted">
             Ti chiedera solo pochi minuti e un feedback finale molto breve.
           </p>
+        </div>
+      </section>
+
+      <section className="surface px-5 py-5">
+        <SectionHeading
+          eyebrow={data.userAccess?.status === "premium" ? "Premium attivo" : "Accesso attuale"}
+          title={
+            data.userAccess?.status === "free_locked"
+              ? "Il mini-ciclo gratuito si e concluso"
+              : data.userAccess?.status === "premium"
+                ? "Il percorso puo continuare ad adattarsi"
+                : "Stai provando il primo ciclo guidato"
+          }
+          description={getTrialStatusCopy(data.userAccess)}
+        />
+
+        <div className="mt-5 flex gap-3">
+          <Link to="/plan/story" className="flex-1">
+            <Button variant="secondary" fullWidth>
+              Rivedi il piano
+            </Button>
+          </Link>
+          <Link
+            to={data.userAccess?.status === "premium" ? "/plan/update" : "/premium"}
+            className="flex-1"
+          >
+            <Button fullWidth icon={<ArrowRight size={18} />} className="justify-between">
+              {data.userAccess?.status === "premium"
+                ? "Aggiorna il percorso"
+                : "Scopri Premium"}
+            </Button>
+          </Link>
         </div>
       </section>
 

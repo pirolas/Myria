@@ -219,6 +219,44 @@ export interface Database {
           updated_at?: string;
         }
       >;
+      user_access: TableDef<
+        {
+          user_id: string;
+          status: string;
+          trial_started_at: string;
+          trial_expires_at: string;
+          free_sessions_limit: number;
+          free_sessions_used: number;
+          first_plan_generated_at: string | null;
+          premium_started_at: string | null;
+          premium_ends_at: string | null;
+          updated_at: string;
+        },
+        {
+          user_id: string;
+          status?: string;
+          trial_started_at?: string;
+          trial_expires_at?: string;
+          free_sessions_limit?: number;
+          free_sessions_used?: number;
+          first_plan_generated_at?: string | null;
+          premium_started_at?: string | null;
+          premium_ends_at?: string | null;
+          updated_at?: string;
+        },
+        {
+          user_id?: string;
+          status?: string;
+          trial_started_at?: string;
+          trial_expires_at?: string;
+          free_sessions_limit?: number;
+          free_sessions_used?: number;
+          first_plan_generated_at?: string | null;
+          premium_started_at?: string | null;
+          premium_ends_at?: string | null;
+          updated_at?: string;
+        }
+      >;
       user_reassessments: TableDef<
         {
           id: string;

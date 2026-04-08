@@ -17,6 +17,7 @@ import type {
   TrainingPlanDay,
   TrainingPlanVersionRecord,
   UserDeepProfileRecord,
+  UserAccessRecord,
   UserMilestone,
   UserOnboardingRecord,
   UserPreferenceRecord,
@@ -88,6 +89,12 @@ export async function ensureUserRecords(user: User) {
         weekly_summary_enabled: true
       },
       { onConflict: "user_id" }
+    ),
+    client.from("user_access").upsert(
+      {
+        user_id: user.id
+      },
+      { onConflict: "user_id" }
     )
   ]);
 }
@@ -101,6 +108,7 @@ export async function loadDashboardModel(userId: string): Promise<DashboardModel
     deepProfileResult,
     reassessmentResult,
     preferencesResult,
+    userAccessResult,
     notificationsResult,
     activePlanResult,
     sessionsResult,
@@ -118,6 +126,7 @@ export async function loadDashboardModel(userId: string): Promise<DashboardModel
       .limit(1)
       .maybeSingle(),
     client.from("user_preferences").select("*").eq("user_id", userId).maybeSingle(),
+    client.from("user_access").select("*").eq("user_id", userId).maybeSingle(),
     client
       .from("notification_preferences")
       .select("*")
@@ -157,6 +166,7 @@ export async function loadDashboardModel(userId: string): Promise<DashboardModel
     deepProfileResult.error,
     reassessmentResult.error,
     preferencesResult.error,
+    userAccessResult.error,
     notificationsResult.error,
     activePlanResult.error,
     sessionsResult.error,
@@ -230,6 +240,29 @@ export async function loadDashboardModel(userId: string): Promise<DashboardModel
   const milestones = (milestonesResult.data ?? []).map(mapMilestone);
   const planAdjustments = (planAdjustmentsResult.data ?? []).map(mapPlanAdjustment);
   const supportTips = (supportTipsResult.data ?? []).map(mapSupportTip);
+  const completedSessionCount = sessions.filter((session) => session.status === "completed").length;
+  const userAccess = mapUserAccess(
+    userAccessResult.data as Database["public"]["Tables"]["user_access"]["Row"] | null,
+    sessionsResult.data ?? [],
+    completedSessionCount
+  );
+
+  if (userAccessResult.data && userAccess) {
+    const shouldSyncAccess =
+      userAccessResult.data.status !== userAccess.status ||
+      userAccessResult.data.free_sessions_used !== userAccess.freeSessionsUsed;
+
+    if (shouldSyncAccess) {
+      const syncResult = await client
+        .from("user_access")
+        .update({
+          status: userAccess.status,
+          free_sessions_used: userAccess.freeSessionsUsed
+        })
+        .eq("user_id", userId);
+      throwIfSupabaseError(syncResult.error);
+    }
+  }
 
   const uncomfortableExerciseIds = Array.from(
     new Set(
@@ -251,6 +284,7 @@ export async function loadDashboardModel(userId: string): Promise<DashboardModel
     deepProfile,
     latestReassessment,
     preferences,
+    userAccess,
     activePlan,
     activePlanVersion,
     weekPlan,
@@ -388,8 +422,42 @@ export async function updateTimerSound(userId: string, enabled: boolean) {
   throwIfSupabaseError(result.error);
 }
 
+export async function upgradeToPremiumAccess(userId: string) {
+  const client = requireSupabaseClient();
+  const result = await client.from("user_access").upsert(
+    {
+      user_id: userId,
+      status: "premium",
+      premium_started_at: new Date().toISOString()
+    },
+    { onConflict: "user_id" }
+  );
+
+  throwIfSupabaseError(result.error);
+}
+
 export async function startWorkoutSession(userId: string, planDay: TrainingPlanDay) {
   const client = requireSupabaseClient();
+  const accessResult = await client.from("user_access").select("*").eq("user_id", userId).maybeSingle();
+  throwIfSupabaseError(accessResult.error);
+  const completedCountResult = await client
+    .from("workout_sessions")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("status", "completed");
+  throwIfSupabaseError(completedCountResult.error);
+
+  const access = mapUserAccess(
+    accessResult.data as Database["public"]["Tables"]["user_access"]["Row"] | null,
+    [],
+    completedCountResult.count ?? 0
+  );
+
+  if (access && !access.canStartWorkout) {
+    throw new Error(
+      "Il mini-ciclo gratuito si e concluso. Per continuare con il percorso guidato serve Premium."
+    );
+  }
 
   const sessionResult = await client
     .from("workout_sessions")
@@ -660,6 +728,49 @@ function mapNotificationPreferences(
     remindersEnabled: row.reminders_enabled,
     reminderTime: row.reminder_time,
     weeklySummaryEnabled: row.weekly_summary_enabled
+  };
+}
+
+function mapUserAccess(
+  row: Database["public"]["Tables"]["user_access"]["Row"] | null,
+  sessions: Array<SessionRow | Database["public"]["Tables"]["workout_sessions"]["Row"]>,
+  explicitCompletedCount?: number
+): UserAccessRecord | null {
+  if (!row) return null;
+
+  const completedCount =
+    explicitCompletedCount ??
+    sessions.filter((session) => session.status === "completed").length;
+  const now = Date.now();
+  const trialExpiresAt = new Date(row.trial_expires_at).getTime();
+  const isPremium =
+    row.status === "premium" &&
+    (!row.premium_ends_at || new Date(row.premium_ends_at).getTime() > now);
+  const isLocked = !isPremium && (completedCount >= row.free_sessions_limit || trialExpiresAt <= now);
+  const status: UserAccessRecord["status"] = isPremium
+    ? "premium"
+    : isLocked
+      ? "free_locked"
+      : "free_trial";
+  const remainingSessions = Math.max(row.free_sessions_limit - completedCount, 0);
+  const remainingDays = Math.max(
+    0,
+    Math.ceil((trialExpiresAt - now) / (24 * 60 * 60 * 1000))
+  );
+
+  return {
+    userId: row.user_id,
+    status,
+    trialStartedAt: row.trial_started_at,
+    trialExpiresAt: row.trial_expires_at,
+    freeSessionsLimit: row.free_sessions_limit,
+    freeSessionsUsed: completedCount,
+    trialRemainingSessions: remainingSessions,
+    trialRemainingDays: remainingDays,
+    premiumStartedAt: row.premium_started_at,
+    premiumEndsAt: row.premium_ends_at,
+    canUsePremiumFeatures: status === "premium",
+    canStartWorkout: status !== "free_locked"
   };
 }
 

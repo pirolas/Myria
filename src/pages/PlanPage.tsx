@@ -129,6 +129,31 @@ export function PlanPage() {
 
       <section className="surface px-5 py-5">
         <SectionHeading
+          eyebrow={data.userAccess?.status === "premium" ? "Continuita Premium" : "Aggiornamento del percorso"}
+          title={
+            data.userAccess?.status === "premium"
+              ? "Il piano puo continuare a evolversi"
+              : "Il primo piano e incluso. Gli adattamenti nel tempo sono Premium."
+          }
+          description={
+            data.userAccess?.status === "premium"
+              ? "Usiamo progressi, feedback e rivalutazioni per correggere ritmo, focus e progressione."
+              : "Il valore Premium non e creare un altro piano da zero, ma farlo cambiare quando cambia la tua situazione."
+          }
+        />
+        <div className="mt-5">
+          <Link to={data.userAccess?.status === "premium" ? "/plan/update" : "/premium"}>
+            <div className="rounded-[22px] border border-line bg-white/78 px-4 py-4 text-sm font-semibold text-accent-deep">
+              {data.userAccess?.status === "premium"
+                ? "Apri Aggiorna il mio percorso"
+                : "Scopri cosa continua con Premium"}
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      <section className="surface px-5 py-5">
+        <SectionHeading
           eyebrow="Outcome realistici"
           title="Cosa ci aspettiamo da questa fase"
           description="Niente promesse lampo: solo risultati coerenti con costanza, energia e situazione reale."

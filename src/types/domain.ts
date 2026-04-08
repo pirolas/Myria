@@ -116,6 +116,8 @@ export type PlannerTrigger =
   | "deep_profile_completed"
   | "reassessment_completed";
 
+export type UserAccessStatus = "free_trial" | "premium" | "free_locked";
+
 export interface PreferenceOption<TValue extends string | number | boolean> {
   value: TValue;
   label: string;
@@ -471,6 +473,21 @@ export interface NotificationPreferenceRecord {
   weeklySummaryEnabled: boolean;
 }
 
+export interface UserAccessRecord {
+  userId: string;
+  status: UserAccessStatus;
+  trialStartedAt: string;
+  trialExpiresAt: string;
+  freeSessionsLimit: number;
+  freeSessionsUsed: number;
+  trialRemainingSessions: number;
+  trialRemainingDays: number;
+  premiumStartedAt: string | null;
+  premiumEndsAt: string | null;
+  canUsePremiumFeatures: boolean;
+  canStartWorkout: boolean;
+}
+
 export interface DashboardModel {
   profile: ProfileRecord | null;
   onboarding: UserOnboardingRecord | null;
@@ -486,6 +503,7 @@ export interface DashboardModel {
   uncomfortableExerciseIds: string[];
   milestones: UserMilestone[];
   notifications: NotificationPreferenceRecord | null;
+  userAccess: UserAccessRecord | null;
   planAdjustments: PlanAdjustment[];
   supportTips: SupportTip[];
 }

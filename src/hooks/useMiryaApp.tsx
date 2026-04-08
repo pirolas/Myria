@@ -17,6 +17,7 @@ import {
   saveOnboarding,
   saveReassessment,
   startWorkoutSession,
+  upgradeToPremiumAccess,
   updateTimerSound
 } from "@/services/app";
 import { generatePersonalizedPlan } from "@/services/planner";
@@ -46,6 +47,7 @@ interface MiryaAppContextValue {
   ) => Promise<void>;
   submitReassessment: (input: ReassessmentInput) => Promise<void>;
   regeneratePlan: (trigger?: PlannerTrigger) => Promise<void>;
+  activatePremium: () => Promise<void>;
   setTimerSoundEnabled: (enabled: boolean) => Promise<void>;
   startSession: (planDay: TrainingPlanDay) => Promise<string>;
   completeSession: (
@@ -75,12 +77,7 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
 
     try {
       await ensureUserRecords(user);
-      let nextData = await loadDashboardModel(user.id);
-
-      if (nextData.onboarding && !nextData.activePlan) {
-        await generatePersonalizedPlan("weekly_refresh");
-        nextData = await loadDashboardModel(user.id);
-      }
+      const nextData = await loadDashboardModel(user.id);
 
       setData(nextData);
       setStatus("ready");
@@ -148,7 +145,9 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
 
         try {
           await saveDeepProfile(user.id, input);
-          await generatePersonalizedPlan("deep_profile_completed");
+          if (data?.userAccess?.canUsePremiumFeatures) {
+            await generatePersonalizedPlan("deep_profile_completed");
+          }
           await refresh();
         } catch (submitError) {
           setError(
@@ -173,7 +172,9 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
             saveOnboarding(user.id, onboardingInput),
             saveDeepProfile(user.id, deepInput)
           ]);
-          await generatePersonalizedPlan("deep_profile_completed");
+          if (data?.userAccess?.canUsePremiumFeatures) {
+            await generatePersonalizedPlan("deep_profile_completed");
+          }
           await refresh();
         } catch (submitError) {
           setError(
@@ -188,6 +189,9 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
       async submitReassessment(input) {
         if (!user) {
           throw new Error("Devi accedere per inviare la rivalutazione.");
+        }
+        if (!data?.userAccess?.canUsePremiumFeatures) {
+          throw new Error("Le rivalutazioni guidate fanno parte di Premium.");
         }
 
         setStatus("saving");
@@ -211,6 +215,11 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
         if (!user) {
           throw new Error("Devi accedere per aggiornare il percorso.");
         }
+        if (!data?.userAccess?.canUsePremiumFeatures) {
+          throw new Error(
+            "L'aggiornamento del percorso nel tempo e disponibile in Premium."
+          );
+        }
 
         setStatus("saving");
         setError(null);
@@ -226,6 +235,27 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
           );
           setStatus("error");
           throw plannerError;
+        }
+      },
+      async activatePremium() {
+        if (!user) {
+          throw new Error("Devi accedere per attivare Premium.");
+        }
+
+        setStatus("saving");
+        setError(null);
+
+        try {
+          await upgradeToPremiumAccess(user.id);
+          await refresh();
+        } catch (upgradeError) {
+          setError(
+            upgradeError instanceof Error
+              ? upgradeError.message
+              : "Non siamo riusciti ad attivare Premium."
+          );
+          setStatus("error");
+          throw upgradeError;
         }
       },
       async setTimerSoundEnabled(enabled) {
@@ -276,7 +306,9 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
 
         try {
           await completeWorkoutSession(user.id, sessionId, planDay, feedback);
-          await generatePersonalizedPlan("post_workout_feedback");
+          if (data?.userAccess?.canUsePremiumFeatures) {
+            await generatePersonalizedPlan("post_workout_feedback");
+          }
           await refresh();
         } catch (sessionError) {
           setError(

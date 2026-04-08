@@ -5,6 +5,7 @@ import type {
   DashboardModel,
   Goal,
   ProgressSnapshot,
+  UserAccessRecord,
   WorkoutSessionRecord
 } from "@/types/domain";
 
@@ -176,4 +177,24 @@ export function getGoalLabel(goal: Goal) {
 export function getLatestFeelingLabel(sessions: WorkoutSessionRecord[]) {
   const latest = sessions.find((session) => session.feeling);
   return latest?.feeling ?? null;
+}
+
+export function getTrialStatusCopy(access: UserAccessRecord | null) {
+  if (!access) {
+    return "Il tuo accesso si sta preparando.";
+  }
+
+  if (access.status === "premium") {
+    return "Premium attivo: il percorso puo continuare ad adattarsi a te nel tempo.";
+  }
+
+  if (access.status === "free_locked") {
+    return "Il mini-ciclo gratuito si e concluso: per continuare con un percorso che si aggiorna serve Premium.";
+  }
+
+  return `Hai ancora ${access.trialRemainingSessions} sessioni oppure ${access.trialRemainingDays} giorni per provare il primo ciclo gratuito.`;
+}
+
+export function shouldShowPremiumGate(access: UserAccessRecord | null) {
+  return access?.status === "free_locked";
 }

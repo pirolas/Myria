@@ -166,7 +166,7 @@ serve(async (request) => {
     const body = (await request.json().catch(() => ({}))) as PlannerRequestBody;
     const trigger = body.trigger ?? "weekly_refresh";
 
-    const [onboardingRes, deepProfileRes, reassessmentRes, sessionRes, currentPlanRes] =
+    const [onboardingRes, deepProfileRes, reassessmentRes, sessionRes, currentPlanRes, accessRes] =
       await Promise.all([
         adminClient.from("user_onboarding").select("*").eq("user_id", user.id).maybeSingle(),
         adminClient.from("user_deep_profile").select("*").eq("user_id", user.id).maybeSingle(),
@@ -191,10 +191,11 @@ serve(async (request) => {
           .eq("status", "active")
           .order("updated_at", { ascending: false })
           .limit(1)
-          .maybeSingle()
+          .maybeSingle(),
+        adminClient.from("user_access").select("*").eq("user_id", user.id).maybeSingle()
       ]);
 
-    [onboardingRes.error, deepProfileRes.error, reassessmentRes.error, sessionRes.error, currentPlanRes.error]
+    [onboardingRes.error, deepProfileRes.error, reassessmentRes.error, sessionRes.error, currentPlanRes.error, accessRes.error]
       .filter(Boolean)
       .forEach((error) => {
         throw error;
@@ -204,20 +205,50 @@ serve(async (request) => {
       return jsonResponse({ error: "Onboarding essenziale mancante." }, 400);
     }
 
+    const access = accessRes.data;
+    const isPremium =
+      access?.status === "premium" &&
+      (!access.premium_ends_at || new Date(access.premium_ends_at).getTime() > Date.now());
+    const canGenerateInitialPlan = !access?.first_plan_generated_at || !currentPlanRes.data;
+
+    if (trigger === "onboarding_completed" && !canGenerateInitialPlan && !isPremium) {
+      return jsonResponse(
+        { error: "Il primo piano e gia stato generato. Gli aggiornamenti successivi fanno parte di Premium." },
+        403
+      );
+    }
+
+    if (trigger !== "onboarding_completed" && !isPremium) {
+      return jsonResponse(
+        { error: "L'aggiornamento del percorso nel tempo e disponibile in Premium." },
+        403
+      );
+    }
+
     const plannerInput = {
       onboarding: onboardingRes.data,
       deepProfile: deepProfileRes.data,
       reassessment: reassessmentRes.data,
       sessions: sessionRes.data ?? [],
       currentPlan: currentPlanRes.data,
+      access,
       trigger
     };
 
-    const plan = (await tryAiPlan(plannerInput)) ?? buildFallbackPlan(plannerInput);
-    const persistedPlanId = await persistPlan(adminClient, user.id, plan, trigger, currentPlanRes.data?.id ?? null);
+    const aiPlan = await tryAiPlan(plannerInput);
+    const plan = aiPlan ?? buildFallbackPlan(plannerInput);
+    const source = aiPlan ? "ai" : "fallback";
+    const persistedPlanId = await persistPlan(
+      adminClient,
+      user.id,
+      plan,
+      trigger,
+      currentPlanRes.data?.id ?? null,
+      source
+    );
 
     return jsonResponse({
-      source: "fallback",
+      source,
       persisted_plan_id: persistedPlanId,
       plan
     });
@@ -366,7 +397,8 @@ async function persistPlan(
   userId: string,
   plan: PlannerOutput,
   trigger: PlannerTrigger,
-  currentPlanId: string | null
+  currentPlanId: string | null,
+  source: "ai" | "fallback"
 ) {
   if (currentPlanId) {
     await client.from("training_plans").update({ status: "archived" }).eq("id", currentPlanId).eq("user_id", userId);
@@ -377,7 +409,7 @@ async function persistPlan(
     .insert({
       user_id: userId,
       status: "active",
-      source: "fallback",
+      source,
       current_phase: plan.current_phase,
       phase_label: plan.phase_label,
       phase_focus: plan.phase_focus,
@@ -495,6 +527,16 @@ async function persistPlan(
       }))
     ]
   );
+
+  await client
+    .from("user_access")
+    .upsert(
+      {
+        user_id: userId,
+        first_plan_generated_at: new Date().toISOString()
+      },
+      { onConflict: "user_id" }
+    );
 
   return planId;
 }

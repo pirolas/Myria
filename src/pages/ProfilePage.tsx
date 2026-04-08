@@ -1,4 +1,4 @@
-import { BellRing, ChevronRight, LogOut, RefreshCw, Volume2, VolumeX } from "lucide-react";
+import { BellRing, ChevronRight, Crown, LogOut, Volume2, VolumeX } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import {
@@ -15,11 +15,12 @@ import {
 } from "@/data/content";
 import { useAuth } from "@/hooks/useAuth";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
+import { getTrialStatusCopy } from "@/lib/mirya";
 
 export function ProfilePage() {
   const navigate = useNavigate();
   const { signOutUser } = useAuth();
-  const { data, regeneratePlan, setTimerSoundEnabled, status } = useMiryaApp();
+  const { data, setTimerSoundEnabled, status } = useMiryaApp();
 
   if (!data?.onboarding) {
     return null;
@@ -104,6 +105,20 @@ export function ProfilePage() {
       </section>
 
       <section className="surface px-5 py-5">
+        <div className="flex items-center gap-3">
+          <div className="rounded-full bg-accent-soft p-3 text-accent-deep">
+            <Crown size={18} />
+          </div>
+          <div>
+            <div className="text-base font-semibold text-ink">Stato accesso</div>
+            <p className="mt-1 text-sm leading-6 text-muted">
+              {getTrialStatusCopy(data.userAccess)}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="surface px-5 py-5">
         <div className="text-base font-semibold text-ink">Preferenze beta</div>
 
         <button
@@ -172,22 +187,21 @@ export function ProfilePage() {
             <ChevronRight size={18} className="text-accent-deep" />
           </Link>
 
-          <button
-            type="button"
-            onClick={() => void regeneratePlan("weekly_refresh")}
-            className="flex w-full items-center justify-between rounded-[22px] border border-line bg-white/78 px-4 py-4 text-left"
+          <Link
+            to="/plan/update"
+            className="flex items-center justify-between rounded-[22px] border border-line bg-white/78 px-4 py-4"
           >
             <div>
               <div className="text-sm font-semibold text-ink">Ricalcola il piano</div>
               <p className="mt-1 text-sm leading-6 text-muted">
-                Rigenera la settimana guidata con i dati piu recenti.
+                Aggiorna il percorso oppure scopri come funziona la continuita Premium.
               </p>
             </div>
-            <RefreshCw size={18} className="text-accent-deep" />
-          </button>
+            <ChevronRight size={18} className="text-accent-deep" />
+          </Link>
 
           <Link
-            to="/reassessment"
+            to={data.userAccess?.status === "premium" ? "/reassessment" : "/premium"}
             className="flex items-center justify-between rounded-[22px] border border-line bg-white/78 px-4 py-4"
           >
             <div>

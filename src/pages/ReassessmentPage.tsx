@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { ChoiceGrid } from "@/components/ui/ChoiceGrid";
 import {
@@ -50,6 +50,10 @@ export function ReassessmentPage() {
   const navigate = useNavigate();
   const { data, submitReassessment, status, error } = useMiryaApp();
   const [form, setForm] = useState<ReassessmentInput>(defaultInput);
+
+  if (data?.userAccess && !data.userAccess.canUsePremiumFeatures) {
+    return <Navigate to="/plan/update" replace />;
+  }
 
   const toggleImprovement = (value: ImprovementTag) => {
     setForm((current) => ({
