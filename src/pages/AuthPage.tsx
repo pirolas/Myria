@@ -8,11 +8,12 @@ type AuthMode = "signin" | "signup";
 
 export function AuthPage() {
   const navigate = useNavigate();
-  const { status, signIn, signUp, isConfigured } = useAuth();
+  const { status, signIn, signUp, signInWithGoogleProvider, isConfigured } = useAuth();
   const [mode, setMode] = useState<AuthMode>("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -63,6 +64,24 @@ export function AuthPage() {
       );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleSubmitting(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      await signInWithGoogleProvider();
+      setMessage("Ti stiamo portando su Google per completare l'accesso.");
+    } catch (authError) {
+      setError(
+        authError instanceof Error
+          ? authError.message
+          : "Non siamo riusciti ad avviare l'accesso con Google."
+      );
+      setIsGoogleSubmitting(false);
     }
   };
 
@@ -119,6 +138,32 @@ export function AuthPage() {
           </section>
         ) : (
           <section className="surface px-5 py-5">
+            <div className="space-y-3">
+              <Button
+                fullWidth
+                variant="secondary"
+                onClick={handleGoogleSignIn}
+                disabled={isGoogleSubmitting || isSubmitting}
+                icon={<GoogleIcon />}
+                className="border-[rgba(108,162,158,0.22)] bg-white text-ink"
+              >
+                {isGoogleSubmitting ? "Apertura di Google..." : "Continua con Google"}
+              </Button>
+
+              <p className="text-sm leading-6 text-muted">
+                Il modo piu rapido per entrare in Myria e ritrovare subito il tuo
+                percorso personale.
+              </p>
+            </div>
+
+            <div className="my-5 flex items-center gap-3">
+              <div className="h-px flex-1 bg-line" />
+              <span className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-muted">
+                oppure con email
+              </span>
+              <div className="h-px flex-1 bg-line" />
+            </div>
+
             <label className="block">
               <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                 Email
@@ -177,9 +222,38 @@ export function AuthPage() {
               {brand.name} salva onboarding, percorso, progressi e feedback in modo
               personale e riservato.
             </p>
+
+            <p className="mt-3 text-xs leading-6 text-muted">
+              Per usare Google, attiva il provider Google nelle impostazioni Auth
+              di Supabase e aggiungi questo URL tra i redirect consentiti:{" "}
+              <span className="font-semibold text-ink">{window.location.origin}/auth</span>
+            </p>
           </section>
         )}
       </div>
     </div>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
+      <path
+        fill="#4285F4"
+        d="M21.6 12.23c0-.78-.07-1.53-.2-2.23H12v4.22h5.4a4.62 4.62 0 0 1-2 3.03v2.52h3.24c1.9-1.75 2.96-4.33 2.96-7.54Z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 22c2.7 0 4.96-.9 6.61-2.43l-3.24-2.52c-.9.6-2.05.96-3.37.96-2.59 0-4.78-1.75-5.57-4.1H3.08v2.58A9.98 9.98 0 0 0 12 22Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M6.43 13.91A5.98 5.98 0 0 1 6.12 12c0-.66.11-1.3.31-1.91V7.51H3.08A9.99 9.99 0 0 0 2 12c0 1.61.39 3.13 1.08 4.49l3.35-2.58Z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.98c1.47 0 2.78.5 3.82 1.48l2.86-2.86C16.95 2.98 14.7 2 12 2a9.98 9.98 0 0 0-8.92 5.51l3.35 2.58c.79-2.35 2.98-4.11 5.57-4.11Z"
+      />
+    </svg>
   );
 }

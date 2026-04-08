@@ -12,6 +12,7 @@ import {
   getCurrentSession,
   listenToAuthState,
   signInWithPassword,
+  signInWithGoogle,
   signOut,
   signUpWithPassword,
   type AuthCredentials
@@ -26,6 +27,7 @@ interface AuthContextValue {
   isConfigured: boolean;
   signIn: (credentials: AuthCredentials) => Promise<{ requiresConfirmation: boolean }>;
   signUp: (credentials: AuthCredentials) => Promise<{ requiresConfirmation: boolean }>;
+  signInWithGoogleProvider: () => Promise<void>;
   signOutUser: () => Promise<void>;
 }
 
@@ -100,6 +102,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return {
           requiresConfirmation: !result.session
         };
+      },
+      async signInWithGoogleProvider() {
+        await signInWithGoogle();
       },
       async signOutUser() {
         await signOut();

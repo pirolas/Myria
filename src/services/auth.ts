@@ -47,6 +47,27 @@ export async function signUpWithPassword(credentials: AuthCredentials) {
   return normalizeAuthResponse(response);
 }
 
+export async function signInWithGoogle() {
+  const client = requireSupabaseClient();
+  const redirectTo =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/auth`
+      : undefined;
+
+  const { data, error } = await client.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo
+    }
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
 export async function signOut() {
   const client = requireSupabaseClient();
   const { error } = await client.auth.signOut();
