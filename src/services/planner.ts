@@ -12,6 +12,38 @@ interface PlannerInvocationResponse {
   source: "ai" | "fallback";
 }
 
+async function resolveAccessToken() {
+  const client = requireSupabaseClient();
+  const {
+    data: { session }
+  } = await client.auth.getSession();
+
+  if (session?.access_token) {
+    return session.access_token;
+  }
+
+  const refreshResult = await client.auth.refreshSession().catch(() => null);
+  const refreshedToken = refreshResult?.data.session?.access_token;
+
+  if (refreshedToken) {
+    return refreshedToken;
+  }
+
+  const {
+    data: { user }
+  } = await client.auth.getUser().catch(() => ({ data: { user: null } }));
+
+  if (!user) {
+    throw new Error(
+      "La sessione non risulta valida per generare il piano. Esci e rientra in Mirya, poi riprova."
+    );
+  }
+
+  throw new Error(
+    "La tua sessione è presente, ma il token non è stato riallineato in tempo. Ricarica la pagina e riprova."
+  );
+}
+
 async function resolvePlannerError(error: unknown) {
   if (error instanceof FunctionsHttpError) {
     const response = error.context;
@@ -61,18 +93,14 @@ async function resolvePlannerError(error: unknown) {
 
 export async function generatePersonalizedPlan(trigger: PlannerTrigger) {
   const client = requireSupabaseClient();
-  const {
-    data: { session }
-  } = await client.auth.getSession();
+  const accessToken = await resolveAccessToken();
   const { data, error } = await client.functions.invoke<PlannerInvocationResponse>(
     "plan-personalization",
     {
       body: { trigger },
-      headers: session?.access_token
-        ? {
-            Authorization: `Bearer ${session.access_token}`
-          }
-        : undefined
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
     }
   );
 
