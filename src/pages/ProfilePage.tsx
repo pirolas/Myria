@@ -63,7 +63,7 @@ export function ProfilePage() {
               onboarding.secondaryObjectives.map((goal) => secondaryObjectiveLabels[goal]).join(", ")
             ],
             [
-              "Aree prioritarie",
+              "Focus ricavato dal profilo",
               onboarding.focusAreas.map((focus) => focusAreaLabels[focus]).join(", ")
             ],
             ["Focus del percorso", goalLabels[onboarding.focusPreference]],

@@ -11,7 +11,6 @@ import {
   energyLabels,
   energyOptions,
   focusAreaLabels,
-  focusAreaOptions,
   gentleStartOptions,
   levelLabels,
   levelOptions,
@@ -34,9 +33,12 @@ import {
   trainingDayOptions
 } from "@/data/content";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
+import {
+  deriveFocusAreasFromObjectives,
+  derivePlanGoalsFromFocusAreas
+} from "@/lib/onboarding";
 import type {
   BetaOnboardingInput,
-  FocusArea,
   Goal,
   LimitationTag,
   PastTrainingType,
@@ -45,36 +47,6 @@ import type {
 } from "@/types/domain";
 
 type StepKey = "identity" | "goal" | "rhythm" | "context" | "preferences";
-
-function derivePlanGoals(focusAreas: FocusArea[]): {
-  primaryGoal: Goal;
-  secondaryGoals: Goal[];
-  focusPreference: Goal;
-} {
-  const goals = new Set<Goal>();
-
-  if (focusAreas.includes("glutei") || focusAreas.includes("gambe")) {
-    goals.add("glutei_gambe");
-  }
-  if (focusAreas.includes("addome_core")) {
-    goals.add("pancia_core");
-  }
-  if (focusAreas.includes("postura")) {
-    goals.add("postura");
-  }
-  if (focusAreas.includes("braccia") || focusAreas.includes("total_body")) {
-    goals.add("tonicita_generale");
-  }
-
-  const derivedGoals = Array.from(goals);
-  const primaryGoal = derivedGoals[0] ?? "tonicita_generale";
-
-  return {
-    primaryGoal,
-    secondaryGoals: derivedGoals.length > 0 ? derivedGoals : [primaryGoal],
-    focusPreference: primaryGoal
-  };
-}
 
 function buildInitialInput(input: BetaOnboardingInput | null | undefined): BetaOnboardingInput {
   const defaults: BetaOnboardingInput = {
@@ -117,10 +89,15 @@ function buildInitialInput(input: BetaOnboardingInput | null | undefined): BetaO
   };
 
   const next = { ...defaults, ...input };
-  const derived = derivePlanGoals(next.focusAreas);
+  const focusAreas =
+    input?.focusAreas && input.focusAreas.length > 0
+      ? input.focusAreas
+      : deriveFocusAreasFromObjectives(next.secondaryObjectives, next.primaryBodyGoal);
+  const derived = derivePlanGoalsFromFocusAreas(focusAreas);
 
   return {
     ...next,
+    focusAreas,
     primaryGoal: input?.primaryGoal ?? derived.primaryGoal,
     secondaryGoals:
       input?.secondaryGoals && input.secondaryGoals.length > 0
@@ -215,28 +192,22 @@ export function OnboardingPage() {
   const toggleValue = <T extends string,>(items: T[], value: T) =>
     items.includes(value) ? items.filter((item) => item !== value) : [...items, value];
 
-  const updateFocusAreas = (value: FocusArea) => {
-    setForm((current) => {
-      const focusAreas = toggleValue(current.focusAreas, value);
-      const normalizedFocusAreas = focusAreas.length > 0 ? focusAreas : [value];
-      const derived = derivePlanGoals(normalizedFocusAreas);
-
-      return {
-        ...current,
-        focusAreas: normalizedFocusAreas,
-        primaryGoal: derived.primaryGoal,
-        secondaryGoals: derived.secondaryGoals,
-        focusPreference: derived.focusPreference
-      };
-    });
-  };
-
   const toggleSecondaryObjective = (value: SecondaryObjective) => {
     setForm((current) => {
       const nextValues = toggleValue(current.secondaryObjectives, value);
+      const secondaryObjectives = nextValues.length > 0 ? nextValues : [value];
+      const focusAreas = deriveFocusAreasFromObjectives(
+        secondaryObjectives,
+        current.primaryBodyGoal
+      );
+      const derived = derivePlanGoalsFromFocusAreas(focusAreas);
       return {
         ...current,
-        secondaryObjectives: nextValues.length > 0 ? nextValues : [value]
+        secondaryObjectives,
+        focusAreas,
+        primaryGoal: derived.primaryGoal,
+        secondaryGoals: derived.secondaryGoals,
+        focusPreference: derived.focusPreference
       };
     });
   };
@@ -466,23 +437,51 @@ export function OnboardingPage() {
               options={primaryBodyGoalOptions}
               value={form.primaryBodyGoal}
               onChange={(primaryBodyGoal) =>
-                setForm((current) => ({ ...current, primaryBodyGoal }))
+                setForm((current) => {
+                  const focusAreas = deriveFocusAreasFromObjectives(
+                    current.secondaryObjectives,
+                    primaryBodyGoal
+                  );
+                  const derived = derivePlanGoalsFromFocusAreas(focusAreas);
+
+                  return {
+                    ...current,
+                    primaryBodyGoal,
+                    focusAreas,
+                    primaryGoal: derived.primaryGoal,
+                    secondaryGoals: derived.secondaryGoals,
+                    focusPreference: derived.focusPreference
+                  };
+                })
               }
             />
 
             <MultiSelectCards
-              title="Obiettivi secondari"
+              title="Cosa vuoi sentire di più, oltre all'obiettivo principale"
               items={secondaryObjectiveOptions}
               selected={form.secondaryObjectives}
               onToggle={(value) => toggleSecondaryObjective(value as SecondaryObjective)}
             />
 
-            <MultiSelectCards
-              title="Aree su cui vuoi più attenzione"
-              items={focusAreaOptions}
-              selected={form.focusAreas}
-              onToggle={(value) => updateFocusAreas(value as FocusArea)}
-            />
+            <div className="rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                Focus che Mirya terrà più presenti
+              </div>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                Lo ricaviamo dai segnali che hai scelto, così non ti facciamo ripetere
+                la stessa cosa due volte.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {form.focusAreas.map((focus) => (
+                  <span
+                    key={focus}
+                    className="selection-chip-selected rounded-full border px-3 py-2 text-sm font-semibold"
+                  >
+                    {focusAreaLabels[focus]}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
         );
       case "rhythm":

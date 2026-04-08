@@ -1,6 +1,10 @@
 import type { User } from "@supabase/supabase-js";
 import { requireSupabaseClient } from "@/lib/supabase";
 import { toDateKey } from "@/lib/date";
+import {
+  deriveFocusAreasFromObjectives,
+  normalizeOnboardingInput
+} from "@/lib/onboarding";
 import type {
   ActiveTrainingPlan,
   BetaOnboardingInput,
@@ -301,56 +305,59 @@ export async function loadDashboardModel(userId: string): Promise<DashboardModel
 
 export async function saveOnboarding(userId: string, input: BetaOnboardingInput) {
   const client = requireSupabaseClient();
+  const normalizedInput = normalizeOnboardingInput(input);
   const limitations =
-    input.limitations.length === 0 ? ["nessuna"] : sanitizeLimitations(input.limitations);
-  const computedBodyGoal = computeBodyGoal(input);
+    normalizedInput.limitations.length === 0
+      ? ["nessuna"]
+      : sanitizeLimitations(normalizedInput.limitations);
+  const computedBodyGoal = computeBodyGoal(normalizedInput);
 
   const onboardingPayload = {
     user_id: userId,
-    full_name: input.fullName || null,
-    age_band: input.ageBand,
-    height_cm: input.heightCm,
-    weight_kg: input.weightKg,
-    primary_body_goal: input.primaryBodyGoal,
+    full_name: normalizedInput.fullName || null,
+    age_band: normalizedInput.ageBand,
+    height_cm: normalizedInput.heightCm,
+    weight_kg: normalizedInput.weightKg,
+    primary_body_goal: normalizedInput.primaryBodyGoal,
     computed_body_goal: computedBodyGoal,
-    secondary_objectives: input.secondaryObjectives,
-    perceived_level: input.perceivedLevel,
-    primary_goal: input.primaryGoal,
-    secondary_goals: input.secondaryGoals,
-    days_per_week: input.daysPerWeek,
-    preferred_minutes: input.preferredMinutes,
-    energy_level: input.energyLevel,
-    past_experience: input.pastExperience,
-    lifestyle: input.lifestyle,
-    gentle_start: input.gentleStart,
+    secondary_objectives: normalizedInput.secondaryObjectives,
+    perceived_level: normalizedInput.perceivedLevel,
+    primary_goal: normalizedInput.primaryGoal,
+    secondary_goals: normalizedInput.secondaryGoals,
+    days_per_week: normalizedInput.daysPerWeek,
+    preferred_minutes: normalizedInput.preferredMinutes,
+    energy_level: normalizedInput.energyLevel,
+    past_experience: normalizedInput.pastExperience,
+    lifestyle: normalizedInput.lifestyle,
+    gentle_start: normalizedInput.gentleStart,
     limitations,
-    focus_preference: input.focusPreference,
-    sleep_quality: input.sleepQuality,
-    stress_level: input.stressLevel,
-    consistency_score: input.consistencyScore,
-    weekly_availability: input.weeklyAvailability,
-    preferred_time_of_day: input.preferredTimeOfDay,
-    preferred_days: input.preferredDays,
-    focus_areas: input.focusAreas,
-    past_training_types: input.pastTrainingTypes,
-    prefer_simple_exercises: input.preferSimpleExercises,
-    session_style: input.sessionStyle,
-    session_tone: input.sessionTone,
-    avoid_jumps: input.avoidJumps,
-    eating_perception: input.eatingPerception,
-    skips_meals: input.skipsMeals,
-    nervous_hunger: input.nervousHunger,
-    low_water_intake: input.lowWaterIntake,
-    low_protein_intake: input.lowProteinIntake,
-    wants_timer_sound: input.wantsTimerSound,
-    notes: input.notes || null
+    focus_preference: normalizedInput.focusPreference,
+    sleep_quality: normalizedInput.sleepQuality,
+    stress_level: normalizedInput.stressLevel,
+    consistency_score: normalizedInput.consistencyScore,
+    weekly_availability: normalizedInput.weeklyAvailability,
+    preferred_time_of_day: normalizedInput.preferredTimeOfDay,
+    preferred_days: normalizedInput.preferredDays,
+    focus_areas: normalizedInput.focusAreas,
+    past_training_types: normalizedInput.pastTrainingTypes,
+    prefer_simple_exercises: normalizedInput.preferSimpleExercises,
+    session_style: normalizedInput.sessionStyle,
+    session_tone: normalizedInput.sessionTone,
+    avoid_jumps: normalizedInput.avoidJumps,
+    eating_perception: normalizedInput.eatingPerception,
+    skips_meals: normalizedInput.skipsMeals,
+    nervous_hunger: normalizedInput.nervousHunger,
+    low_water_intake: normalizedInput.lowWaterIntake,
+    low_protein_intake: normalizedInput.lowProteinIntake,
+    wants_timer_sound: normalizedInput.wantsTimerSound,
+    notes: normalizedInput.notes || null
   };
 
   const [profileResult, onboardingResult, preferenceResult] = await Promise.all([
     client.from("profiles").upsert(
       {
         id: userId,
-        full_name: input.fullName || null
+        full_name: normalizedInput.fullName || null
       },
       { onConflict: "id" }
     ),
@@ -362,7 +369,7 @@ export async function saveOnboarding(userId: string, input: BetaOnboardingInput)
     client.from("user_preferences").upsert(
       {
         user_id: userId,
-        timer_sound_enabled: input.wantsTimerSound,
+        timer_sound_enabled: normalizedInput.wantsTimerSound,
         reminders_enabled: true
       },
       { onConflict: "user_id" }
@@ -681,7 +688,13 @@ function mapOnboarding(
     preferredDays: (row.preferred_days ?? []) as UserOnboardingRecord["preferredDays"],
     pastTrainingTypes:
       (row.past_training_types ?? []) as UserOnboardingRecord["pastTrainingTypes"],
-    focusAreas: (row.focus_areas ?? []) as UserOnboardingRecord["focusAreas"],
+    focusAreas:
+      ((row.focus_areas ?? []).length > 0
+        ? row.focus_areas
+        : deriveFocusAreasFromObjectives(
+            (row.secondary_objectives ?? []) as UserOnboardingRecord["secondaryObjectives"],
+            row.primary_body_goal as UserOnboardingRecord["primaryBodyGoal"]
+          )) as UserOnboardingRecord["focusAreas"],
     preferSimpleExercises: row.prefer_simple_exercises ?? true,
     sessionStyle:
       (row.session_style as UserOnboardingRecord["sessionStyle"]) ?? "sequenze_lente",
