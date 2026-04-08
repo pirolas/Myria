@@ -63,26 +63,46 @@ export async function generatePersonalizedPlan(
   trigger: PlannerTrigger,
   accessToken?: string | null
 ) {
-  const resolvedAccessToken = await resolveAccessToken(accessToken);
   const { url, anonKey } = getSupabaseEnv();
-  const response = await fetch(`${url}/functions/v1/plan-personalization`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: anonKey,
-      Authorization: `Bearer ${resolvedAccessToken}`
-    },
-    body: JSON.stringify({ trigger })
-  }).catch(() => null);
+  const client = requireSupabaseClient();
 
-  if (!response) {
-    throw new Error(
-      "La funzione che genera il piano non è raggiungibile in questo momento. Riprova tra un attimo."
-    );
+  const callPlanner = async (token: string) => {
+    const response = await fetch(`${url}/functions/v1/plan-personalization`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: anonKey,
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ trigger })
+    }).catch(() => null);
+
+    if (!response) {
+      throw new Error(
+        "La funzione che genera il piano non è raggiungibile in questo momento. Riprova tra un attimo."
+      );
+    }
+
+    const payload = await parseJsonResponse(response);
+    return { response, payload };
+  };
+
+  let tokenToUse = await resolveAccessToken(accessToken);
+  let { response, payload } = await callPlanner(tokenToUse);
+  let message = readPayloadError(payload);
+
+  if (response.status === 401) {
+    const refreshResult = await client.auth.refreshSession().catch(() => null);
+    const refreshedToken = refreshResult?.data.session?.access_token;
+
+    if (refreshedToken && refreshedToken !== tokenToUse) {
+      tokenToUse = refreshedToken;
+      const retried = await callPlanner(tokenToUse);
+      response = retried.response;
+      payload = retried.payload;
+      message = readPayloadError(payload);
+    }
   }
-
-  const payload = await parseJsonResponse(response);
-  const message = readPayloadError(payload);
 
   if (!response.ok) {
     if (response.status === 401) {
