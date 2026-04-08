@@ -23,6 +23,7 @@ create table if not exists public.user_onboarding (
   age_band text not null,
   perceived_level text not null,
   primary_goal text not null,
+  secondary_goals text[] not null default '{}'::text[],
   days_per_week integer not null check (days_per_week between 2 and 5),
   preferred_minutes integer not null check (preferred_minutes in (10, 15, 20, 25)),
   energy_level text not null,

@@ -45,6 +45,7 @@ export interface Database {
           age_band: string;
           perceived_level: string;
           primary_goal: string;
+          secondary_goals: string[];
           days_per_week: number;
           preferred_minutes: number;
           energy_level: string;
@@ -60,6 +61,7 @@ export interface Database {
           age_band: string;
           perceived_level: string;
           primary_goal: string;
+          secondary_goals?: string[];
           days_per_week: number;
           preferred_minutes: number;
           energy_level: string;
@@ -75,6 +77,7 @@ export interface Database {
           age_band?: string;
           perceived_level?: string;
           primary_goal?: string;
+          secondary_goals?: string[];
           days_per_week?: number;
           preferred_minutes?: number;
           energy_level?: string;

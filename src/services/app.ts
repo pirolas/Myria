@@ -185,24 +185,42 @@ export async function saveOnboarding(
   const client = requireSupabaseClient();
   const limitations =
     input.limitations.length === 0 ? ["nessuna"] : sanitizeLimitations(input.limitations);
+  const onboardingPayload = {
+    user_id: userId,
+    age_band: input.ageBand,
+    perceived_level: input.perceivedLevel,
+    primary_goal: input.primaryGoal,
+    secondary_goals: input.secondaryGoals,
+    days_per_week: input.daysPerWeek,
+    preferred_minutes: input.preferredMinutes,
+    energy_level: input.energyLevel,
+    gentle_start: input.gentleStart,
+    limitations,
+    focus_preference: input.focusPreference,
+    notes: input.notes || null
+  };
 
-  const [onboardingResult, preferenceResult] = await Promise.all([
-    client.from("user_onboarding").upsert(
-      {
-        user_id: userId,
-        age_band: input.ageBand,
-        perceived_level: input.perceivedLevel,
-        primary_goal: input.primaryGoal,
-        days_per_week: input.daysPerWeek,
-        preferred_minutes: input.preferredMinutes,
-        energy_level: input.energyLevel,
-        gentle_start: input.gentleStart,
-        limitations,
-        focus_preference: input.focusPreference,
-        notes: input.notes || null
-      },
-      { onConflict: "user_id" }
-    ),
+  let onboardingResult = await client
+    .from("user_onboarding")
+    .upsert(onboardingPayload, { onConflict: "user_id" });
+
+  if (
+    onboardingResult.error?.message.includes("secondary_goals") ||
+    onboardingResult.error?.message.includes("schema cache")
+  ) {
+    const fallbackPayload = {
+      ...onboardingPayload,
+      notes: buildOnboardingNotes(input)
+    };
+
+    delete (fallbackPayload as { secondary_goals?: string[] }).secondary_goals;
+
+    onboardingResult = await client
+      .from("user_onboarding")
+      .upsert(fallbackPayload, { onConflict: "user_id" });
+  }
+
+  const [preferenceResult] = await Promise.all([
     client.from("user_preferences").upsert(
       {
         user_id: userId,
@@ -403,6 +421,9 @@ function mapOnboarding(
     ageBand: row.age_band as UserOnboardingRecord["ageBand"],
     perceivedLevel: row.perceived_level as UserOnboardingRecord["perceivedLevel"],
     primaryGoal: row.primary_goal as UserOnboardingRecord["primaryGoal"],
+    secondaryGoals: (row.secondary_goals ?? []).filter(
+      (value): value is UserOnboardingRecord["primaryGoal"] => typeof value === "string"
+    ),
     daysPerWeek: row.days_per_week,
     preferredMinutes: row.preferred_minutes as UserOnboardingRecord["preferredMinutes"],
     energyLevel: row.energy_level as UserOnboardingRecord["energyLevel"],
@@ -595,6 +616,16 @@ function toPlanDayStatus(status: string): PlanDayStatus {
 function sanitizeLimitations(values: string[]) {
   const filtered = values.filter((value) => value !== "nessuna");
   return filtered.length > 0 ? filtered : ["nessuna"];
+}
+
+function buildOnboardingNotes(input: BetaOnboardingInput) {
+  const secondaryGoalLabel =
+    input.secondaryGoals.length > 1
+      ? `Focus aggiuntivi: ${input.secondaryGoals.slice(1).join(", ")}.`
+      : "";
+  const cleanNotes = input.notes.trim();
+
+  return [cleanNotes, secondaryGoalLabel].filter(Boolean).join("\n");
 }
 
 async function upsertMilestones(userId: string) {

@@ -70,6 +70,7 @@ export interface UserPreferences {
   daysPerWeek: number;
   preferredMinutes: MinuteOption;
   goal: Goal;
+  secondaryGoals?: Goal[];
   level: Level;
   gentleStart: boolean;
 }
@@ -78,6 +79,7 @@ export interface BetaOnboardingInput {
   ageBand: AgeBand;
   perceivedLevel: Level;
   primaryGoal: Goal;
+  secondaryGoals: Goal[];
   daysPerWeek: number;
   preferredMinutes: MinuteOption;
   energyLevel: EnergyLevel;

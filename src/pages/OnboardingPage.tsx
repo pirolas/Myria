@@ -41,20 +41,34 @@ type StepKey =
 function buildInitialInput(
   onboarding: BetaOnboardingInput | null | undefined
 ): BetaOnboardingInput {
-  return (
-    onboarding ?? {
-      ageBand: "35_44",
-      perceivedLevel: "principiante",
-      primaryGoal: "glutei_gambe",
-      daysPerWeek: 3,
-      preferredMinutes: 15,
-      energyLevel: "media",
-      gentleStart: true,
-      limitations: ["nessuna"],
-      focusPreference: "glutei_gambe",
-      notes: ""
-    }
-  );
+  if (onboarding) {
+    const normalizedGoals =
+      onboarding.secondaryGoals && onboarding.secondaryGoals.length > 0
+        ? onboarding.secondaryGoals
+        : [onboarding.primaryGoal];
+
+    return {
+      ...onboarding,
+      secondaryGoals: normalizedGoals,
+      focusPreference: normalizedGoals.includes(onboarding.focusPreference)
+        ? onboarding.focusPreference
+        : normalizedGoals[0]
+    };
+  }
+
+  return {
+    ageBand: "35_44",
+    perceivedLevel: "principiante",
+    primaryGoal: "glutei_gambe",
+    secondaryGoals: ["glutei_gambe"],
+    daysPerWeek: 3,
+    preferredMinutes: 15,
+    energyLevel: "media",
+    gentleStart: true,
+    limitations: ["nessuna"],
+    focusPreference: "glutei_gambe",
+    notes: ""
+  };
 }
 
 function findLabel<TValue extends string | number | boolean>(
@@ -92,9 +106,9 @@ export function OnboardingPage() {
         {
           key: "goal",
           eyebrow: "Obiettivo principale",
-          title: "Qual e il cambiamento che vuoi sentire di piu?",
+          title: "Qual è il cambiamento che vuoi sentire di più?",
           description:
-            "Scegliamo un asse principale, senza escludere il resto del corpo."
+            "Puoi indicare più aree. Mirya userà la prima come asse guida e terrà presenti anche le altre."
         },
         {
           key: "days",
@@ -149,6 +163,9 @@ export function OnboardingPage() {
 
   const currentStep = steps[stepIndex];
   const progress = ((stepIndex + 1) / steps.length) * 100;
+  const availableFocusOptions = focusOptions.filter((option) =>
+    form.secondaryGoals.includes(option.value)
+  );
 
   const summaryChips = [
     ageBandLabels[form.ageBand],
@@ -156,6 +173,30 @@ export function OnboardingPage() {
     `${form.preferredMinutes} minuti`,
     goalLabels[form.focusPreference]
   ];
+
+  const toggleGoal = (value: Goal) => {
+    setForm((current) => {
+      const isSelected = current.secondaryGoals.includes(value);
+      const nextValues = isSelected
+        ? current.secondaryGoals.filter((item) => item !== value)
+        : [...current.secondaryGoals, value];
+
+      const normalizedGoals = nextValues.length > 0 ? nextValues : [value];
+      const nextPrimary = normalizedGoals.includes(current.primaryGoal)
+        ? current.primaryGoal
+        : normalizedGoals[0];
+      const nextFocus = normalizedGoals.includes(current.focusPreference)
+        ? current.focusPreference
+        : normalizedGoals[0];
+
+      return {
+        ...current,
+        primaryGoal: nextPrimary,
+        focusPreference: nextFocus,
+        secondaryGoals: normalizedGoals
+      };
+    });
+  };
 
   const toggleLimitation = (value: LimitationTag) => {
     setForm((current) => {
@@ -206,13 +247,49 @@ export function OnboardingPage() {
         );
       case "goal":
         return (
-          <ChoiceGrid
-            options={goalOptions}
-            value={form.primaryGoal}
-            onChange={(primaryGoal) =>
-              setForm((current) => ({ ...current, primaryGoal }))
-            }
-          />
+          <div className="space-y-4">
+            <div className="grid gap-3">
+              {goalOptions.map((option) => {
+                const isSelected = form.secondaryGoals.includes(option.value);
+                const isPrimary = form.primaryGoal === option.value;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => toggleGoal(option.value)}
+                    className={[
+                      "surface text-left px-4 py-4 transition",
+                      isSelected
+                        ? "border-[rgba(94,184,178,0.48)] bg-white"
+                        : "hover:border-accent/30 hover:bg-white/80"
+                    ].join(" ")}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-ink">
+                          {option.label}
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-muted">
+                          {option.description}
+                        </p>
+                      </div>
+                      {isPrimary ? (
+                        <span className="rounded-full bg-[rgba(215,239,236,0.82)] px-3 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-accent-deep">
+                          guida
+                        </span>
+                      ) : null}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="text-sm leading-6 text-muted">
+              Tocca una o più aree. La prima selezionata diventa il filo guida del
+              piano.
+            </p>
+          </div>
         );
       case "days":
         return (
@@ -303,7 +380,7 @@ export function OnboardingPage() {
       case "focus":
         return (
           <ChoiceGrid
-            options={focusOptions}
+            options={availableFocusOptions}
             value={form.focusPreference}
             onChange={(focusPreference: Goal) =>
               setForm((current) => ({ ...current, focusPreference }))
@@ -322,7 +399,7 @@ export function OnboardingPage() {
       case "level":
         return levelLabels[form.perceivedLevel];
       case "goal":
-        return goalLabels[form.primaryGoal];
+        return form.secondaryGoals.map((goal) => goalLabels[goal]).join(", ");
       case "days":
         return findLabel(trainingDayOptions, form.daysPerWeek);
       case "minutes":
