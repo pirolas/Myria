@@ -5,7 +5,7 @@ import { brand } from "@/data/content";
 
 const promises = [
   "Raccoglie le tue esigenze iniziali in pochi passaggi chiari.",
-  "Ti assegna il workout di oggi senza farti scegliere da sola.",
+  "Ti propone il workout di oggi in modo chiaro e gia organizzato.",
   "Adatta il percorso in base a costanza, feedback e giorni reali."
 ];
 
@@ -37,11 +37,11 @@ export function WelcomePage() {
                 <div className="min-w-0">
                   <div className="eyebrow text-accent-deep">Il cuore del prodotto</div>
                   <div className="mt-2 text-lg font-semibold text-ink">
-                    Non devi capire tu come allenarti.
+                    Hai un percorso chiaro da seguire, fin da subito.
                   </div>
                   <p className="mt-2 text-sm leading-6 text-muted">
-                    Mirya costruisce il tuo percorso iniziale, ti mostra il focus
-                    della fase e ti accompagna seduta dopo seduta.
+                    Mirya costruisce il tuo piano iniziale, ti spiega da dove si
+                    parte e ti accompagna con una progressione semplice e credibile.
                   </p>
                 </div>
                 <div className="rounded-[1.2rem] bg-accent-soft p-3 text-accent-deep">
