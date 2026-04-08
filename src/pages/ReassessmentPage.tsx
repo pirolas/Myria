@@ -1,4 +1,5 @@
 ﻿import { useState } from "react";
+import { Check } from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { ChoiceGrid } from "@/components/ui/ChoiceGrid";
@@ -127,16 +128,30 @@ export function ReassessmentPage() {
                 onClick={() => toggleImprovement(item.value)}
                 aria-pressed={isSelected}
                 className={[
-                  "surface px-4 py-4 text-left transition",
+                  "surface relative overflow-hidden px-4 py-4 text-left transition",
                   isSelected
                     ? "selection-card-selected"
                     : "selection-card-idle"
                 ].join(" ")}
               >
+                {isSelected ? (
+                  <>
+                    <div className="absolute inset-y-4 left-0 w-1 rounded-full bg-accent-deep/80" />
+                    <div className="absolute right-4 top-4 inline-flex h-7 w-7 items-center justify-center rounded-full border border-accent-deep bg-accent-deep text-white shadow-sm">
+                      <Check size={14} strokeWidth={2.7} />
+                    </div>
+                  </>
+                ) : null}
                 <div className={isSelected ? "text-sm font-semibold text-accent-deep" : "text-sm font-semibold text-ink"}>
                   {item.label}
                 </div>
-                <p className={isSelected ? "mt-2 text-sm leading-6 text-ink/78" : "mt-2 text-sm leading-6 text-muted"}>
+                <p
+                  className={
+                    isSelected
+                      ? "mt-2 max-w-[15rem] text-sm leading-6 text-ink/80"
+                      : "mt-2 max-w-[15rem] text-sm leading-6 text-muted"
+                  }
+                >
                   {item.description}
                 </p>
               </button>
