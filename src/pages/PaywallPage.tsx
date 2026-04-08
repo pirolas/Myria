@@ -1,4 +1,4 @@
-import { ArrowRight, Crown, RefreshCw, Sparkles } from "lucide-react";
+﻿import { ArrowRight, Crown, RefreshCw, Sparkles } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
@@ -36,23 +36,23 @@ export function PaywallPage() {
       </section>
 
       <section className="surface px-5 py-5">
-        <div className="text-base font-semibold text-ink">Con Premium continui cosi</div>
+        <div className="text-base font-semibold text-ink">Con Premium continui così</div>
         <div className="mt-4 space-y-3">
           {[
             {
               icon: RefreshCw,
               title: "Il piano si aggiorna",
-              body: "Non resti con il piano iniziale: Mirya puo correggere ritmo, focus e progressione nel tempo."
+              body: "Non resti con il piano iniziale: Mirya può correggere ritmo, focus e progressione nel tempo."
             },
             {
               icon: Sparkles,
               title: "La rivalutazione diventa utile",
-              body: "Le rivalutazioni brevi non sono un questionario in piu: servono a decidere cosa cambiare davvero."
+              body: "Le rivalutazioni brevi non sono un questionario in più: servono a decidere cosa cambiare davvero."
             },
             {
               icon: Crown,
               title: "Vedi l'evoluzione del percorso",
-              body: "Storico adattamenti, focus che si sposta quando serve, tips piu rilevanti e reminder."
+              body: "Storico adattamenti, focus che si sposta quando serve, tips più rilevanti e reminder."
             }
           ].map((item) => {
             const Icon = item.icon;
@@ -99,3 +99,6 @@ export function PaywallPage() {
     </div>
   );
 }
+
+
+

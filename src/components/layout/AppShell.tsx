@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+﻿import { ArrowLeft } from "lucide-react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { brand } from "@/data/content";
@@ -29,7 +29,7 @@ function resolveMeta(pathname: string) {
       return { label: "Aggiorna il percorso", backTo: "/plan", badge: "premium" };
     }
     return pathname.startsWith("/plan/story")
-      ? { label: "Perche questo piano", backTo: "/plan", badge: "lettura" }
+      ? { label: "Perché questo piano", backTo: "/plan", badge: "lettura" }
       : { label: "Piano settimanale", badge: "percorso" };
   }
 
@@ -48,7 +48,7 @@ function resolveMeta(pathname: string) {
   }
 
   if (pathname.startsWith("/premium")) {
-    return { label: "Premium", backTo: "/dashboard", badge: "continuita" };
+    return { label: "Premium", backTo: "/dashboard", badge: "continuità" };
   }
 
   return { label: "Dashboard", badge: formatLongDate(new Date()) };
@@ -92,3 +92,5 @@ export function AppShell() {
     </div>
   );
 }
+
+

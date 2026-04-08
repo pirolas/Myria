@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { brand } from "@/data/content";
@@ -28,7 +28,7 @@ export function AuthPage() {
         : {
             title: "Rientra nel tuo percorso",
             description:
-              "Riprendi da dove eri rimasta, con il workout di oggi gia pronto."
+              "Riprendi da dove eri rimasta, con la sessione di oggi già pronta."
           },
     [mode]
   );
@@ -132,7 +132,7 @@ export function AuthPage() {
             </div>
             <p className="mt-3 text-sm leading-7 text-muted">
               Inserisci `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` nelle env
-              del frontend. Senza queste chiavi Mirya non puo creare account,
+              del frontend. Senza queste chiavi Mirya non può creare account,
               salvare progressi o generare piani personalizzati.
             </p>
           </section>
@@ -151,7 +151,7 @@ export function AuthPage() {
               </Button>
 
               <p className="text-sm leading-6 text-muted">
-                Il modo piu rapido per entrare in Mirya e ritrovare subito il tuo
+                Il modo più rapido per entrare in Mirya è ritrovare subito il tuo
                 percorso personale.
               </p>
             </div>
@@ -257,3 +257,5 @@ function GoogleIcon() {
     </svg>
   );
 }
+
+

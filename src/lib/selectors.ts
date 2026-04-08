@@ -1,4 +1,4 @@
-import {
+﻿import {
   categoryMeta,
   consistencyMessages,
   feelingLabels,
@@ -226,13 +226,13 @@ export function getPersonalExerciseNote(
   exercise: { category: CategoryId }
 ) {
   if (!preferences) {
-    return "Tieni il gesto semplice, regolare e senza fretta. La qualita del movimento viene prima della quantita.";
+    return "Tieni il gesto semplice, regolare e senza fretta. La qualità del movimento viene prima della quantità.";
   }
 
   const gentleLine =
     preferences.gentleStart || preferences.level === "molto_fuori_allenamento"
       ? "Per te oggi conta soprattutto restare in un'ampiezza piccola e pulita."
-      : "Per te oggi puo essere utile cercare un gesto pieno ma sempre controllato.";
+      : "Per te oggi può essere utile cercare un gesto pieno ma sempre controllato.";
 
   const focusMatch =
     (preferences.goal === "glutei_gambe" && exercise.category === "glutei_gambe") ||
@@ -246,7 +246,9 @@ export function getPersonalExerciseNote(
 
   const focusLine = focusMatch
     ? "Questo esercizio e molto coerente con il focus che hai scelto in Mirya."
-    : "Anche quando non e il focus principale, questo movimento aiuta a rendere il corpo piu stabile e presente.";
+    : "Anche quando non è il focus principale, questo movimento aiuta a rendere il corpo più stabile e presente.";
 
   return `${gentleLine} ${focusLine}`;
 }
+
+

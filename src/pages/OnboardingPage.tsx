@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
@@ -155,9 +155,9 @@ export function OnboardingPage() {
         {
           key: "goal",
           eyebrow: "Obiettivo reale",
-          title: "Che cambiamento vuoi costruire nel modo piu concreto possibile?",
+          title: "Che cambiamento vuoi costruire nel modo più concreto possibile?",
           description:
-            "Qui distinguiamo perdita di peso, tono, massa e ricomposizione. E da qui che il piano smette di sembrare generico."
+            "Qui distinguiamo perdita di peso, tono, massa e ricomposizione. È da qui che il piano smette di sembrare generico."
         },
         {
           key: "rhythm",
@@ -178,7 +178,7 @@ export function OnboardingPage() {
           eyebrow: "Come vuoi lavorare",
           title: "Ultimi dettagli per rendere il piano prudente, leggibile e davvero tuo.",
           description:
-            "Queste scelte ci aiutano a comporre sessioni che ti sembrino accessibili e sensate gia dal primo giorno."
+            "Queste scelte ci aiutano a comporre sessioni che ti sembrino accessibili e sensate già dal primo giorno."
         }
       ] as Array<{
         key: StepKey;
@@ -208,7 +208,7 @@ export function OnboardingPage() {
     rhythm: `${form.daysPerWeek} giorni · ${form.preferredMinutes} min`,
     context: `${levelLabels[form.perceivedLevel]} · ${energyLabels[form.energyLevel]}`,
     preferences: `${form.gentleStart ? "inizio graduale" : "base attiva"} · ${
-      form.avoidJumps ? "senza salti" : "piu libero"
+      form.avoidJumps ? "senza salti" : "più libero"
     }`
   }[currentStep.key];
 
@@ -352,9 +352,9 @@ export function OnboardingPage() {
                 Prima di generare il piano
               </div>
               <p className="mt-2 text-sm leading-6 text-muted">
-                Useremo il tuo obiettivo principale, il focus corporeo che senti piu
+                Useremo il tuo obiettivo principale, il focus corporeo che senti più
                 importante, il ritmo che puoi davvero sostenere e le attenzioni da
-                proteggere. Poi Mirya comporra una prima settimana concreta, con
+                proteggere. Poi Mirya comporrà una prima settimana concreta, con
                 struttura, giorni, esercizi e progressione iniziale.
               </p>
             </div>
@@ -364,7 +364,7 @@ export function OnboardingPage() {
                 Cosa succede dopo
               </div>
               <p className="mt-2 text-sm leading-6 text-muted">
-                Alla fine ricevi un piano gia costruito per te, non una libreria da
+                Alla fine ricevi un piano già costruito per te, non una libreria da
                 interpretare da sola.
               </p>
             </div>
@@ -478,7 +478,7 @@ export function OnboardingPage() {
             />
 
             <MultiSelectCards
-              title="Aree su cui vuoi piu attenzione"
+              title="Aree su cui vuoi più attenzione"
               items={focusAreaOptions}
               selected={form.focusAreas}
               onToggle={(value) => updateFocusAreas(value as FocusArea)}
@@ -510,7 +510,7 @@ export function OnboardingPage() {
               }
             />
             <MultiSelectInline
-              title="Se hai giorni piu facili da proteggere"
+              title="Se hai giorni più facili da proteggere"
               items={preferredDayOptions}
               selected={form.preferredDays}
               onToggle={(value) => togglePreferredDay(value as PreferredDay)}
@@ -558,7 +558,7 @@ export function OnboardingPage() {
               }
             />
             <MultiSelectInline
-              title="Allenamenti gia provati"
+              title="Allenamenti già provati"
               items={pastTrainingTypeOptions}
               selected={form.pastTrainingTypes}
               onToggle={(value) => togglePastTrainingType(value as PastTrainingType)}
@@ -781,7 +781,7 @@ function BooleanToggleRow({
             value ? "bg-accent-soft text-accent-deep" : "bg-[rgba(246,250,249,0.9)] text-muted"
           ].join(" ")}
         >
-          Si
+          Sì
         </button>
         <button
           type="button"
@@ -827,3 +827,8 @@ function NumericField({
     </label>
   );
 }
+
+
+
+
+

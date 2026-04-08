@@ -1,4 +1,4 @@
-import { Crown, RefreshCw, Sparkles } from "lucide-react";
+﻿import { Crown, RefreshCw, Sparkles } from "lucide-react";
 import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
@@ -19,7 +19,7 @@ export function PlanUpdatePage() {
         <h1 className="mt-3 font-serif text-[2rem] leading-tight text-ink">
           {isPremium
             ? "Facciamo il punto e adattiamo il percorso."
-            : "L'aggiornamento del percorso fa parte della continuita Premium."}
+            : "L'aggiornamento del percorso fa parte della continuità Premium."}
         </h1>
         <p className="mt-4 text-sm leading-7 text-muted">
           {isPremium
@@ -34,7 +34,7 @@ export function PlanUpdatePage() {
           <div className="mt-4 space-y-3">
             {[
               "Le sessioni completate e quanto bene sei riuscita a proteggerle.",
-              "Il feedback finale che hai lasciato dopo i workout.",
+              "Il feedback finale che hai lasciato dopo le sessioni.",
               "Le eventuali nuove informazioni del profilo o della rivalutazione breve."
             ].map((item) => (
               <div
@@ -64,18 +64,18 @@ export function PlanUpdatePage() {
             {[
               {
                 icon: Sparkles,
-                title: "Il focus puo spostarsi",
-                body: "Quando serve, Mirya puo ribilanciare il lavoro tra tono, postura, core e ripartenza."
+                title: "Il focus può spostarsi",
+                body: "Quando serve, Mirya può ribilanciare il lavoro tra tono, postura, core e ripartenza."
               },
               {
                 icon: RefreshCw,
-                title: "Il ritmo puo alleggerirsi o salire",
+                title: "Il ritmo può alleggerirsi o aumentare",
                 body: "Se la settimana cambia o il corpo risponde meglio, il piano viene corretto e spiegato."
               },
               {
                 icon: Crown,
-                title: "La continuita resta personale",
-                body: "Storico adattamenti, rivalutazioni e tips piu rilevanti restano dentro una lettura unica del tuo percorso."
+                title: "La continuità resta personale",
+                body: "Storico adattamenti, rivalutazioni e tips più rilevanti restano dentro una lettura unica del tuo percorso."
               }
             ].map((item) => {
               const Icon = item.icon;
@@ -118,3 +118,5 @@ export function PlanUpdatePage() {
     </div>
   );
 }
+
+

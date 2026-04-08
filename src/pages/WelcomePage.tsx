@@ -1,11 +1,11 @@
-import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+﻿import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { brand } from "@/data/content";
 
 const promises = [
   "Raccoglie le tue esigenze iniziali in pochi passaggi chiari.",
-  "Ti propone il workout di oggi in modo chiaro e gia organizzato.",
+  "Ti propone la sessione di oggi in modo chiaro e già organizzato.",
   "Adatta il percorso in base a costanza, feedback e giorni reali."
 ];
 
@@ -87,3 +87,5 @@ export function WelcomePage() {
     </div>
   );
 }
+
+

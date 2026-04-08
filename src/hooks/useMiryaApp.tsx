@@ -1,4 +1,4 @@
-import {
+﻿import {
   createContext,
   useCallback,
   useContext,
@@ -180,7 +180,7 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
           setError(
             submitError instanceof Error
               ? submitError.message
-              : "Non siamo riusciti a rendere il piano piu preciso."
+              : "Non siamo riusciti a rendere il piano più preciso."
           );
           setStatus("error");
           throw submitError;
@@ -338,3 +338,4 @@ export function useMiryaApp() {
 
   return context;
 }
+

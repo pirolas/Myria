@@ -1,4 +1,4 @@
-import { CalendarDays, Flame, Smile, Timer } from "lucide-react";
+﻿import { CalendarDays, Flame, Smile, Timer } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { feelingLabels } from "@/data/content";
 import { exercises } from "@/data/workouts";
@@ -32,7 +32,7 @@ export function ProgressPage() {
       <section className="surface-strong px-5 py-6">
         <div className="eyebrow">Progressi personali</div>
         <h1 className="mt-3 font-serif text-[2rem] leading-tight text-ink">
-          Una lettura semplice di cio che stai costruendo.
+          Una lettura semplice di ciò che stai costruendo.
         </h1>
         <p className="mt-4 text-sm leading-7 text-muted">
           Allenamenti completati, minuti reali, giorni attivi, sensazioni finali e
@@ -162,7 +162,7 @@ export function ProgressPage() {
           <div className="flex items-center gap-3">
             <Smile size={18} className="text-accent-deep" />
             <div className="text-base font-semibold text-ink">
-              Sensazioni piu recenti
+              Sensazioni più recenti
             </div>
           </div>
           {progress.recentFeelings.length > 0 ? (
@@ -179,7 +179,7 @@ export function ProgressPage() {
           ) : (
             <p className="mt-3 text-sm leading-6 text-muted">
               Nessun feedback ancora registrato. Dopo la prima sessione troverai qui
-              una lettura piu personale dell'andamento.
+              una lettura più personale dell'andamento.
             </p>
           )}
         </div>
@@ -197,7 +197,7 @@ export function ProgressPage() {
           ) : (
             <p className="mt-3 text-sm leading-6 text-muted">
               Nessun esercizio segnalato per ora. Se qualcosa non e comodo, Mirya lo
-              terra presente nel piano successivo.
+              terrà presente nel piano successivo.
             </p>
           )}
         </div>
@@ -248,14 +248,14 @@ export function ProgressPage() {
                   </div>
                   <p className="mt-2 text-sm leading-6 text-muted">
                     {session.durationMinutes} minuti
-                    {session.feeling ? ` • ${feelingLabels[session.feeling]}` : ""}
+                    {session.feeling ? ` · ${feelingLabels[session.feeling]}` : ""}
                   </p>
                 </div>
               ))}
             </div>
           ) : (
             <p className="mt-3 text-sm leading-6 text-muted">
-              Lo storico apparira qui dopo le prime sessioni completate.
+              Lo storico apparirà qui dopo le prime sessioni completate.
             </p>
           )}
         </div>
@@ -263,3 +263,5 @@ export function ProgressPage() {
     </div>
   );
 }
+
+

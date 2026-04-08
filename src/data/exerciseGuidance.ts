@@ -1,4 +1,4 @@
-export interface ExerciseGuidanceEntry {
+﻿export interface ExerciseGuidanceEntry {
   summary: string;
   startingPosition: string;
   movementCue: string;
@@ -22,7 +22,7 @@ export const exerciseGuidance: Record<string, ExerciseGuidanceEntry> = {
     summary:
       "Uno squat semplice e guidato, utile per dare tono a gambe e glutei senza perdere sicurezza.",
     startingPosition:
-      "In piedi davanti a una sedia, piedi poco piu larghi delle anche e sguardo avanti.",
+      "In piedi davanti a una sedia, piedi poco più larghi delle anche e sguardo avanti.",
     movementCue:
       "Porta il bacino indietro come per sederti appena, sfiora la sedia e poi risali spingendo bene sui piedi.",
     feelCue:
@@ -42,13 +42,13 @@ export const exerciseGuidance: Record<string, ExerciseGuidanceEntry> = {
   },
   "slanci-laterali-in-piedi": {
     summary:
-      "Un gesto in piedi per attivare il lato del gluteo e migliorare la stabilita del bacino.",
+      "Un gesto in piedi per attivare il lato del gluteo e migliorare la stabilità del bacino.",
     startingPosition:
       "In piedi vicino a un appoggio leggero, busto lungo e gamba d'appoggio ben stabile.",
     movementCue:
       "Apri lentamente una gamba verso il lato senza inclinare il busto, poi torna al centro con controllo.",
     feelCue:
-      "Dovresti sentire il lato del gluteo della gamba che si muove e stabilita sulla gamba ferma.",
+      "Dovresti sentire il lato del gluteo della gamba che si muove e stabilità sulla gamba ferma.",
     microTip: "Meglio un'apertura piccola ma precisa che uno slancio ampio e veloce."
   },
   "affondo-assistito-indietro": {
@@ -60,7 +60,7 @@ export const exerciseGuidance: Record<string, ExerciseGuidanceEntry> = {
       "Porta una gamba indietro, piega entrambe le ginocchia di poco e torna al centro spingendo sul piede davanti.",
     feelCue:
       "Dovresti sentire soprattutto gluteo e coscia della gamba davanti, non tensione nella schiena.",
-    microTip: "Se senti instabilita, fai un passo piu corto e scendi molto meno."
+    microTip: "Se senti instabilità, fai un passo più corto e scendi molto meno."
   },
   "bird-dog": {
     summary:
@@ -77,7 +77,7 @@ export const exerciseGuidance: Record<string, ExerciseGuidanceEntry> = {
     summary:
       "Scivolamenti dei talloni a terra per ritrovare controllo del core in modo molto delicato.",
     startingPosition:
-      "Sdraiata, ginocchia piegate, piedi a terra e bacino il piu possibile fermo.",
+      "Sdraiata, ginocchia piegate, piedi a terra e bacino il più possibile fermo.",
     movementCue:
       "Fai scivolare lentamente un tallone in avanti e riportalo indietro senza perdere il sostegno del tronco.",
     feelCue:
@@ -86,25 +86,25 @@ export const exerciseGuidance: Record<string, ExerciseGuidanceEntry> = {
   },
   "dead-bug-semplificato": {
     summary:
-      "Una versione accessibile del dead bug per sentire il centro del corpo piu presente e stabile.",
+      "Una versione accessibile del dead bug per sentire il centro del corpo più presente e stabile.",
     startingPosition:
       "Sdraiata, con un piede a terra o con le gambe in tavolino se il controllo te lo permette.",
     movementCue:
       "Abbassa lentamente un tallone verso il pavimento mantenendo il tronco stabile, poi torna e cambia lato.",
     feelCue:
       "Dovresti sentire il centro attivo e il respiro regolare, senza tirare il collo.",
-    microTip: "Se senti che il ventre spinge in fuori, torna alla variante piu facile."
+    microTip: "Se senti che il ventre spinge in fuori, torna alla variante più facile."
   },
   "ponte-con-marcia": {
     summary:
       "Una progressione del ponte glutei in cui sollevi un piede alla volta senza far ballare il bacino.",
     startingPosition:
-      "Parti da un ponte glutei comodo, con il bacino gia sollevato e stabile.",
+      "Parti da un ponte glutei comodo, con il bacino già sollevato e stabile.",
     movementCue:
       "Stacca un piede di poco dal pavimento, riappoggialo e alterna senza cambiare l'altezza del bacino.",
     feelCue:
       "Dovresti sentire glutei e centro del corpo che lavorano insieme per tenerti ferma.",
-    microTip: "Alza il piede di poco: la stabilita vale piu dell'ampiezza."
+    microTip: "Alza il piede di poco: la stabilità vale più dell'ampiezza."
   },
   "sollevamenti-polpacci": {
     summary:
@@ -115,7 +115,7 @@ export const exerciseGuidance: Record<string, ExerciseGuidanceEntry> = {
       "Sali sulle punte in modo controllato e poi scendi lentamente senza lasciarti cadere.",
     feelCue:
       "Dovresti sentire polpacci e caviglie che lavorano, con il busto che resta alto.",
-    microTip: "Pensa a crescere verso l'alto piu che a spingerti in avanti."
+    microTip: "Pensa a crescere verso l'alto più che a spingerti in avanti."
   },
   "side-leg-lifts": {
     summary:
@@ -136,29 +136,29 @@ export const exerciseGuidance: Record<string, ExerciseGuidanceEntry> = {
     movementCue:
       "Inspira allargando le costole, poi espira lentamente e senti una lieve attivazione del basso addome.",
     feelCue:
-      "Dovresti sentire il respiro piu ampio e il centro del corpo che si raccoglie senza sforzo duro.",
+      "Dovresti sentire il respiro più ampio e il centro del corpo che si raccoglie senza sforzo duro.",
     microTip: "L'espirazione deve restare lunga e morbida, mai forzata."
   },
   "mobilita-bacino-colonna": {
     summary:
-      "Un piccolo dondolio del bacino per sciogliere la colonna bassa e ritrovare fluidita.",
+      "Un piccolo dondolio del bacino per sciogliere la colonna bassa e ritrovare fluidità.",
     startingPosition:
       "Sdraiata o seduta comoda, con il respiro tranquillo e il corpo appoggiato bene.",
     movementCue:
       "Alterna una piccola retroversione del bacino e un ritorno neutro, senza cercare ampiezza.",
     feelCue:
-      "Dovresti sentire la zona lombare che si muove con piu comfort e meno rigidita.",
+      "Dovresti sentire la zona lombare che si muove con più comfort e meno rigidità.",
     microTip: "Pensa a un movimento piccolo e continuo, come un dondolio."
   },
   "scapole-al-muro": {
     summary:
-      "Un esercizio al muro per aprire il torace e dare piu presenza alla parte alta della schiena.",
+      "Un esercizio al muro per aprire il torace e dare più presenza alla parte alta della schiena.",
     startingPosition:
       "Schiena al muro, collo lungo, gomiti piegati e spalle lontane dalle orecchie.",
     movementCue:
       "Fai scorrere lentamente le braccia verso l'alto e poi di nuovo in basso, senza irrigidirti.",
     feelCue:
-      "Dovresti sentire la parte alta della schiena attiva e il petto piu aperto.",
+      "Dovresti sentire la parte alta della schiena attiva e il petto più aperto.",
     microTip: "Se il muro ti fa perdere comfort, riduci l'escursione delle braccia."
   },
   "allungamento-petto-parete": {
@@ -173,3 +173,5 @@ export const exerciseGuidance: Record<string, ExerciseGuidanceEntry> = {
     microTip: "Se l'allungamento tira troppo, ruota meno e ammorbidisci il gomito."
   }
 };
+
+

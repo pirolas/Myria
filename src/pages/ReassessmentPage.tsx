@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { ChoiceGrid } from "@/components/ui/ChoiceGrid";
@@ -32,7 +32,7 @@ const consistencyOptions = [
   {
     value: 1 as const,
     label: "La sto perdendo",
-    description: "Il ritmo mi sta sfuggendo e ho bisogno di piu semplicità."
+    description: "Il ritmo mi sta sfuggendo e ho bisogno di più semplicità."
   },
   {
     value: 3 as const,
@@ -42,7 +42,7 @@ const consistencyOptions = [
   {
     value: 5 as const,
     label: "La proteggo bene",
-    description: "Sto riuscendo a tenerlo con una buona continuita."
+    description: "Sto riuscendo a tenerlo con una buona continuità."
   }
 ];
 
@@ -149,7 +149,7 @@ export function ReassessmentPage() {
             {
               value: false,
               label: "Vorrei spostarlo",
-              description: "Il mio bisogno principale e cambiato un po."
+              description: "Il mio bisogno principale è cambiato un po'."
             }
           ]}
           value={form.keepCurrentFocus}
@@ -170,7 +170,7 @@ export function ReassessmentPage() {
 
         <label className="block">
           <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-            Solo se c'e qualcosa da tenere d'occhio
+            Solo se c'è qualcosa da tenere d'occhio
           </span>
           <textarea
             value={form.cautionNotes}
@@ -179,7 +179,7 @@ export function ReassessmentPage() {
             }
             rows={4}
             className="mt-2 w-full rounded-[20px] border border-line bg-white px-4 py-3 text-sm leading-6 text-ink outline-none transition focus:border-accent"
-            placeholder="Per esempio: il ritmo serale mi pesa di piu, oppure alcune ginocchia oggi chiedono piu attenzione."
+            placeholder="Per esempio: il ritmo serale mi pesa di più, oppure alcune ginocchia oggi chiedono più attenzione."
           />
         </label>
       </section>
@@ -196,3 +196,5 @@ export function ReassessmentPage() {
     </div>
   );
 }
+
+

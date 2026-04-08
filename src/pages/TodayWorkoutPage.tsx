@@ -1,4 +1,4 @@
-import { ArrowRight, ShieldAlert, Timer } from "lucide-react";
+﻿import { ArrowRight, ShieldAlert, Timer } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -32,10 +32,10 @@ export function TodayWorkoutPage() {
             <div className="min-w-0">
               <div className="eyebrow text-accent-deep">Quello che fai adesso</div>
               <div className="mt-2 text-lg font-semibold text-ink">
-                Apri il timer e segui una sessione gia pronta.
+                Apri il timer e segui una sessione già pronta.
               </div>
               <p className="mt-2 text-sm leading-6 text-muted">
-                Nessuna scelta da fare: oggi hai una sequenza chiara, breve e gia
+                Nessuna scelta da fare: oggi hai una sequenza chiara, breve e già
                 composta per te.
               </p>
             </div>
@@ -91,8 +91,8 @@ export function TodayWorkoutPage() {
       <section className="surface px-5 py-5">
         <SectionHeading
           eyebrow="Sequenza di oggi"
-          title="Gli step sono gia ordinati per te"
-          description="Leggili solo se vuoi orientarti prima di partire. Durante la sessione troverai una guida ancora piu semplice."
+          title="Gli step sono già ordinati per te"
+          description="Leggili solo se vuoi orientarti prima di partire. Durante la sessione troverai una guida ancora più semplice."
         />
 
         <div className="mt-5 space-y-3">
@@ -126,7 +126,7 @@ export function TodayWorkoutPage() {
               ) : null}
               {step.easierOption ? (
                 <p className="mt-2 text-sm leading-6 text-muted">
-                  <span className="font-semibold text-ink">Variante piu facile:</span>{" "}
+                  <span className="font-semibold text-ink">Variante più facile:</span>{" "}
                   {step.easierOption}
                 </p>
               ) : null}
@@ -168,3 +168,5 @@ export function TodayWorkoutPage() {
     </div>
   );
 }
+
+

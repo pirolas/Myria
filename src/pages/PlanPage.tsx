@@ -1,4 +1,4 @@
-import { CheckCircle2, ChevronRight, Sparkles } from "lucide-react";
+﻿import { CheckCircle2, ChevronRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
@@ -61,7 +61,7 @@ export function PlanPage() {
 
         <div className="mt-4 rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
           <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-            Difficolta attuale
+            Difficoltà attuale
           </div>
           <p className="mt-2 text-sm leading-6 text-ink">{data.activePlan.sessionDifficulty}</p>
           <p className="mt-3 text-sm leading-6 text-muted">
@@ -137,7 +137,7 @@ export function PlanPage() {
             <Sparkles size={18} />
           </div>
           <div>
-            <div className="text-base font-semibold text-ink">Perche questo piano</div>
+            <div className="text-base font-semibold text-ink">Perché questo piano</div>
             <p className="mt-1 text-sm leading-6 text-muted">
               {data.activePlan.progressionReason}
             </p>
@@ -147,16 +147,16 @@ export function PlanPage() {
 
       <section className="surface px-5 py-5">
         <SectionHeading
-          eyebrow={data.userAccess?.status === "premium" ? "Continuita Premium" : "Aggiornamento del percorso"}
+          eyebrow={data.userAccess?.status === "premium" ? "Continuità Premium" : "Aggiornamento del percorso"}
           title={
             data.userAccess?.status === "premium"
-              ? "Il piano puo continuare a evolversi"
-              : "Il primo piano e incluso. Gli adattamenti nel tempo sono Premium."
+              ? "Il piano può continuare a evolversi"
+              : "Il primo piano è incluso. Gli adattamenti nel tempo sono Premium."
           }
           description={
             data.userAccess?.status === "premium"
               ? "Usiamo progressi, feedback e rivalutazioni per correggere ritmo, focus e progressione."
-              : "Il valore Premium non e creare un altro piano da zero, ma farlo cambiare quando cambia la tua situazione."
+              : "Il valore Premium non è creare un altro piano da zero, ma farlo cambiare quando cambia la tua situazione."
           }
         />
         <div className="mt-5">
@@ -172,7 +172,7 @@ export function PlanPage() {
 
       <section className="surface px-5 py-5">
         <SectionHeading
-          eyebrow="Outcome realistici"
+          eyebrow="Risultati realistici"
           title="Cosa ci aspettiamo da questa fase"
           description="Niente promesse lampo: solo risultati coerenti con costanza, energia e situazione reale."
         />
@@ -186,7 +186,7 @@ export function PlanPage() {
       {data.supportTips.length > 0 ? (
         <section className="surface px-5 py-5">
           <SectionHeading
-            eyebrow="Tips di supporto"
+            eyebrow="Indicazioni di supporto"
             title="Piccoli accorgimenti che aiutano il piano a lavorare meglio"
           />
           <div className="mt-4 space-y-3">
@@ -205,3 +205,8 @@ export function PlanPage() {
     </div>
   );
 }
+
+
+
+
+

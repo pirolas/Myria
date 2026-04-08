@@ -1,4 +1,4 @@
-import {
+﻿import {
   ArrowRight,
   CalendarDays,
   CheckCircle2,
@@ -35,7 +35,7 @@ export function DashboardPage() {
         <section className="surface-strong px-5 py-6">
           <div className="eyebrow">Stiamo preparando Mirya</div>
           <h1 className="mt-3 font-serif text-[2rem] leading-tight text-ink">
-            Il tuo percorso e quasi pronto.
+            Il tuo percorso è quasi pronto.
           </h1>
           <p className="mt-4 text-sm leading-7 text-muted">
             Un attimo ancora: stiamo componendo la prima settimana in base alle tue
@@ -63,8 +63,8 @@ export function DashboardPage() {
     0
   );
   const todayChecklist = [
-    `Apri il timer e segui ${data.todayPlanDay.workout.steps.length} step gia pronti.`,
-    "Muoviti con calma: il focus oggi e qualita del gesto, non intensita.",
+    `Apri il timer e segui ${data.todayPlanDay.workout.steps.length} step già pronti.`,
+    "Muoviti con calma: il focus oggi è la qualità del gesto, non l'intensità.",
     "Alla fine lascia un feedback breve, cosi Mirya adatta i prossimi giorni."
   ];
   const nextReassessmentCopy = data.activePlan.nextReassessmentDate
@@ -135,7 +135,7 @@ export function DashboardPage() {
           </div>
 
           <p className="mt-3 text-center text-sm leading-6 text-muted">
-            Ti chiedera solo pochi minuti e un feedback finale molto breve.
+            Ti chiederà solo pochi minuti e un feedback finale molto breve.
           </p>
         </div>
       </section>
@@ -147,7 +147,7 @@ export function DashboardPage() {
             data.userAccess?.status === "free_locked"
               ? "Il mini-ciclo gratuito si e concluso"
               : data.userAccess?.status === "premium"
-                ? "Il percorso puo continuare ad adattarsi"
+                ? "Il percorso può continuare ad adattarsi"
                 : "Stai provando il primo ciclo guidato"
           }
           description={getTrialStatusCopy(data.userAccess)}
@@ -175,7 +175,7 @@ export function DashboardPage() {
       <section className="surface px-5 py-5">
         <SectionHeading
           eyebrow="Lettura del percorso"
-          title="Mirya ti sta guidando, non ti sta solo assegnando un workout"
+          title="Mirya ti sta guidando, non ti sta solo assegnando una sessione"
           description={data.activePlan.userProfileSummary}
         />
 
@@ -184,7 +184,7 @@ export function DashboardPage() {
             to="/plan/story"
             className="rounded-[22px] border border-line bg-white/78 px-4 py-4"
           >
-            <div className="text-sm font-semibold text-ink">Perche questo piano</div>
+            <div className="text-sm font-semibold text-ink">Perché questo piano</div>
             <p className="mt-2 text-sm leading-6 text-muted">
               Leggi la logica della fase, i risultati realistici e come evolveranno le prime settimane.
             </p>
@@ -195,7 +195,7 @@ export function DashboardPage() {
               to="/profile/deep"
               className="rounded-[22px] border border-line bg-white/78 px-4 py-4"
             >
-              <div className="text-sm font-semibold text-ink">Rendilo ancora piu tuo</div>
+              <div className="text-sm font-semibold text-ink">Rendilo ancora più tuo</div>
               <p className="mt-2 text-sm leading-6 text-muted">
                 In un minuto puoi aggiungere contesto, segnali del corpo e preferenze per rifinire il piano.
               </p>
@@ -207,7 +207,7 @@ export function DashboardPage() {
       <section className="surface px-5 py-5">
         <SectionHeading
           eyebrow="Guida rapida"
-          title="Per oggi il percorso e questo"
+          title="Per oggi il percorso è questo"
           description="Mirya ti accompagna in modo lineare. Non devi decidere tu la sequenza."
         />
 
@@ -274,7 +274,7 @@ export function DashboardPage() {
 
         <div className="mt-4 rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
           <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-            Perche stai lavorando cosi
+            Perché stai lavorando così
           </div>
           <p className="mt-2 text-sm leading-6 text-ink">
             {data.activePlan.progressionReason}
@@ -299,7 +299,7 @@ export function DashboardPage() {
           description={
             minutesRemaining > 0
               ? `Per chiudere bene la settimana ti mancano ancora ${minutesRemaining} minuti ben distribuiti.`
-              : "Hai gia raggiunto il ritmo morbido di questa settimana."
+              : "Hai già raggiunto il ritmo morbido di questa settimana."
           }
         />
 
@@ -376,3 +376,6 @@ function DashboardLoadingState() {
     </div>
   );
 }
+
+
+

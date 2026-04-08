@@ -1,4 +1,4 @@
-import { getWeekDays, toDateKey } from "@/lib/date";
+﻿import { getWeekDays, toDateKey } from "@/lib/date";
 import { goalLabels, horizonMessages } from "@/data/content";
 import type {
   ActiveTrainingPlan,
@@ -156,18 +156,18 @@ export function getPlanHorizonCopy(plan: ActiveTrainingPlan | null) {
 
 export function getNextObjective(plan: ActiveTrainingPlan | null) {
   if (!plan) {
-    return "Completa il primo workout per dare una base reale al percorso.";
+    return "Completa la prima sessione per dare una base reale al percorso.";
   }
 
   if (plan.currentWeek <= 2) {
-    return "Rendere il gesto piu stabile e far diventare il ritmo familiare.";
+    return "Rendere il gesto più stabile e far diventare il ritmo familiare.";
   }
 
   if (plan.currentWeek <= 4) {
-    return "Consolidare tono e continuita senza alzare troppo la richiesta.";
+    return "Consolidare tono e continuità senza alzare troppo la richiesta.";
   }
 
-  return "Portare il lavoro verso una tonicita piu piena, mantenendo la qualita.";
+  return "Portare il lavoro verso una tonicità più piena, mantenendo la qualità.";
 }
 
 export function getGoalLabel(goal: Goal) {
@@ -185,11 +185,11 @@ export function getTrialStatusCopy(access: UserAccessRecord | null) {
   }
 
   if (access.status === "premium") {
-    return "Premium attivo: il percorso puo continuare ad adattarsi a te nel tempo.";
+    return "Premium attivo: il percorso può continuare ad adattarsi a te nel tempo.";
   }
 
   if (access.status === "free_locked") {
-    return "Il mini-ciclo gratuito si e concluso: per continuare con un percorso che si aggiorna serve Premium.";
+    return "Il mini-ciclo gratuito si è concluso: per continuare con un percorso che si aggiorna serve Premium.";
   }
 
   return `Hai ancora ${access.trialRemainingSessions} sessioni oppure ${access.trialRemainingDays} giorni per provare il primo ciclo gratuito.`;
@@ -198,3 +198,5 @@ export function getTrialStatusCopy(access: UserAccessRecord | null) {
 export function shouldShowPremiumGate(access: UserAccessRecord | null) {
   return access?.status === "free_locked";
 }
+
+

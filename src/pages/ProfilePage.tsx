@@ -1,4 +1,4 @@
-import { BellRing, ChevronRight, Crown, LogOut, Volume2, VolumeX } from "lucide-react";
+﻿import { BellRing, ChevronRight, Crown, LogOut, Volume2, VolumeX } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import {
@@ -55,7 +55,7 @@ export function ProfilePage() {
         <div className="mt-4 space-y-3">
           {[
             ["Nome", onboarding.fullName || "Non indicato"],
-            ["Fascia d'eta", ageBandLabels[onboarding.ageBand]],
+            ["Fascia d'età", ageBandLabels[onboarding.ageBand]],
             ["Livello percepito", levelLabels[onboarding.perceivedLevel]],
             ["Obiettivo principale", primaryBodyGoalLabels[onboarding.primaryBodyGoal]],
             [
@@ -173,7 +173,7 @@ export function ProfilePage() {
             className="flex items-center justify-between rounded-[22px] border border-line bg-white/78 px-4 py-4"
           >
             <div>
-              <div className="text-sm font-semibold text-ink">Rendi il piano piu personale</div>
+              <div className="text-sm font-semibold text-ink">Rendi il piano più personale</div>
               <p className="mt-1 text-sm leading-6 text-muted">
                 Aggiungi dettagli opzionali su ritmo reale, segnali del corpo e stile di allenamento.
               </p>
@@ -188,7 +188,7 @@ export function ProfilePage() {
             <div>
               <div className="text-sm font-semibold text-ink">Rivedi il percorso iniziale</div>
               <p className="mt-1 text-sm leading-6 text-muted">
-                Aggiorna onboarding, focus e ritmo se il momento e cambiato.
+                Aggiorna onboarding, focus e ritmo se il momento è cambiato.
               </p>
             </div>
             <ChevronRight size={18} className="text-accent-deep" />
@@ -201,7 +201,7 @@ export function ProfilePage() {
             <div>
               <div className="text-sm font-semibold text-ink">Ricalcola il piano</div>
               <p className="mt-1 text-sm leading-6 text-muted">
-                Aggiorna il percorso oppure scopri come funziona la continuita Premium.
+                Aggiorna il percorso oppure scopri come funziona la continuità Premium.
               </p>
             </div>
             <ChevronRight size={18} className="text-accent-deep" />
@@ -214,7 +214,7 @@ export function ProfilePage() {
             <div>
               <div className="text-sm font-semibold text-ink">Compila una rivalutazione</div>
               <p className="mt-1 text-sm leading-6 text-muted">
-                Se il piano e cambiato rispetto a come ti senti oggi, aggiornalo con pochi tocchi.
+                Se il piano è cambiato rispetto a come ti senti oggi, aggiornalo con pochi tocchi.
               </p>
             </div>
             <ChevronRight size={18} className="text-accent-deep" />
@@ -234,3 +234,5 @@ export function ProfilePage() {
     </div>
   );
 }
+
+

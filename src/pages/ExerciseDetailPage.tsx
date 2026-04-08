@@ -1,4 +1,4 @@
-import { CheckCircle2, CircleAlert, HeartHandshake } from "lucide-react";
+﻿import { CheckCircle2, CircleAlert, HeartHandshake } from "lucide-react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { ExerciseFigure } from "@/components/workouts/ExerciseFigure";
 import { Button } from "@/components/ui/Button";
@@ -51,7 +51,7 @@ export function ExerciseDetailPage() {
         </div>
 
         <div className="mt-5 rounded-[24px] border border-line bg-[rgba(255,255,255,0.72)] px-4 py-4">
-          <div className="text-sm font-semibold text-ink">Perche e utile</div>
+          <div className="text-sm font-semibold text-ink">Perché è utile</div>
           <p className="mt-2 text-sm leading-6 text-muted">{exercise.benefit}</p>
         </div>
 
@@ -124,7 +124,7 @@ export function ExerciseDetailPage() {
 
       <section className="grid gap-3">
         <div className="surface px-5 py-5">
-          <div className="text-sm font-semibold text-ink">Se vuoi farlo piu facilmente</div>
+          <div className="text-sm font-semibold text-ink">Se vuoi farlo più facilmente</div>
           <p className="mt-2 text-sm leading-6 text-muted">
             {exercise.easierVariant}
           </p>
@@ -154,7 +154,7 @@ export function ExerciseDetailPage() {
         </div>
         <p className="mt-2 text-sm leading-6 text-muted">
           Puoi segnare questo esercizio come scomodo per ritrovarlo dopo e
-          trattarlo con piu gradualita.
+          trattarlo con più gradualità.
         </p>
         <div className="mt-4">
           <Button
@@ -205,3 +205,4 @@ export function ExerciseDetailPage() {
     </div>
   );
 }
+

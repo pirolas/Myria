@@ -1,4 +1,4 @@
-import { ArrowRight, Sparkles } from "lucide-react";
+﻿import { ArrowRight, Sparkles } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
@@ -16,13 +16,13 @@ export function PlanReadyPage() {
       <section className="surface-strong soft-gradient px-5 py-6">
         <div className="flex items-start justify-between gap-4">
           <div className="max-w-[16rem]">
-            <div className="eyebrow">Il tuo piano e pronto</div>
+            <div className="eyebrow">Il tuo piano è pronto</div>
             <h1 className="mt-3 font-serif text-[2rem] leading-tight text-ink">
-              Hai gia una direzione chiara da seguire.
+              Hai già una direzione chiara da seguire.
             </h1>
             <p className="mt-3 text-sm leading-7 text-muted">
               Mirya ha composto il tuo primo percorso personale. Adesso puoi leggerlo,
-              capire perche parte cosi e iniziare il mini-ciclo gratuito.
+              capire perché parte così e iniziare il mini-ciclo gratuito.
             </p>
           </div>
           <div className="rounded-[1.3rem] bg-white/82 p-3 text-accent-deep">
@@ -44,8 +44,8 @@ export function PlanReadyPage() {
         <div className="text-base font-semibold text-ink">Cosa puoi fare da subito</div>
         <div className="mt-4 space-y-3">
           {[
-            "Vedere il tuo primo piano personalizzato e la logica con cui e stato costruito.",
-            "Usare il timer workout e completare il primo mini-ciclo guidato.",
+            "Vedere il tuo primo piano personalizzato e la logica con cui è stato costruito.",
+            "Usare il timer guidato e completare il primo mini-ciclo.",
             "Salvare sessioni, progressi base e feedback finali."
           ].map((item) => (
             <div
@@ -61,7 +61,7 @@ export function PlanReadyPage() {
       <div className="flex gap-3">
         <Link to="/plan/story" className="flex-1">
           <Button variant="secondary" fullWidth>
-            Perche questo piano
+            Perché questo piano
           </Button>
         </Link>
         <Link to="/dashboard" className="flex-1">
@@ -73,3 +73,7 @@ export function PlanReadyPage() {
     </div>
   );
 }
+
+
+
+

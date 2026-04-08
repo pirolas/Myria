@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import {
   Pause,
   Play,
@@ -147,7 +147,7 @@ export function ActiveWorkoutPage() {
       {player.stage === "ready" ? (
         <section className="surface px-5 py-5">
           <div className="text-base font-semibold text-ink">
-            Tutto e pronto per partire
+            Tutto è pronto per partire
           </div>
           <p className="mt-3 text-sm leading-7 text-muted">
             Da qui in poi Mirya tiene il ritmo per te. Tu devi solo iniziare e
@@ -156,8 +156,8 @@ export function ActiveWorkoutPage() {
 
           <div className="mt-5 space-y-3">
             {[
-              "Comparira un countdown iniziale breve.",
-              "Ogni esercizio andra avanti in automatico.",
+              "Comparirà un countdown iniziale breve.",
+              "Ogni esercizio andrà avanti in automatico.",
               "Se serve, puoi mettere in pausa o saltare uno step."
             ].map((item, index) => (
               <div
@@ -299,11 +299,11 @@ export function ActiveWorkoutPage() {
           </h2>
           <p className="mt-3 text-sm leading-7 text-muted">
             Bastano pochi tocchi. Questo ci serve per tenere il percorso realistico
-            e sempre piu adatto a te.
+            è sempre più adatto a te.
           </p>
 
           <div className="mt-5">
-            <div className="text-sm font-semibold text-ink">Com'e andata?</div>
+            <div className="text-sm font-semibold text-ink">Com'è andata?</div>
             <div className="mt-3 grid gap-3">
               {feelingOptions.map((option) => (
                 <button
@@ -382,7 +382,7 @@ export function ActiveWorkoutPage() {
               value={discomfortNotes}
               onChange={(event) => setDiscomfortNotes(event.target.value)}
               className="mt-2 w-full rounded-[20px] border border-line bg-white px-4 py-3 text-sm leading-6 text-ink outline-none transition focus:border-accent"
-              placeholder="Per esempio: un esercizio era scomodo oggi oppure la zona lombare si e affaticata presto."
+              placeholder="Per esempio: un esercizio era scomodo oggi oppure la zona lombare si è affaticata presto."
             />
           </label>
 
@@ -438,7 +438,7 @@ function getStageMeta(stage: string, currentTitle: string) {
         eyebrow: "Adesso",
         title: currentTitle,
         description:
-          "Segui un movimento semplice e regolare. La qualita conta piu della velocita."
+          "Segui un movimento semplice e regolare. La qualità conta più della velocità."
       };
   }
 }
@@ -451,3 +451,4 @@ const emptyWorkout: TrainingPlanDay["workout"] = {
   cautionNotes: [],
   steps: []
 };
+

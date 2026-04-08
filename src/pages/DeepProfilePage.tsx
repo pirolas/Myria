@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Sparkles } from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
@@ -88,7 +88,7 @@ export function DeepProfilePage() {
           <div className="max-w-[16rem]">
             <div className="eyebrow">Profilo approfondito</div>
             <h1 className="mt-3 font-serif text-[2rem] leading-tight text-ink">
-              Un minuto in piu per farlo assomigliare davvero a te.
+              Un minuto in più per farlo assomigliare davvero a te.
             </h1>
             <p className="mt-3 text-sm leading-7 text-muted">
               Qui non rifacciamo l'onboarding. Aggiungiamo solo i dettagli che aiutano
@@ -104,7 +104,7 @@ export function DeepProfilePage() {
       <section className="surface px-5 py-5 space-y-4">
         <div className="text-base font-semibold text-ink">Contesto quotidiano</div>
         <p className="text-sm leading-6 text-muted">
-          Non cambia chi sei: ci aiuta solo a capire quanto margine reale c'e oggi.
+          Non cambia chi sei: ci aiuta solo a capire quanto margine reale c'è oggi.
         </p>
 
         <ChoiceGrid
@@ -199,7 +199,7 @@ export function DeepProfilePage() {
         <div className="text-base font-semibold text-ink">Come si sente il tuo corpo</div>
         <p className="text-sm leading-6 text-muted">
           Bastano pochi segnali per capire dove proteggerti e dove possiamo chiederti
-          qualcosa in piu.
+          qualcosa in più.
         </p>
 
         <ChoiceGrid
@@ -382,7 +382,7 @@ export function DeepProfilePage() {
         </label>
         <label className="block">
           <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-            Se c'e qualcosa che vuoi farci capire meglio
+            Se c'è qualcosa che vuoi farci capire meglio
           </span>
           <textarea
             value={deepForm.notes}
@@ -407,7 +407,7 @@ export function DeepProfilePage() {
           Lo faccio dopo
         </Button>
         <Button fullWidth onClick={handleSubmit} disabled={status === "saving"}>
-          {status === "saving" ? "Raffiniamo il piano..." : "Rendi il piano piu personale"}
+          {status === "saving" ? "Raffiniamo il piano..." : "Rendi il piano più personale"}
         </Button>
       </div>
     </div>
@@ -475,3 +475,5 @@ function NumericField({
     </label>
   );
 }
+
+

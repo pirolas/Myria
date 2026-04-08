@@ -1,4 +1,4 @@
-import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+﻿import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -16,7 +16,7 @@ export function PlanStoryPage() {
       <section className="surface-strong soft-gradient px-5 py-6">
         <div className="flex items-start justify-between gap-4">
           <div className="max-w-[16rem]">
-            <div className="eyebrow">Perche questo piano</div>
+            <div className="eyebrow">Perché questo piano</div>
             <h1 className="mt-3 font-serif text-[2rem] leading-tight text-ink">
               Un inizio costruito sul tuo momento, non su un modello standard.
             </h1>
@@ -85,20 +85,20 @@ export function PlanStoryPage() {
             Il senso dell'inizio
           </div>
           <p className="mt-2 text-sm leading-6 text-ink">
-            Non partiamo forte per principio. Partiamo nel punto in cui hai piu
-            probabilita di sentirti guidata, costante e davvero capace di restare
+            Non partiamo forte per principio. Partiamo nel punto in cui hai più
+            probabilità di sentirti guidata, costante e davvero capace di restare
             dentro il percorso.
           </p>
         </div>
 
         <div className="mt-4 rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
           <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-            Come diventa piu personale
+            Come diventa più personale
           </div>
           <p className="mt-2 text-sm leading-6 text-muted">
             Dopo i primi allenamenti Mirya osserva come rispondi, raccoglie una
             rivalutazione breve e, se vuoi, usa il profilo approfondito per rendere
-            piu precisi ritmo, focus e progressione.
+            più precisi ritmo, focus e progressione.
           </p>
         </div>
       </section>
@@ -144,7 +144,7 @@ export function PlanStoryPage() {
       <div className="flex gap-3">
         <Link to="/profile/deep" className="flex-1">
           <Button variant="secondary" fullWidth>
-            Rendi il piano piu preciso
+            Rendi il piano più preciso
           </Button>
         </Link>
         <Link to="/dashboard" className="flex-1">
@@ -156,3 +156,6 @@ export function PlanStoryPage() {
     </div>
   );
 }
+
+
+
