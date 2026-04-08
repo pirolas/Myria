@@ -13,7 +13,9 @@ import {
   completeWorkoutSession,
   ensureUserRecords,
   loadDashboardModel,
+  saveDeepProfile,
   saveOnboarding,
+  saveReassessment,
   startWorkoutSession,
   updateTimerSound
 } from "@/services/app";
@@ -21,7 +23,9 @@ import { generatePersonalizedPlan } from "@/services/planner";
 import type {
   BetaOnboardingInput,
   DashboardModel,
+  DeepProfileInput,
   PlannerTrigger,
+  ReassessmentInput,
   TrainingPlanDay,
   WorkoutFeedbackInput
 } from "@/types/domain";
@@ -35,6 +39,8 @@ interface MiryaAppContextValue {
   progress: ReturnType<typeof buildProgressSnapshot>;
   refresh: () => Promise<void>;
   completeOnboarding: (input: BetaOnboardingInput) => Promise<void>;
+  saveDeepProfileAnswers: (input: DeepProfileInput) => Promise<void>;
+  submitReassessment: (input: ReassessmentInput) => Promise<void>;
   regeneratePlan: (trigger?: PlannerTrigger) => Promise<void>;
   setTimerSoundEnabled: (enabled: boolean) => Promise<void>;
   startSession: (planDay: TrainingPlanDay) => Promise<string>;
@@ -123,6 +129,50 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
             submitError instanceof Error
               ? submitError.message
               : "Non siamo riusciti a creare il tuo percorso."
+          );
+          setStatus("error");
+          throw submitError;
+        }
+      },
+      async saveDeepProfileAnswers(input) {
+        if (!user) {
+          throw new Error("Devi accedere per completare il profilo.");
+        }
+
+        setStatus("saving");
+        setError(null);
+
+        try {
+          await saveDeepProfile(user.id, input);
+          await generatePersonalizedPlan("deep_profile_completed");
+          await refresh();
+        } catch (submitError) {
+          setError(
+            submitError instanceof Error
+              ? submitError.message
+              : "Non siamo riusciti a salvare queste informazioni."
+          );
+          setStatus("error");
+          throw submitError;
+        }
+      },
+      async submitReassessment(input) {
+        if (!user) {
+          throw new Error("Devi accedere per inviare la rivalutazione.");
+        }
+
+        setStatus("saving");
+        setError(null);
+
+        try {
+          await saveReassessment(user.id, input);
+          await generatePersonalizedPlan("reassessment_completed");
+          await refresh();
+        } catch (submitError) {
+          setError(
+            submitError instanceof Error
+              ? submitError.message
+              : "Non siamo riusciti ad aggiornare il percorso."
           );
           setStatus("error");
           throw submitError;

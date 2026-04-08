@@ -66,6 +66,11 @@ export function DashboardPage() {
     "Muoviti con calma: il focus oggi e qualita del gesto, non intensita.",
     "Alla fine lascia un feedback breve, cosi Mirya adatta i prossimi giorni."
   ];
+  const nextReassessmentCopy = data.activePlan.nextReassessmentDate
+    ? `La prossima rivalutazione breve sara disponibile intorno al ${new Date(
+        data.activePlan.nextReassessmentDate
+      ).toLocaleDateString("it-IT")}.`
+    : `Tra circa ${data.activePlan.reassessmentDueInDays} giorni ti chiederemo una breve rivalutazione per confermare o correggere il piano.`;
 
   return (
     <div className="page-enter space-y-6">
@@ -131,6 +136,38 @@ export function DashboardPage() {
           <p className="mt-3 text-center text-sm leading-6 text-muted">
             Ti chiedera solo pochi minuti e un feedback finale molto breve.
           </p>
+        </div>
+      </section>
+
+      <section className="surface px-5 py-5">
+        <SectionHeading
+          eyebrow="Lettura del percorso"
+          title="Mirya ti sta guidando, non ti sta solo assegnando un workout"
+          description={data.activePlan.userProfileSummary}
+        />
+
+        <div className="mt-5 grid gap-3">
+          <Link
+            to="/plan/story"
+            className="rounded-[22px] border border-line bg-white/78 px-4 py-4"
+          >
+            <div className="text-sm font-semibold text-ink">Perche questo piano</div>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Leggi la logica della fase, i risultati realistici e come evolveranno le prime settimane.
+            </p>
+          </Link>
+
+          {!data.deepProfile ? (
+            <Link
+              to="/profile/deep"
+              className="rounded-[22px] border border-line bg-white/78 px-4 py-4"
+            >
+              <div className="text-sm font-semibold text-ink">Rendilo ancora piu preciso</div>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                Aggiungi alcune informazioni opzionali su postura, sensibilita e stile di allenamento.
+              </p>
+            </Link>
+          ) : null}
         </div>
       </section>
 
@@ -209,6 +246,16 @@ export function DashboardPage() {
           <p className="mt-2 text-sm leading-6 text-ink">
             {data.activePlan.progressionReason}
           </p>
+        </div>
+
+        <div className="mt-4 rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+            Rivalutazione prevista
+          </div>
+          <p className="mt-2 text-sm leading-6 text-muted">{nextReassessmentCopy}</p>
+          <Link to="/reassessment" className="mt-3 inline-flex text-sm font-semibold text-accent-deep">
+            Invia una rivalutazione adesso
+          </Link>
         </div>
       </section>
 

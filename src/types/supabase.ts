@@ -42,50 +42,157 @@ export interface Database {
       user_onboarding: TableDef<
         {
           user_id: string;
+          full_name: string | null;
           age_band: string;
+          height_cm: number | null;
+          weight_kg: number | null;
           perceived_level: string;
           primary_goal: string;
           secondary_goals: string[];
           days_per_week: number;
           preferred_minutes: number;
           energy_level: string;
+          past_experience: string | null;
+          lifestyle: string | null;
           gentle_start: boolean;
           limitations: string[];
           focus_preference: string;
+          sleep_quality: string | null;
+          stress_level: string | null;
+          consistency_score: number | null;
+          weekly_availability: string | null;
+          preferred_time_of_day: string | null;
           notes: string | null;
           completed_at: string;
           updated_at: string;
         },
         {
           user_id: string;
+          full_name?: string | null;
           age_band: string;
+          height_cm?: number | null;
+          weight_kg?: number | null;
           perceived_level: string;
           primary_goal: string;
           secondary_goals?: string[];
           days_per_week: number;
           preferred_minutes: number;
           energy_level: string;
-          gentle_start: boolean;
+          past_experience?: string | null;
+          lifestyle?: string | null;
+          gentle_start?: boolean;
           limitations?: string[];
           focus_preference: string;
+          sleep_quality?: string | null;
+          stress_level?: string | null;
+          consistency_score?: number | null;
+          weekly_availability?: string | null;
+          preferred_time_of_day?: string | null;
           notes?: string | null;
           completed_at?: string;
           updated_at?: string;
         },
         {
           user_id?: string;
+          full_name?: string | null;
           age_band?: string;
+          height_cm?: number | null;
+          weight_kg?: number | null;
           perceived_level?: string;
           primary_goal?: string;
           secondary_goals?: string[];
           days_per_week?: number;
           preferred_minutes?: number;
           energy_level?: string;
+          past_experience?: string | null;
+          lifestyle?: string | null;
           gentle_start?: boolean;
           limitations?: string[];
           focus_preference?: string;
+          sleep_quality?: string | null;
+          stress_level?: string | null;
+          consistency_score?: number | null;
+          weekly_availability?: string | null;
+          preferred_time_of_day?: string | null;
           notes?: string | null;
           completed_at?: string;
+          updated_at?: string;
+        }
+      >;
+      user_deep_profile: TableDef<
+        {
+          user_id: string;
+          weak_area: string | null;
+          priority_area: string | null;
+          movement_discomforts: string | null;
+          posture_perception: string | null;
+          mobility_perception: string | null;
+          coordination_level: string | null;
+          sensitivities: string[];
+          pregnancies_count: number | null;
+          cesareans_count: number | null;
+          months_since_last_birth: number | null;
+          diastasis_status: string | null;
+          pelvic_signals: string[];
+          scar_discomfort: boolean | null;
+          body_confidence: string | null;
+          dropout_reasons: string[];
+          nutrition_pattern: string | null;
+          nervous_hunger: boolean | null;
+          skips_meals: boolean | null;
+          hydration_pattern: string | null;
+          training_preference: string | null;
+          notes: string | null;
+          updated_at: string;
+        },
+        {
+          user_id: string;
+          weak_area?: string | null;
+          priority_area?: string | null;
+          movement_discomforts?: string | null;
+          posture_perception?: string | null;
+          mobility_perception?: string | null;
+          coordination_level?: string | null;
+          sensitivities?: string[];
+          pregnancies_count?: number | null;
+          cesareans_count?: number | null;
+          months_since_last_birth?: number | null;
+          diastasis_status?: string | null;
+          pelvic_signals?: string[];
+          scar_discomfort?: boolean | null;
+          body_confidence?: string | null;
+          dropout_reasons?: string[];
+          nutrition_pattern?: string | null;
+          nervous_hunger?: boolean | null;
+          skips_meals?: boolean | null;
+          hydration_pattern?: string | null;
+          training_preference?: string | null;
+          notes?: string | null;
+          updated_at?: string;
+        },
+        {
+          user_id?: string;
+          weak_area?: string | null;
+          priority_area?: string | null;
+          movement_discomforts?: string | null;
+          posture_perception?: string | null;
+          mobility_perception?: string | null;
+          coordination_level?: string | null;
+          sensitivities?: string[];
+          pregnancies_count?: number | null;
+          cesareans_count?: number | null;
+          months_since_last_birth?: number | null;
+          diastasis_status?: string | null;
+          pelvic_signals?: string[];
+          scar_discomfort?: boolean | null;
+          body_confidence?: string | null;
+          dropout_reasons?: string[];
+          nutrition_pattern?: string | null;
+          nervous_hunger?: boolean | null;
+          skips_meals?: boolean | null;
+          hydration_pattern?: string | null;
+          training_preference?: string | null;
+          notes?: string | null;
           updated_at?: string;
         }
       >;
@@ -112,6 +219,62 @@ export interface Database {
           updated_at?: string;
         }
       >;
+      user_reassessments: TableDef<
+        {
+          id: string;
+          user_id: string;
+          plan_fit: string;
+          feels_more_stable: boolean | null;
+          feels_more_toned: boolean | null;
+          feels_more_energetic: boolean | null;
+          effective_exercises: string[];
+          uncomfortable_exercises: string[];
+          consistency_keeping: number;
+          main_obstacle: string | null;
+          improvements: string[];
+          caution_notes: string | null;
+          keep_current_focus: boolean;
+          new_focus: string | null;
+          realistic_minutes_now: number;
+          completed_at: string;
+        },
+        {
+          id?: string;
+          user_id: string;
+          plan_fit: string;
+          feels_more_stable?: boolean | null;
+          feels_more_toned?: boolean | null;
+          feels_more_energetic?: boolean | null;
+          effective_exercises?: string[];
+          uncomfortable_exercises?: string[];
+          consistency_keeping: number;
+          main_obstacle?: string | null;
+          improvements?: string[];
+          caution_notes?: string | null;
+          keep_current_focus?: boolean;
+          new_focus?: string | null;
+          realistic_minutes_now: number;
+          completed_at?: string;
+        },
+        {
+          id?: string;
+          user_id?: string;
+          plan_fit?: string;
+          feels_more_stable?: boolean | null;
+          feels_more_toned?: boolean | null;
+          feels_more_energetic?: boolean | null;
+          effective_exercises?: string[];
+          uncomfortable_exercises?: string[];
+          consistency_keeping?: number;
+          main_obstacle?: string | null;
+          improvements?: string[];
+          caution_notes?: string | null;
+          keep_current_focus?: boolean;
+          new_focus?: string | null;
+          realistic_minutes_now?: number;
+          completed_at?: string;
+        }
+      >;
       training_plans: TableDef<
         {
           id: string;
@@ -121,15 +284,27 @@ export interface Database {
           current_phase: string;
           phase_label: string;
           phase_focus: string;
+          phase_goal: string | null;
+          user_profile_summary: string | null;
           current_week: number;
           total_weeks: number;
           weekly_goal: string;
           weekly_goal_minutes: number;
           weekly_goal_sessions: number;
+          weekly_structure: Json;
+          session_difficulty: string | null;
+          progression_strategy: string | null;
           progression_reason: string;
           motivational_note: string;
+          realistic_expected_outcomes: Json;
           caution_notes: Json;
+          recovery_notes: Json;
+          adherence_strategy: string | null;
+          nutrition_tips: Json;
+          plan_explanation: string | null;
           adjustments: Json;
+          reassessment_due_in_days: number;
+          next_reassessment_at: string | null;
           created_at: string;
           updated_at: string;
         },
@@ -141,15 +316,27 @@ export interface Database {
           current_phase: string;
           phase_label: string;
           phase_focus: string;
+          phase_goal?: string | null;
+          user_profile_summary?: string | null;
           current_week: number;
           total_weeks?: number;
           weekly_goal: string;
           weekly_goal_minutes: number;
           weekly_goal_sessions: number;
+          weekly_structure?: Json;
+          session_difficulty?: string | null;
+          progression_strategy?: string | null;
           progression_reason: string;
           motivational_note: string;
+          realistic_expected_outcomes?: Json;
           caution_notes?: Json;
+          recovery_notes?: Json;
+          adherence_strategy?: string | null;
+          nutrition_tips?: Json;
+          plan_explanation?: string | null;
           adjustments?: Json;
+          reassessment_due_in_days?: number;
+          next_reassessment_at?: string | null;
           created_at?: string;
           updated_at?: string;
         },
@@ -161,17 +348,91 @@ export interface Database {
           current_phase?: string;
           phase_label?: string;
           phase_focus?: string;
+          phase_goal?: string | null;
+          user_profile_summary?: string | null;
           current_week?: number;
           total_weeks?: number;
           weekly_goal?: string;
           weekly_goal_minutes?: number;
           weekly_goal_sessions?: number;
+          weekly_structure?: Json;
+          session_difficulty?: string | null;
+          progression_strategy?: string | null;
           progression_reason?: string;
           motivational_note?: string;
+          realistic_expected_outcomes?: Json;
           caution_notes?: Json;
+          recovery_notes?: Json;
+          adherence_strategy?: string | null;
+          nutrition_tips?: Json;
+          plan_explanation?: string | null;
           adjustments?: Json;
+          reassessment_due_in_days?: number;
+          next_reassessment_at?: string | null;
           created_at?: string;
           updated_at?: string;
+        }
+      >;
+      training_plan_versions: TableDef<
+        {
+          id: string;
+          plan_id: string;
+          user_id: string;
+          version_number: number;
+          trigger: string;
+          payload: Json;
+          user_profile_summary: string;
+          phase_goal: string;
+          weekly_structure: Json;
+          session_difficulty: string;
+          progression_strategy: string;
+          realistic_expected_outcomes: Json;
+          motivational_message: string;
+          recovery_notes: Json;
+          adherence_strategy: string;
+          nutrition_tips: Json;
+          plan_explanation: string;
+          created_at: string;
+        },
+        {
+          id?: string;
+          plan_id: string;
+          user_id: string;
+          version_number: number;
+          trigger: string;
+          payload?: Json;
+          user_profile_summary: string;
+          phase_goal: string;
+          weekly_structure?: Json;
+          session_difficulty: string;
+          progression_strategy: string;
+          realistic_expected_outcomes?: Json;
+          motivational_message: string;
+          recovery_notes?: Json;
+          adherence_strategy: string;
+          nutrition_tips?: Json;
+          plan_explanation: string;
+          created_at?: string;
+        },
+        {
+          id?: string;
+          plan_id?: string;
+          user_id?: string;
+          version_number?: number;
+          trigger?: string;
+          payload?: Json;
+          user_profile_summary?: string;
+          phase_goal?: string;
+          weekly_structure?: Json;
+          session_difficulty?: string;
+          progression_strategy?: string;
+          realistic_expected_outcomes?: Json;
+          motivational_message?: string;
+          recovery_notes?: Json;
+          adherence_strategy?: string;
+          nutrition_tips?: Json;
+          plan_explanation?: string;
+          created_at?: string;
         }
       >;
       training_plan_days: TableDef<
@@ -287,6 +548,41 @@ export interface Database {
           session_summary?: Json;
           created_at?: string;
           updated_at?: string;
+        }
+      >;
+      workout_feedback: TableDef<
+        {
+          id: string;
+          session_id: string;
+          user_id: string;
+          feeling: string | null;
+          energy_final: string | null;
+          discomfort_notes: string | null;
+          stop_reason: string | null;
+          uncomfortable_exercise_ids: string[];
+          created_at: string;
+        },
+        {
+          id?: string;
+          session_id: string;
+          user_id: string;
+          feeling?: string | null;
+          energy_final?: string | null;
+          discomfort_notes?: string | null;
+          stop_reason?: string | null;
+          uncomfortable_exercise_ids?: string[];
+          created_at?: string;
+        },
+        {
+          id?: string;
+          session_id?: string;
+          user_id?: string;
+          feeling?: string | null;
+          energy_final?: string | null;
+          discomfort_notes?: string | null;
+          stop_reason?: string | null;
+          uncomfortable_exercise_ids?: string[];
+          created_at?: string;
         }
       >;
       workout_session_exercises: TableDef<
@@ -415,6 +711,67 @@ export interface Database {
           reminder_time?: string | null;
           weekly_summary_enabled?: boolean;
           updated_at?: string;
+        }
+      >;
+      plan_adjustments: TableDef<
+        {
+          id: string;
+          user_id: string;
+          plan_id: string;
+          plan_version_id: string | null;
+          adjustment_type: string;
+          title: string;
+          description: string;
+          created_at: string;
+        },
+        {
+          id?: string;
+          user_id: string;
+          plan_id: string;
+          plan_version_id?: string | null;
+          adjustment_type: string;
+          title: string;
+          description: string;
+          created_at?: string;
+        },
+        {
+          id?: string;
+          user_id?: string;
+          plan_id?: string;
+          plan_version_id?: string | null;
+          adjustment_type?: string;
+          title?: string;
+          description?: string;
+          created_at?: string;
+        }
+      >;
+      support_tips: TableDef<
+        {
+          id: string;
+          user_id: string;
+          plan_id: string | null;
+          category: string;
+          title: string;
+          body: string;
+          created_at: string;
+        },
+        {
+          id?: string;
+          user_id: string;
+          plan_id?: string | null;
+          category: string;
+          title: string;
+          body: string;
+          created_at?: string;
+        },
+        {
+          id?: string;
+          user_id?: string;
+          plan_id?: string | null;
+          category?: string;
+          title?: string;
+          body?: string;
+          created_at?: string;
         }
       >;
     };

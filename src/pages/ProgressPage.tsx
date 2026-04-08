@@ -203,6 +203,31 @@ export function ProgressPage() {
         </div>
 
         <div className="surface px-5 py-5">
+          <div className="text-base font-semibold text-ink">
+            Storico adattamenti del piano
+          </div>
+          {data.planAdjustments.length > 0 ? (
+            <div className="mt-4 space-y-3">
+              {data.planAdjustments.map((adjustment) => (
+                <div
+                  key={adjustment.id}
+                  className="rounded-[20px] border border-line bg-white/78 px-4 py-4"
+                >
+                  <div className="text-sm font-semibold text-ink">{adjustment.title}</div>
+                  <p className="mt-2 text-sm leading-6 text-muted">
+                    {adjustment.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm leading-6 text-muted">
+              Quando Mirya alleggerisce, conferma o intensifica il piano, troverai qui una traccia semplice dei cambiamenti.
+            </p>
+          )}
+        </div>
+
+        <div className="surface px-5 py-5">
           <div className="text-base font-semibold text-ink">Storico recente</div>
           {data.sessions.length > 0 ? (
             <div className="mt-4 space-y-3">

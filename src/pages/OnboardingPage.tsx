@@ -6,6 +6,7 @@ import { ChoiceGrid } from "@/components/ui/ChoiceGrid";
 import {
   ageBandLabels,
   ageBandOptions,
+  consistencyMessages,
   energyLabels,
   energyOptions,
   focusOptions,
@@ -16,66 +17,58 @@ import {
   levelOptions,
   limitationLabels,
   limitationOptions,
+  lifestyleLabels,
+  lifestyleOptions,
   minuteOptions,
-  trainingDayOptions
+  pastExperienceLabels,
+  pastExperienceOptions,
+  sleepQualityLabels,
+  sleepQualityOptions,
+  stressLabels,
+  stressLevelOptions,
+  timePreferenceLabels,
+  timePreferenceOptions,
+  trainingDayOptions,
+  weeklyAvailabilityLabels,
+  weeklyAvailabilityOptions
 } from "@/data/content";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
-import type {
-  BetaOnboardingInput,
-  Goal,
-  LimitationTag,
-  PreferenceOption
-} from "@/types/domain";
+import type { BetaOnboardingInput, Goal, LimitationTag } from "@/types/domain";
 
-type StepKey =
-  | "age"
-  | "level"
-  | "goal"
-  | "days"
-  | "minutes"
-  | "energy"
-  | "gentle"
-  | "limitations"
-  | "focus";
+type StepKey = "identity" | "goals" | "background" | "rhythm" | "energy" | "care";
 
-function buildInitialInput(
-  onboarding: BetaOnboardingInput | null | undefined
-): BetaOnboardingInput {
-  if (onboarding) {
-    const normalizedGoals =
-      onboarding.secondaryGoals && onboarding.secondaryGoals.length > 0
-        ? onboarding.secondaryGoals
-        : [onboarding.primaryGoal];
-
+function buildInitialInput(input: BetaOnboardingInput | null | undefined): BetaOnboardingInput {
+  if (input) {
     return {
-      ...onboarding,
-      secondaryGoals: normalizedGoals,
-      focusPreference: normalizedGoals.includes(onboarding.focusPreference)
-        ? onboarding.focusPreference
-        : normalizedGoals[0]
+      ...input,
+      secondaryGoals:
+        input.secondaryGoals.length > 0 ? input.secondaryGoals : [input.primaryGoal]
     };
   }
 
   return {
+    fullName: "",
     ageBand: "35_44",
-    perceivedLevel: "principiante",
+    heightCm: null,
+    weightKg: null,
     primaryGoal: "glutei_gambe",
     secondaryGoals: ["glutei_gambe"],
+    perceivedLevel: "principiante",
     daysPerWeek: 3,
     preferredMinutes: 15,
     energyLevel: "media",
+    pastExperience: "qualche_fase",
+    lifestyle: "molto_sedentaria",
+    focusPreference: "glutei_gambe",
     gentleStart: true,
     limitations: ["nessuna"],
-    focusPreference: "glutei_gambe",
+    sleepQuality: "discontinua",
+    stressLevel: "medio",
+    consistencyScore: 3,
+    weeklyAvailability: "alcuni_spazi",
+    preferredTimeOfDay: "variabile",
     notes: ""
   };
-}
-
-function findLabel<TValue extends string | number | boolean>(
-  options: PreferenceOption<TValue>[],
-  value: TValue
-) {
-  return options.find((option) => option.value === value)?.label ?? String(value);
 }
 
 export function OnboardingPage() {
@@ -90,69 +83,48 @@ export function OnboardingPage() {
     () =>
       [
         {
-          key: "age",
-          eyebrow: "Profilo",
-          title: "In quale fascia d'eta ti riconosci oggi?",
+          key: "identity",
+          eyebrow: "Base essenziale",
+          title: "Partiamo da te, senza fare un interrogatorio.",
           description:
-            "Ci serve solo per regolare tono, gradualita e modo di accompagnarti."
+            "Raccogliamo solo i dati che servono per costruire un primo piano sensato e sostenibile."
         },
         {
-          key: "level",
+          key: "goals",
+          eyebrow: "Direzione del piano",
+          title: "Quale cambiamento vuoi sentire davvero nelle prossime settimane?",
+          description:
+            "Puoi indicare piu aree. Mirya usera un asse guida e terra presenti anche i focus secondari."
+        },
+        {
+          key: "background",
           eyebrow: "Punto di partenza",
-          title: "Come ti senti rispetto al movimento in questo momento?",
+          title: "Quanto margine di adattamento ci serve all'inizio?",
           description:
-            "Basta una fotografia onesta del presente. Mirya si adatta da qui."
+            "Qui capiamo livello attuale, esperienza e quanto dosare il primo mese."
         },
         {
-          key: "goal",
-          eyebrow: "Obiettivo principale",
-          title: "Qual è il cambiamento che vuoi sentire di più?",
+          key: "rhythm",
+          eyebrow: "Tempo reale",
+          title: "Costruiamo il piano dentro la tua settimana vera.",
           description:
-            "Puoi indicare più aree. Mirya userà la prima come asse guida e terrà presenti anche le altre."
-        },
-        {
-          key: "days",
-          eyebrow: "Ritmo",
-          title: "Quanti giorni a settimana puoi dedicarti a te?",
-          description:
-            "Meglio un ritmo credibile che un piano troppo ambizioso per la tua settimana."
-        },
-        {
-          key: "minutes",
-          eyebrow: "Durata",
-          title: "Quanto tempo vuoi che duri una sessione tipica?",
-          description:
-            "Costruiamo il percorso intorno a un tempo che puoi ritrovare davvero."
+            "Meglio un ritmo che puoi proteggere davvero, non un piano troppo ambizioso."
         },
         {
           key: "energy",
-          eyebrow: "Energia",
-          title: "Com'e la tua energia media in questo periodo?",
+          eyebrow: "Recupero e aderenza",
+          title: "Come stanno energia, sonno e continuita in questo periodo?",
           description:
-            "Questo aiuta Mirya a dosare volume, intensita e recupero."
+            "Servono per scegliere il tono giusto del percorso, non per giudicarti."
         },
         {
-          key: "gentle",
-          eyebrow: "Approccio iniziale",
-          title: "Vuoi che la partenza sia molto delicata?",
-          description:
-            "Possiamo costruire una fase iniziale ancora piu rassicurante."
-        },
-        {
-          key: "limitations",
+          key: "care",
           eyebrow: "Attenzioni utili",
-          title: "Ci sono zone o situazioni che vuoi far tenere presenti a Mirya?",
+          title: "Ultime informazioni essenziali per partire con intelligenza.",
           description:
-            "Segnalaci solo cio che puo aiutare il piano a restare semplice e rispettoso."
-        },
-        {
-          key: "focus",
-          eyebrow: "Direzione del percorso",
-          title: "Dove vuoi sentire il percorso piu centrato nelle prossime settimane?",
-          description:
-            "Questo focus guidera i primi micro-obiettivi del piano."
+            "Segnalaci solo cio che puo aiutare il piano a restare rispettoso, chiaro e personale."
         }
-      ] satisfies Array<{
+      ] as Array<{
         key: StepKey;
         eyebrow: string;
         title: string;
@@ -163,37 +135,38 @@ export function OnboardingPage() {
 
   const currentStep = steps[stepIndex];
   const progress = ((stepIndex + 1) / steps.length) * 100;
-  const availableFocusOptions = focusOptions.filter((option) =>
-    form.secondaryGoals.includes(option.value)
-  );
 
   const summaryChips = [
+    form.fullName || "Il tuo percorso",
     ageBandLabels[form.ageBand],
     `${form.daysPerWeek} giorni`,
-    `${form.preferredMinutes} minuti`,
-    goalLabels[form.focusPreference]
+    `${form.preferredMinutes} minuti`
   ];
+
+  const currentSummary = {
+    identity: form.fullName || ageBandLabels[form.ageBand],
+    goals: form.secondaryGoals.map((goal) => goalLabels[goal]).join(", "),
+    background: `${levelLabels[form.perceivedLevel]} • ${pastExperienceLabels[form.pastExperience]}`,
+    rhythm: `${form.daysPerWeek} giorni • ${form.preferredMinutes} min • ${timePreferenceLabels[form.preferredTimeOfDay]}`,
+    energy: `${energyLabels[form.energyLevel]} • sonno ${sleepQualityLabels[form.sleepQuality]} • stress ${stressLabels[form.stressLevel]}`,
+    care: `${goalLabels[form.focusPreference]} • ${form.gentleStart ? "partenza graduale" : "partenza dolce"}`
+  }[currentStep.key];
 
   const toggleGoal = (value: Goal) => {
     setForm((current) => {
-      const isSelected = current.secondaryGoals.includes(value);
-      const nextValues = isSelected
+      const exists = current.secondaryGoals.includes(value);
+      const nextGoals = exists
         ? current.secondaryGoals.filter((item) => item !== value)
         : [...current.secondaryGoals, value];
-
-      const normalizedGoals = nextValues.length > 0 ? nextValues : [value];
-      const nextPrimary = normalizedGoals.includes(current.primaryGoal)
-        ? current.primaryGoal
-        : normalizedGoals[0];
-      const nextFocus = normalizedGoals.includes(current.focusPreference)
-        ? current.focusPreference
-        : normalizedGoals[0];
+      const normalizedGoals = nextGoals.length > 0 ? nextGoals : [value];
 
       return {
         ...current,
-        primaryGoal: nextPrimary,
-        focusPreference: nextFocus,
-        secondaryGoals: normalizedGoals
+        secondaryGoals: normalizedGoals,
+        primaryGoal: normalizedGoals[0],
+        focusPreference: normalizedGoals.includes(current.focusPreference)
+          ? current.focusPreference
+          : normalizedGoals[0]
       };
     });
   };
@@ -222,214 +195,22 @@ export function OnboardingPage() {
     }
 
     await completeOnboarding(form);
-    navigate("/dashboard", { replace: true });
+    navigate("/plan/story", { replace: true });
   };
-
-  const renderChoices = () => {
-    switch (currentStep.key) {
-      case "age":
-        return (
-          <ChoiceGrid
-            options={ageBandOptions}
-            value={form.ageBand}
-            onChange={(ageBand) => setForm((current) => ({ ...current, ageBand }))}
-          />
-        );
-      case "level":
-        return (
-          <ChoiceGrid
-            options={levelOptions}
-            value={form.perceivedLevel}
-            onChange={(perceivedLevel) =>
-              setForm((current) => ({ ...current, perceivedLevel }))
-            }
-          />
-        );
-      case "goal":
-        return (
-          <div className="space-y-4">
-            <div className="grid gap-3">
-              {goalOptions.map((option) => {
-                const isSelected = form.secondaryGoals.includes(option.value);
-                const isPrimary = form.primaryGoal === option.value;
-
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => toggleGoal(option.value)}
-                    className={[
-                      "surface text-left px-4 py-4 transition",
-                      isSelected
-                        ? "border-[rgba(94,184,178,0.48)] bg-white"
-                        : "hover:border-accent/30 hover:bg-white/80"
-                    ].join(" ")}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold text-ink">
-                          {option.label}
-                        </div>
-                        <p className="mt-2 text-sm leading-6 text-muted">
-                          {option.description}
-                        </p>
-                      </div>
-                      {isPrimary ? (
-                        <span className="rounded-full bg-[rgba(215,239,236,0.82)] px-3 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-accent-deep">
-                          guida
-                        </span>
-                      ) : null}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            <p className="text-sm leading-6 text-muted">
-              Tocca una o più aree. La prima selezionata diventa il filo guida del
-              piano.
-            </p>
-          </div>
-        );
-      case "days":
-        return (
-          <ChoiceGrid
-            options={trainingDayOptions}
-            value={form.daysPerWeek}
-            onChange={(daysPerWeek) =>
-              setForm((current) => ({ ...current, daysPerWeek }))
-            }
-            columns="two"
-          />
-        );
-      case "minutes":
-        return (
-          <ChoiceGrid
-            options={minuteOptions}
-            value={form.preferredMinutes}
-            onChange={(preferredMinutes) =>
-              setForm((current) => ({ ...current, preferredMinutes }))
-            }
-            columns="two"
-          />
-        );
-      case "energy":
-        return (
-          <ChoiceGrid
-            options={energyOptions}
-            value={form.energyLevel}
-            onChange={(energyLevel) =>
-              setForm((current) => ({ ...current, energyLevel }))
-            }
-          />
-        );
-      case "gentle":
-        return (
-          <ChoiceGrid
-            options={gentleStartOptions}
-            value={form.gentleStart}
-            onChange={(gentleStart) =>
-              setForm((current) => ({ ...current, gentleStart }))
-            }
-          />
-        );
-      case "limitations":
-        return (
-          <div className="space-y-4">
-            <div className="grid gap-3">
-              {limitationOptions.map((option) => {
-                const isSelected = form.limitations.includes(option.value);
-
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => toggleLimitation(option.value)}
-                    className={[
-                      "surface text-left px-4 py-4 transition",
-                      isSelected
-                        ? "border-[rgba(94,184,178,0.48)] bg-white"
-                        : "hover:border-accent/30 hover:bg-white/80"
-                    ].join(" ")}
-                  >
-                    <div className="text-sm font-semibold text-ink">{option.label}</div>
-                    <p className="mt-2 text-sm leading-6 text-muted">
-                      {option.description}
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
-
-            <label className="block">
-              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                Nota opzionale
-              </span>
-              <textarea
-                value={form.notes}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, notes: event.target.value }))
-                }
-                rows={4}
-                className="mt-2 w-full rounded-[20px] border border-line bg-white px-4 py-3 text-sm leading-6 text-ink outline-none transition focus:border-accent"
-                placeholder="Per esempio: preferisco evitare movimenti troppo bruschi o giornate troppo intense."
-              />
-            </label>
-          </div>
-        );
-      case "focus":
-        return (
-          <ChoiceGrid
-            options={availableFocusOptions}
-            value={form.focusPreference}
-            onChange={(focusPreference: Goal) =>
-              setForm((current) => ({ ...current, focusPreference }))
-            }
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
-  const currentSummary = (() => {
-    switch (currentStep.key) {
-      case "age":
-        return ageBandLabels[form.ageBand];
-      case "level":
-        return levelLabels[form.perceivedLevel];
-      case "goal":
-        return form.secondaryGoals.map((goal) => goalLabels[goal]).join(", ");
-      case "days":
-        return findLabel(trainingDayOptions, form.daysPerWeek);
-      case "minutes":
-        return findLabel(minuteOptions, form.preferredMinutes);
-      case "energy":
-        return energyLabels[form.energyLevel];
-      case "gentle":
-        return form.gentleStart ? "Partenza molto delicata" : "Partenza delicata attiva";
-      case "limitations":
-        return form.limitations.map((item) => limitationLabels[item]).join(", ");
-      case "focus":
-        return goalLabels[form.focusPreference];
-      default:
-        return "";
-    }
-  })();
 
   return (
     <div className="mx-auto min-h-screen w-full max-w-[440px] px-4 pb-36 pt-4">
       <div className="page-enter space-y-6">
         <section className="surface-strong soft-gradient overflow-hidden px-5 py-6">
           <div className="flex items-start justify-between gap-4">
-            <div className="max-w-[14rem]">
+            <div className="max-w-[15rem]">
               <div className="eyebrow">Onboarding intelligente</div>
               <h1 className="mt-3 font-serif text-[2rem] leading-tight text-ink">
-                Impostiamo un percorso che ti assomigli davvero.
+                Impostiamo un percorso che ti capisca davvero.
               </h1>
               <p className="mt-3 text-sm leading-7 text-muted">
-                Pochi passaggi chiari per costruire una base sostenibile, guidata e
-                personale fin dal primo accesso.
+                Pochi blocchi chiari per costruire la prima versione del piano.
+                Quello che non serve subito lo raccoglieremo dopo, con calma.
               </p>
             </div>
             <div className="rounded-[1.3rem] bg-[rgba(255,255,255,0.82)] p-3 text-accent-deep shadow-sm">
@@ -466,22 +247,25 @@ export function OnboardingPage() {
 
         <section className="surface px-5 py-5">
           <div className="eyebrow">{currentStep.eyebrow}</div>
-          <h2 className="mt-3 font-serif text-[1.9rem] leading-tight text-ink">
+          <h2 className="mt-3 font-serif text-[1.85rem] leading-tight text-ink">
             {currentStep.title}
           </h2>
-          <p className="mt-3 max-w-[21rem] text-sm leading-7 text-muted">
+          <p className="mt-3 max-w-[22rem] text-sm leading-7 text-muted">
             {currentStep.description}
           </p>
 
-          <div className="mt-5">{renderChoices()}</div>
+          <div className="mt-5">{renderStep()}</div>
 
           <div className="mt-5 rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
             <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-              Sintesi del passo
+              Perche te lo chiediamo
             </div>
-            <div className="mt-2 text-sm font-semibold text-ink">{currentSummary}</div>
             <p className="mt-2 text-sm leading-6 text-muted">
-              Mirya usera questa informazione per dosare ritmo, focus e progressione.
+              {stepIndex <= 1
+                ? "Serve per impostare il piano iniziale senza chiederti troppo, ma facendolo gia aderire bene alla tua situazione."
+                : stepIndex <= 3
+                  ? "Questo ci aiuta a scegliere carico iniziale, ritmo e distribuzione settimanale in modo piu realistico."
+                  : "Queste informazioni servono soprattutto a proteggere continuita, recupero e qualita del gesto."}
             </p>
           </div>
 
@@ -521,11 +305,9 @@ export function OnboardingPage() {
               className="justify-between"
             >
               {status === "saving"
-                ? "Creiamo il tuo percorso..."
+                ? "Stiamo creando il tuo piano..."
                 : stepIndex === steps.length - 1
-                  ? data?.onboarding
-                    ? "Aggiorna il mio percorso"
-                    : "Ricevi il mio percorso"
+                  ? "Ricevi il tuo piano"
                   : "Continua"}
             </Button>
           </div>
@@ -533,4 +315,285 @@ export function OnboardingPage() {
       </div>
     </div>
   );
+
+  function renderStep() {
+    switch (currentStep.key) {
+      case "identity":
+        return (
+          <div className="space-y-4">
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                Come vuoi che ti chiamiamo
+              </span>
+              <input
+                type="text"
+                value={form.fullName}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, fullName: event.target.value }))
+                }
+                className="mt-2 h-12 w-full rounded-[18px] border border-line bg-white px-4 text-sm text-ink outline-none transition focus:border-accent"
+                placeholder="Per esempio: Laura"
+              />
+            </label>
+
+            <ChoiceGrid
+              options={ageBandOptions}
+              value={form.ageBand}
+              onChange={(ageBand) => setForm((current) => ({ ...current, ageBand }))}
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                  Altezza
+                </span>
+                <input
+                  type="number"
+                  value={form.heightCm ?? ""}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      heightCm: event.target.value ? Number(event.target.value) : null
+                    }))
+                  }
+                  className="mt-2 h-12 w-full rounded-[18px] border border-line bg-white px-4 text-sm text-ink outline-none transition focus:border-accent"
+                  placeholder="cm"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                  Peso
+                </span>
+                <input
+                  type="number"
+                  value={form.weightKg ?? ""}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      weightKg: event.target.value ? Number(event.target.value) : null
+                    }))
+                  }
+                  className="mt-2 h-12 w-full rounded-[18px] border border-line bg-white px-4 text-sm text-ink outline-none transition focus:border-accent"
+                  placeholder="kg"
+                />
+              </label>
+            </div>
+          </div>
+        );
+      case "goals":
+        return (
+          <div className="space-y-4">
+            <div className="grid gap-3">
+              {goalOptions.map((option) => {
+                const isSelected = form.secondaryGoals.includes(option.value);
+                const isPrimary = form.primaryGoal === option.value;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => toggleGoal(option.value)}
+                    className={[
+                      "surface px-4 py-4 text-left transition",
+                      isSelected
+                        ? "border-[rgba(94,184,178,0.48)] bg-white"
+                        : "hover:border-accent/30 hover:bg-white/80"
+                    ].join(" ")}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-ink">{option.label}</div>
+                        <p className="mt-2 text-sm leading-6 text-muted">
+                          {option.description}
+                        </p>
+                      </div>
+                      {isPrimary ? (
+                        <span className="rounded-full bg-[rgba(215,239,236,0.82)] px-3 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-accent-deep">
+                          guida
+                        </span>
+                      ) : null}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <ChoiceGrid
+              options={focusOptions.filter((option) =>
+                form.secondaryGoals.includes(option.value)
+              )}
+              value={form.focusPreference}
+              onChange={(focusPreference) =>
+                setForm((current) => ({ ...current, focusPreference }))
+              }
+            />
+          </div>
+        );
+      case "background":
+        return (
+          <div className="space-y-4">
+            <ChoiceGrid
+              options={levelOptions}
+              value={form.perceivedLevel}
+              onChange={(perceivedLevel) =>
+                setForm((current) => ({ ...current, perceivedLevel }))
+              }
+            />
+            <ChoiceGrid
+              options={pastExperienceOptions}
+              value={form.pastExperience}
+              onChange={(pastExperience) =>
+                setForm((current) => ({ ...current, pastExperience }))
+              }
+            />
+            <ChoiceGrid
+              options={lifestyleOptions}
+              value={form.lifestyle}
+              onChange={(lifestyle) =>
+                setForm((current) => ({ ...current, lifestyle }))
+              }
+            />
+          </div>
+        );
+      case "rhythm":
+        return (
+          <div className="space-y-4">
+            <ChoiceGrid
+              options={trainingDayOptions}
+              value={form.daysPerWeek}
+              onChange={(daysPerWeek) => setForm((current) => ({ ...current, daysPerWeek }))}
+              columns="two"
+            />
+            <ChoiceGrid
+              options={minuteOptions}
+              value={form.preferredMinutes}
+              onChange={(preferredMinutes) =>
+                setForm((current) => ({ ...current, preferredMinutes }))
+              }
+              columns="two"
+            />
+            <ChoiceGrid
+              options={weeklyAvailabilityOptions}
+              value={form.weeklyAvailability}
+              onChange={(weeklyAvailability) =>
+                setForm((current) => ({ ...current, weeklyAvailability }))
+              }
+            />
+            <ChoiceGrid
+              options={timePreferenceOptions}
+              value={form.preferredTimeOfDay}
+              onChange={(preferredTimeOfDay) =>
+                setForm((current) => ({ ...current, preferredTimeOfDay }))
+              }
+            />
+          </div>
+        );
+      case "energy":
+        return (
+          <div className="space-y-4">
+            <ChoiceGrid
+              options={energyOptions}
+              value={form.energyLevel}
+              onChange={(energyLevel) =>
+                setForm((current) => ({ ...current, energyLevel }))
+              }
+            />
+            <ChoiceGrid
+              options={sleepQualityOptions}
+              value={form.sleepQuality}
+              onChange={(sleepQuality) =>
+                setForm((current) => ({ ...current, sleepQuality }))
+              }
+            />
+            <ChoiceGrid
+              options={stressLevelOptions}
+              value={form.stressLevel}
+              onChange={(stressLevel) =>
+                setForm((current) => ({ ...current, stressLevel }))
+              }
+            />
+            <label className="block rounded-[22px] border border-line bg-white/78 px-4 py-4">
+              <div className="text-sm font-semibold text-ink">
+                Quanto ti senti costante oggi, da 1 a 5?
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={5}
+                step={1}
+                value={form.consistencyScore}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    consistencyScore: Number(event.target.value) as 1 | 2 | 3 | 4 | 5
+                  }))
+                }
+                className="mt-4 w-full accent-[var(--color-accent)]"
+              />
+              <div className="mt-2 flex items-center justify-between text-xs font-semibold text-muted">
+                <span>1</span>
+                <span>{consistencyMessages[(form.consistencyScore - 1) % consistencyMessages.length]}</span>
+                <span>5</span>
+              </div>
+            </label>
+          </div>
+        );
+      case "care":
+        return (
+          <div className="space-y-4">
+            <ChoiceGrid
+              options={gentleStartOptions}
+              value={form.gentleStart}
+              onChange={(gentleStart) =>
+                setForm((current) => ({ ...current, gentleStart }))
+              }
+            />
+
+            <div className="grid gap-3">
+              {limitationOptions.map((option) => {
+                const isSelected = form.limitations.includes(option.value);
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => toggleLimitation(option.value)}
+                    className={[
+                      "surface px-4 py-4 text-left transition",
+                      isSelected
+                        ? "border-[rgba(94,184,178,0.48)] bg-white"
+                        : "hover:border-accent/30 hover:bg-white/80"
+                    ].join(" ")}
+                  >
+                    <div className="text-sm font-semibold text-ink">{option.label}</div>
+                    <p className="mt-2 text-sm leading-6 text-muted">
+                      {option.description}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                Nota opzionale
+              </span>
+              <textarea
+                value={form.notes}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, notes: event.target.value }))
+                }
+                rows={4}
+                className="mt-2 w-full rounded-[20px] border border-line bg-white px-4 py-3 text-sm leading-6 text-ink outline-none transition focus:border-accent"
+                placeholder="Per esempio: la settimana e irregolare, oppure preferisco evitare giorni troppo intensi."
+              />
+            </label>
+          </div>
+        );
+      default:
+        return null;
+    }
+  }
 }
+

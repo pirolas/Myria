@@ -22,7 +22,9 @@ function resolveMeta(pathname: string) {
   }
 
   if (pathname.startsWith("/plan")) {
-    return { label: "Piano settimanale", badge: "percorso" };
+    return pathname.startsWith("/plan/story")
+      ? { label: "Perche questo piano", backTo: "/plan", badge: "lettura" }
+      : { label: "Piano settimanale", badge: "percorso" };
   }
 
   if (pathname.startsWith("/progress")) {
@@ -30,7 +32,13 @@ function resolveMeta(pathname: string) {
   }
 
   if (pathname.startsWith("/profile")) {
-    return { label: "Il mio percorso", badge: "profilo" };
+    return pathname.startsWith("/profile/deep")
+      ? { label: "Profilo approfondito", backTo: "/profile", badge: "precisione" }
+      : { label: "Il mio percorso", badge: "profilo" };
+  }
+
+  if (pathname.startsWith("/reassessment")) {
+    return { label: "Rivalutazione", backTo: "/plan", badge: "breve" };
   }
 
   return { label: "Dashboard", badge: formatLongDate(new Date()) };

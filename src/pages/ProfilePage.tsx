@@ -6,7 +6,12 @@ import {
   energyLabels,
   goalLabels,
   levelLabels,
-  limitationLabels
+  limitationLabels,
+  lifestyleLabels,
+  sleepQualityLabels,
+  stressLabels,
+  timePreferenceLabels,
+  weeklyAvailabilityLabels
 } from "@/data/content";
 import { useAuth } from "@/hooks/useAuth";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
@@ -45,13 +50,26 @@ export function ProfilePage() {
         <div className="text-base font-semibold text-ink">Le tue basi attuali</div>
         <div className="mt-4 space-y-3">
           {[
+            ["Nome", onboarding.fullName || "Non indicato"],
             ["Fascia d'eta", ageBandLabels[onboarding.ageBand]],
             ["Livello percepito", levelLabels[onboarding.perceivedLevel]],
             ["Obiettivo principale", goalLabels[onboarding.primaryGoal]],
+            [
+              "Obiettivi secondari",
+              onboarding.secondaryGoals.map((goal) => goalLabels[goal]).join(", ")
+            ],
             ["Focus del percorso", goalLabels[onboarding.focusPreference]],
             ["Ritmo", `${onboarding.daysPerWeek} giorni a settimana`],
             ["Durata preferita", `${onboarding.preferredMinutes} minuti`],
             ["Energia media", energyLabels[onboarding.energyLevel]],
+            ["Stile di vita", lifestyleLabels[onboarding.lifestyle]],
+            ["Sonno percepito", sleepQualityLabels[onboarding.sleepQuality]],
+            ["Stress percepito", stressLabels[onboarding.stressLevel]],
+            [
+              "Disponibilita reale",
+              weeklyAvailabilityLabels[onboarding.weeklyAvailability]
+            ],
+            ["Orario preferito", timePreferenceLabels[onboarding.preferredTimeOfDay]],
             [
               "Partenza",
               onboarding.gentleStart ? "Molto delicata" : "Delicata ma attiva"
@@ -129,6 +147,19 @@ export function ProfilePage() {
         <div className="text-base font-semibold text-ink">Azioni utili</div>
         <div className="mt-4 space-y-3">
           <Link
+            to="/profile/deep"
+            className="flex items-center justify-between rounded-[22px] border border-line bg-white/78 px-4 py-4"
+          >
+            <div>
+              <div className="text-sm font-semibold text-ink">Completa il profilo approfondito</div>
+              <p className="mt-1 text-sm leading-6 text-muted">
+                Aggiungi dettagli opzionali su postura, sensibilita, fiducia e ostacoli principali.
+              </p>
+            </div>
+            <ChevronRight size={18} className="text-accent-deep" />
+          </Link>
+
+          <Link
             to="/onboarding"
             className="flex items-center justify-between rounded-[22px] border border-line bg-white/78 px-4 py-4"
           >
@@ -154,6 +185,19 @@ export function ProfilePage() {
             </div>
             <RefreshCw size={18} className="text-accent-deep" />
           </button>
+
+          <Link
+            to="/reassessment"
+            className="flex items-center justify-between rounded-[22px] border border-line bg-white/78 px-4 py-4"
+          >
+            <div>
+              <div className="text-sm font-semibold text-ink">Compila una rivalutazione</div>
+              <p className="mt-1 text-sm leading-6 text-muted">
+                Se il piano e cambiato rispetto a come ti senti oggi, aggiornalo con pochi tocchi.
+              </p>
+            </div>
+            <ChevronRight size={18} className="text-accent-deep" />
+          </Link>
 
           <Button
             variant="secondary"

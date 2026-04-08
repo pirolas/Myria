@@ -1,23 +1,26 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8?target=denonext";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-type Goal =
-  | "glutei_gambe"
-  | "pancia_core"
-  | "postura"
-  | "tonicita_generale"
-  | "ripartenza_dolce";
+type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
 
-type Level =
-  | "molto_fuori_allenamento"
-  | "principiante"
-  | "intermedio_leggero";
+type PlannerTrigger =
+  | "onboarding_completed"
+  | "weekly_refresh"
+  | "post_workout_feedback"
+  | "deep_profile_completed"
+  | "reassessment_completed";
 
-type Feeling = "facile" | "giusto" | "impegnativo";
+interface PlannerRequestBody {
+  trigger?: PlannerTrigger;
+}
 
-type EnergyLevel = "molto_bassa" | "bassa" | "media" | "buona";
-
-type WorkoutStepPlan = {
+interface WorkoutStepPlan {
   id: string;
   kind: "exercise";
   exerciseId: string;
@@ -28,9 +31,9 @@ type WorkoutStepPlan = {
   bodyArea: string;
   doseLabel: string;
   caution?: string;
-};
+}
 
-type PlannerDayOutput = {
+interface PlannerDayOutput {
   day_index: number;
   scheduled_for: string;
   title: string;
@@ -40,48 +43,35 @@ type PlannerDayOutput = {
   coach_note: string;
   caution_notes: string[];
   steps: WorkoutStepPlan[];
-};
+}
 
-type PlannerOutput = {
+interface PlannerOutput {
+  user_profile_summary: string;
   current_phase: string;
   phase_label: string;
   phase_focus: string;
+  phase_goal: string;
   current_week: number;
   total_weeks: number;
   weekly_goal: string;
   weekly_goal_minutes: number;
   weekly_goal_sessions: number;
+  weekly_structure: string[];
   today_workout: PlannerDayOutput;
   weekly_plan: PlannerDayOutput[];
+  session_difficulty: string;
+  progression_strategy: string;
   progression_reason: string;
-  motivational_note: string;
-  caution_notes: string[];
+  realistic_expected_outcomes: string[];
+  motivational_message: string;
+  caution_flags: string[];
+  recovery_notes: string[];
+  adherence_strategy: string;
+  nutrition_tips: string[];
+  plan_explanation: string;
   adjustments: string[];
-};
-
-type PlannerContext = {
-  userId: string;
-  onboarding: {
-    age_band: string;
-    perceived_level: Level;
-    primary_goal: Goal;
-    days_per_week: number;
-    preferred_minutes: number;
-    energy_level: EnergyLevel;
-    gentle_start: boolean;
-    limitations: string[];
-    focus_preference: Goal;
-    notes: string | null;
-  };
-  sessions: Array<{
-    status: string;
-    feeling: Feeling | null;
-    completed_at: string | null;
-    adherence_score: number | null;
-    session_summary: Record<string, unknown> | null;
-  }>;
-  trigger: string;
-};
+  reassessment_due_in_days: number;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -89,169 +79,60 @@ const corsHeaders = {
 };
 
 const exerciseCatalog = {
-  "ponte-glutei": {
-    title: "Ponte glutei",
-    summary: "Attiva glutei e retro coscia con un gesto semplice e controllato.",
-    bodyArea: "Glutei e retro coscia",
-    doseLabel: "Movimento lento e pieno",
-    caution: "Riduci l'ampiezza se senti pressione nella zona lombare."
-  },
-  "squat-alla-sedia": {
-    title: "Squat alla sedia",
-    summary: "Rinforza gambe e glutei con un riferimento sicuro e chiaro.",
-    bodyArea: "Gambe e glutei",
-    doseLabel: "Discesa controllata e risalita stabile"
-  },
-  "wall-sit": {
-    title: "Wall sit",
-    summary: "Una tenuta essenziale per dare tono a cosce e glutei senza impatto.",
-    bodyArea: "Cosce e glutei",
-    doseLabel: "Mantieni una seduta comoda"
-  },
-  "slanci-laterali-in-piedi": {
-    title: "Slanci laterali in piedi",
-    summary: "Lavora sul lato del gluteo e sulla stabilita del bacino.",
-    bodyArea: "Gluteo laterale e anche",
-    doseLabel: "Ampiezza piccola ma precisa"
-  },
-  "affondo-assistito-indietro": {
-    title: "Affondo assistito indietro",
-    summary: "Coinvolge gambe e glutei con un appoggio rassicurante.",
-    bodyArea: "Gambe e glutei",
-    doseLabel: "Passo corto e busto alto"
-  },
-  "bird-dog": {
-    title: "Bird dog",
-    summary: "Allena centro, schiena e glutei senza fretta e senza impatto.",
-    bodyArea: "Core, schiena, glutei",
-    doseLabel: "Allungo pulito e stabile",
-    caution: "Riduci l'ampiezza se senti instabilita addominale."
-  },
-  "dead-bug-semplificato": {
-    title: "Dead bug semplificato",
-    summary: "Aiuta il controllo del core con movimenti piccoli e coordinati.",
-    bodyArea: "Core e respiro",
-    doseLabel: "Tallone giu lentamente",
-    caution: "Torna alla variante piu facile se senti pressione addominale."
-  },
-  "heel-slides": {
-    title: "Heel slides",
-    summary: "Scivolamenti delicati per ritrovare sostegno del centro.",
-    bodyArea: "Addome profondo e bacino",
-    doseLabel: "Bacino calmo, gesto corto"
-  },
-  "ponte-con-marcia": {
-    title: "Ponte con marcia",
-    summary: "Una progressione del ponte per stabilita di glutei e bacino.",
-    bodyArea: "Glutei e core",
-    doseLabel: "Bacino fermo, sollevamento piccolo"
-  },
-  "sollevamenti-polpacci": {
-    title: "Sollevamenti polpacci",
-    summary: "Rende piu presenti caviglie, polpacci e appoggio del piede.",
-    bodyArea: "Polpacci e caviglie",
-    doseLabel: "Sali e scendi con controllo"
-  },
-  "side-leg-lifts": {
-    title: "Side leg lifts",
-    summary: "Aiuta il lato del gluteo e la stabilita del fianco.",
-    bodyArea: "Gluteo laterale",
-    doseLabel: "Sollevamento controllato"
-  },
-  "respirazione-addominale-profonda": {
-    title: "Respirazione con attivazione addominale profonda",
-    summary: "Rimette al centro respiro, controllo e tono di base.",
-    bodyArea: "Respiro e addome profondo",
-    doseLabel: "Espira lungo e morbido",
-    caution: "Interrompi se il respiro diventa teso o compare fastidio pelvico."
-  },
-  "mobilita-bacino-colonna": {
-    title: "Mobilita bacino e colonna",
-    summary: "Piccoli movimenti fluidi per sciogliere la zona lombare.",
-    bodyArea: "Bacino e colonna",
-    doseLabel: "Dondolio piccolo e continuo"
-  },
-  "scapole-al-muro": {
-    title: "Scapole al muro",
-    summary: "Aiuta postura, apertura del torace e stabilita della parte alta.",
-    bodyArea: "Schiena alta e spalle",
-    doseLabel: "Spalle lontane dalle orecchie"
-  },
-  "allungamento-petto-parete": {
-    title: "Allungamento petto parete",
-    summary: "Apertura dolce per alleggerire spalle e torace.",
-    bodyArea: "Petto e spalle",
-    doseLabel: "Allungamento morbido"
-  }
+  "ponte-glutei": { title: "Ponte glutei", bodyArea: "Glutei e retro coscia", caution: "Riduci l'altezza se senti la schiena." },
+  "squat-alla-sedia": { title: "Squat alla sedia", bodyArea: "Gambe e glutei" },
+  "wall-sit": { title: "Wall sit", bodyArea: "Cosce e glutei" },
+  "slanci-laterali-in-piedi": { title: "Slanci laterali in piedi", bodyArea: "Gluteo laterale e anche" },
+  "affondo-assistito-indietro": { title: "Affondo assistito indietro", bodyArea: "Glutei, cosce, equilibrio" },
+  "bird-dog": { title: "Bird dog", bodyArea: "Core, schiena, glutei", caution: "Riduci l'ampiezza se perdi stabilita addominale." },
+  "heel-slides": { title: "Heel slides", bodyArea: "Addome profondo e bacino" },
+  "dead-bug-semplificato": { title: "Dead bug semplificato", bodyArea: "Core e coordinazione", caution: "Torna alla variante facile se senti pressione addominale." },
+  "ponte-con-marcia": { title: "Ponte con marcia", bodyArea: "Glutei e stabilita del bacino" },
+  "sollevamenti-polpacci": { title: "Sollevamenti polpacci", bodyArea: "Polpacci e caviglie" },
+  "side-leg-lifts": { title: "Side leg lifts", bodyArea: "Gluteo laterale e anche" },
+  "respirazione-addominale-profonda": { title: "Respirazione con attivazione addominale profonda", bodyArea: "Respiro, addome profondo, pavimento pelvico" },
+  "mobilita-bacino-colonna": { title: "Mobilita bacino e colonna", bodyArea: "Bacino e colonna" },
+  "scapole-al-muro": { title: "Scapole al muro", bodyArea: "Schiena alta e spalle" },
+  "allungamento-petto-parete": { title: "Apertura del petto alla parete", bodyArea: "Petto e spalle" }
 } as const;
 
-const programTemplates = {
-  gentle_reset: {
-    title: "Reset dolce",
-    focus: "Ripartenza e controllo",
-    exerciseIds: [
-      "respirazione-addominale-profonda",
-      "heel-slides",
-      "ponte-glutei",
-      "mobilita-bacino-colonna",
-      "allungamento-petto-parete"
-    ]
-  },
-  glutei_foundation: {
-    title: "Glutei e gambe base",
-    focus: "Glutei e gambe",
-    exerciseIds: [
-      "ponte-glutei",
-      "squat-alla-sedia",
-      "wall-sit",
-      "slanci-laterali-in-piedi",
-      "sollevamenti-polpacci"
-    ]
-  },
-  glutei_progression: {
-    title: "Glutei e gambe presenti",
-    focus: "Glutei, gambe e stabilita",
-    exerciseIds: [
-      "ponte-glutei",
-      "affondo-assistito-indietro",
-      "side-leg-lifts",
-      "wall-sit",
-      "sollevamenti-polpacci"
-    ]
-  },
-  core_posture: {
-    title: "Core e postura",
-    focus: "Centro e appoggio",
-    exerciseIds: [
-      "respirazione-addominale-profonda",
-      "heel-slides",
-      "dead-bug-semplificato",
-      "bird-dog",
-      "scapole-al-muro"
-    ]
-  },
-  total_body: {
-    title: "Total body tonificante",
-    focus: "Tonicita generale",
-    exerciseIds: [
-      "squat-alla-sedia",
-      "ponte-glutei",
-      "bird-dog",
-      "sollevamenti-polpacci",
-      "scapole-al-muro"
-    ]
-  },
-  recovery_flow: {
-    title: "Recupero guidato",
-    focus: "Mobilita e recupero",
-    exerciseIds: [
-      "respirazione-addominale-profonda",
-      "mobilita-bacino-colonna",
-      "allungamento-petto-parete",
-      "scapole-al-muro"
-    ]
-  }
-} as const;
+const workoutTemplates: Record<string, string[]> = {
+  glutei_gambe: [
+    "ponte-glutei",
+    "squat-alla-sedia",
+    "slanci-laterali-in-piedi",
+    "wall-sit",
+    "sollevamenti-polpacci"
+  ],
+  pancia_core: [
+    "respirazione-addominale-profonda",
+    "heel-slides",
+    "bird-dog",
+    "dead-bug-semplificato",
+    "ponte-con-marcia"
+  ],
+  postura: [
+    "mobilita-bacino-colonna",
+    "scapole-al-muro",
+    "allungamento-petto-parete",
+    "bird-dog",
+    "respirazione-addominale-profonda"
+  ],
+  tonicita_generale: [
+    "squat-alla-sedia",
+    "ponte-glutei",
+    "bird-dog",
+    "sollevamenti-polpacci",
+    "scapole-al-muro"
+  ],
+  ripartenza_dolce: [
+    "respirazione-addominale-profonda",
+    "heel-slides",
+    "ponte-glutei",
+    "mobilita-bacino-colonna",
+    "allungamento-petto-parete"
+  ]
+};
 
 serve(async (request) => {
   if (request.method === "OPTIONS") {
@@ -260,21 +141,16 @@ serve(async (request) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const authHeader = request.headers.get("Authorization");
 
-    if (!supabaseUrl || !supabaseAnonKey || !serviceRoleKey || !authHeader) {
-      return jsonResponse(
-        { error: "Configurazione Supabase incompleta o token assente." },
-        401
-      );
+    if (!supabaseUrl || !anonKey || !serviceRoleKey) {
+      throw new Error("Configurazione Supabase incompleta.");
     }
 
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: { Authorization: authHeader }
-      }
+    const authHeader = request.headers.get("Authorization") ?? "";
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } }
     });
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
@@ -284,483 +160,503 @@ serve(async (request) => {
     } = await userClient.auth.getUser();
 
     if (authError || !user) {
-      return jsonResponse({ error: "Utente non autenticato." }, 401);
+      return jsonResponse({ error: "Utente non autenticata." }, 401);
     }
 
-    const body = (await request.json().catch(() => ({}))) as { trigger?: string };
+    const body = (await request.json().catch(() => ({}))) as PlannerRequestBody;
+    const trigger = body.trigger ?? "weekly_refresh";
 
-    const context = await loadPlannerContext(adminClient, user.id, body.trigger ?? "manual");
-    const plan = await buildPlan(context);
-    const persistedPlanId = await persistPlan(adminClient, user.id, plan);
+    const [onboardingRes, deepProfileRes, reassessmentRes, sessionRes, currentPlanRes] =
+      await Promise.all([
+        adminClient.from("user_onboarding").select("*").eq("user_id", user.id).maybeSingle(),
+        adminClient.from("user_deep_profile").select("*").eq("user_id", user.id).maybeSingle(),
+        adminClient
+          .from("user_reassessments")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("completed_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        adminClient
+          .from("workout_sessions")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("status", "completed")
+          .order("completed_at", { ascending: false })
+          .limit(12),
+        adminClient
+          .from("training_plans")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      ]);
+
+    [onboardingRes.error, deepProfileRes.error, reassessmentRes.error, sessionRes.error, currentPlanRes.error]
+      .filter(Boolean)
+      .forEach((error) => {
+        throw error;
+      });
+
+    if (!onboardingRes.data) {
+      return jsonResponse({ error: "Onboarding essenziale mancante." }, 400);
+    }
+
+    const plannerInput = {
+      onboarding: onboardingRes.data,
+      deepProfile: deepProfileRes.data,
+      reassessment: reassessmentRes.data,
+      sessions: sessionRes.data ?? [],
+      currentPlan: currentPlanRes.data,
+      trigger
+    };
+
+    const plan = (await tryAiPlan(plannerInput)) ?? buildFallbackPlan(plannerInput);
+    const persistedPlanId = await persistPlan(adminClient, user.id, plan, trigger, currentPlanRes.data?.id ?? null);
 
     return jsonResponse({
-      plan,
+      source: "fallback",
       persisted_plan_id: persistedPlanId,
-      source: hasAiConfig() ? "ai" : "fallback"
+      plan
     });
   } catch (error) {
+    console.error(error);
     return jsonResponse(
       {
-        error:
-          error instanceof Error ? error.message : "Errore interno nel planner."
+        error: error instanceof Error ? error.message : "Planner non disponibile."
       },
       500
     );
   }
 });
 
-async function loadPlannerContext(
-  adminClient: ReturnType<typeof createClient>,
-  userId: string,
-  trigger: string
-): Promise<PlannerContext> {
-  const [onboardingResult, sessionsResult] = await Promise.all([
-    adminClient
-      .from("user_onboarding")
-      .select("*")
-      .eq("user_id", userId)
-      .single(),
-    adminClient
-      .from("workout_sessions")
-      .select("status, feeling, completed_at, adherence_score, session_summary")
-      .eq("user_id", userId)
-      .order("started_at", { ascending: false })
-      .limit(20)
-  ]);
+async function tryAiPlan(input: Record<string, unknown>) {
+  const aiUrl = Deno.env.get("AI_API_URL");
+  const aiKey = Deno.env.get("AI_API_KEY");
+  if (!aiUrl || !aiKey) return null;
 
-  if (onboardingResult.error || !onboardingResult.data) {
-    throw new Error("Onboarding non trovato per questo utente.");
-  }
-
-  if (sessionsResult.error) {
-    throw new Error(sessionsResult.error.message);
-  }
-
-  return {
-    userId,
-    onboarding: onboardingResult.data as PlannerContext["onboarding"],
-    sessions:
-      (sessionsResult.data as PlannerContext["sessions"] | null | undefined) ?? [],
-    trigger
-  };
-}
-
-async function buildPlan(context: PlannerContext): Promise<PlannerOutput> {
-  const aiPlan = await tryAiPlanner(context);
-  if (aiPlan) {
-    return aiPlan;
-  }
-
-  return buildFallbackPlan(context);
-}
-
-async function tryAiPlanner(context: PlannerContext) {
-  if (!hasAiConfig()) {
-    return null;
-  }
-
-  const response = await fetch(Deno.env.get("AI_API_URL") as string, {
+  const response = await fetch(aiUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${Deno.env.get("AI_API_KEY")}`
+      Authorization: `Bearer ${aiKey}`
     },
     body: JSON.stringify({
-      model: Deno.env.get("AI_MODEL") ?? "planner-beta",
-      input: context,
-      system:
-        "Sei il planner controllato di Mirya. Restituisci solo JSON conforme allo schema richiesto, senza testo libero.",
-      schema: {
-        current_phase: "string",
-        phase_label: "string",
-        phase_focus: "string",
-        current_week: "number",
-        total_weeks: "number",
-        weekly_goal: "string",
-        weekly_goal_minutes: "number",
-        weekly_goal_sessions: "number",
-        today_workout: "PlannerDayOutput",
-        weekly_plan: "PlannerDayOutput[]",
-        progression_reason: "string",
-        motivational_note: "string",
-        caution_notes: "string[]",
-        adjustments: "string[]"
-      }
+      model: Deno.env.get("AI_MODEL") ?? "gpt-5.4-mini",
+      input,
+      response_format: { type: "json_object" }
     })
-  });
+  }).catch(() => null);
 
-  if (!response.ok) {
-    return null;
-  }
-
-  const raw = await response.json().catch(() => null);
-  const plan = raw?.plan ?? raw;
-
-  if (!isPlannerOutput(plan)) {
-    return null;
-  }
-
-  return plan;
+  if (!response?.ok) return null;
+  const payload = await response.json().catch(() => null);
+  const candidate = payload?.plan ?? payload?.output ?? payload;
+  return isPlannerOutput(candidate) ? candidate : null;
 }
 
-function buildFallbackPlan(context: PlannerContext): PlannerOutput {
-  const onboarding = context.onboarding;
-  const completedSessions = context.sessions.filter((session) => session.status === "completed");
-  const recentFeelings = completedSessions
-    .map((session) => session.feeling)
-    .filter((value): value is Feeling => Boolean(value));
-  const adherenceAverage = average(
-    completedSessions
-      .map((session) => session.adherence_score)
-      .filter((value): value is number => typeof value === "number")
+function buildFallbackPlan(input: Record<string, any>): PlannerOutput {
+  const onboarding = input.onboarding;
+  const deepProfile = input.deepProfile;
+  const reassessment = input.reassessment;
+  const sessions = input.sessions as Array<Record<string, any>>;
+  const trigger = input.trigger as PlannerTrigger;
+  const preferredGoal = reassessment?.new_focus && !reassessment?.keep_current_focus
+    ? reassessment.new_focus
+    : onboarding.focus_preference;
+  const phase = resolvePhaseMeta(trigger, sessions.length, onboarding.gentle_start, reassessment?.plan_fit);
+  const workoutDays = getWorkoutDayIndexes(onboarding.days_per_week);
+  const weeklyPlan = Array.from({ length: 7 }, (_, index) =>
+    buildWorkoutDay(index, workoutDays.includes(index), onboarding.preferred_minutes, preferredGoal, phase.label, onboarding, deepProfile)
   );
-  const currentWeek = Math.min(
-    6,
-    Math.max(1, Math.floor(completedSessions.length / onboarding.days_per_week) + 1)
-  );
-  const phaseMeta = resolvePhaseMeta(currentWeek);
-  const weeklyGoalSessions = onboarding.days_per_week;
-  const weeklyGoalMinutes = onboarding.days_per_week * onboarding.preferred_minutes;
-  const adjustments = buildAdjustments(onboarding, recentFeelings, adherenceAverage);
-  const cautionNotes = buildGlobalCautions(onboarding.limitations);
-  const workoutDayIndexes = getWorkoutDayIndexes(onboarding.days_per_week);
-  const templates = buildTemplateSequence(onboarding);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const weeklyPlan = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(today);
-    date.setDate(today.getDate() + index);
-    const scheduledFor = toDateKey(date);
-    const isWorkoutDay = workoutDayIndexes.includes(index);
-    const templateKey = isWorkoutDay
-      ? templates[Math.min(workoutDayIndexes.indexOf(index), templates.length - 1)]
-      : "recovery_flow";
-    const estimatedMinutes = isWorkoutDay
-      ? onboarding.preferred_minutes
-      : Math.min(10, onboarding.preferred_minutes);
-    const workout = buildWorkout(templateKey, estimatedMinutes, onboarding, currentWeek);
-    const coachNote = isWorkoutDay
-      ? buildWorkoutCoachNote(onboarding, phaseMeta.label)
-      : "Oggi il lavoro resta leggero: recupero, respiro e mobilita per sostenere la costanza.";
-
-    return {
-      day_index: index,
-      scheduled_for: scheduledFor,
-      title: workout.title,
-      focus: workout.focus,
-      session_kind: isWorkoutDay ? "workout" : "recovery",
-      estimated_minutes: estimatedMinutes,
-      coach_note: coachNote,
-      caution_notes: workout.cautionNotes,
-      steps: workout.steps
-    } satisfies PlannerDayOutput;
-  });
+  const todayWorkout = weeklyPlan.find((day) => day.session_kind === "workout") ?? weeklyPlan[0];
+  const cautionFlags = buildGlobalCautions(onboarding, deepProfile, reassessment);
 
   return {
-    current_phase: phaseMeta.id,
-    phase_label: phaseMeta.label,
-    phase_focus: phaseMeta.focus,
-    current_week: currentWeek,
-    total_weeks: 6,
-    weekly_goal: `Completa ${weeklyGoalSessions} sessioni ben distribuite, senza rincorrere intensita inutili.`,
-    weekly_goal_minutes: weeklyGoalMinutes,
-    weekly_goal_sessions: weeklyGoalSessions,
-    today_workout: weeklyPlan[0],
+    user_profile_summary: buildUserProfileSummary(onboarding, deepProfile),
+    current_phase: phase.key,
+    phase_label: phase.label,
+    phase_focus: formatFocus(preferredGoal),
+    phase_goal: buildPhaseGoal(onboarding, deepProfile, phase.label),
+    current_week: Math.max(1, Math.min(4, Math.floor(sessions.length / Math.max(onboarding.days_per_week, 1)) + 1)),
+    total_weeks: 4,
+    weekly_goal: `Allenarti ${onboarding.days_per_week} volte con sessioni da ${onboarding.preferred_minutes} minuti e una percezione di lavoro sostenibile.`,
+    weekly_goal_minutes: onboarding.days_per_week * onboarding.preferred_minutes,
+    weekly_goal_sessions: onboarding.days_per_week,
+    weekly_structure: buildWeeklyStructure(onboarding, preferredGoal),
+    today_workout: todayWorkout,
     weekly_plan: weeklyPlan,
-    progression_reason: phaseMeta.reason,
-    motivational_note: phaseMeta.note,
-    caution_notes: cautionNotes,
-    adjustments
+    session_difficulty: describeDifficulty(onboarding, deepProfile, reassessment),
+    progression_strategy: describeProgressionStrategy(phase.label),
+    progression_reason: phase.reason,
+    realistic_expected_outcomes: buildRealisticOutcomes(onboarding, deepProfile),
+    motivational_message: buildCoachMessage(onboarding),
+    caution_flags: cautionFlags,
+    recovery_notes: buildRecoveryNotes(onboarding, deepProfile),
+    adherence_strategy: describeAdherenceStrategy(onboarding),
+    nutrition_tips: buildNutritionTips(deepProfile),
+    plan_explanation: buildPlanExplanation(onboarding, deepProfile, phase.label),
+    adjustments: buildAdjustments(trigger, reassessment),
+    reassessment_due_in_days: 14
   };
 }
 
-function buildWorkout(
-  templateKey: keyof typeof programTemplates,
-  estimatedMinutes: number,
-  onboarding: PlannerContext["onboarding"],
-  currentWeek: number
-) {
-  const template = programTemplates[templateKey];
-  const isGentle =
-    onboarding.gentle_start ||
-    onboarding.perceived_level === "molto_fuori_allenamento" ||
-    onboarding.energy_level === "molto_bassa";
-  const stepCount = template.exerciseIds.length;
-  const restSeconds = isGentle ? 20 : currentWeek >= 5 ? 15 : 18;
-  const totalRest = restSeconds * Math.max(stepCount - 1, 0);
-  const workSeconds = Math.max(
-    30,
-    Math.round((estimatedMinutes * 60 - totalRest) / Math.max(stepCount, 1))
-  );
-
-  const steps = template.exerciseIds.map((exerciseId, index) => {
-    const item = exerciseCatalog[exerciseId as keyof typeof exerciseCatalog];
-
+function buildWorkoutDay(
+  dayIndex: number,
+  isWorkout: boolean,
+  preferredMinutes: number,
+  goal: string,
+  phaseLabel: string,
+  onboarding: Record<string, any>,
+  deepProfile: Record<string, any> | null
+): PlannerDayOutput {
+  const scheduledFor = toDateKey(addDays(startOfWeek(new Date()), dayIndex));
+  if (!isWorkout) {
     return {
-      id: `${templateKey}-${index}`,
-      kind: "exercise",
+      day_index: dayIndex,
+      scheduled_for: scheduledFor,
+      title: "Recupero guidato",
+      focus: "Mobilita, respiro e scarico",
+      session_kind: "recovery",
+      estimated_minutes: 10,
+      coach_note: "Oggi conta il recupero: sciogli, respira e conserva energia per la prossima sessione.",
+      caution_notes: [],
+      steps: buildTemplateSequence("ripartenza_dolce", 10, true)
+    };
+  }
+
+  return {
+    day_index: dayIndex,
+    scheduled_for: scheduledFor,
+    title: resolveWorkoutTitle(goal, phaseLabel),
+    focus: resolveWorkoutFocus(goal),
+    session_kind: "workout",
+    estimated_minutes: preferredMinutes,
+    coach_note: buildWorkoutCoachNote(onboarding, deepProfile),
+    caution_notes: buildGlobalCautions(onboarding, deepProfile, null),
+    steps: buildTemplateSequence(goal, preferredMinutes, onboarding.gentle_start)
+  };
+}
+
+function buildTemplateSequence(goal: string, preferredMinutes: number, gentleStart: boolean) {
+  const ids = workoutTemplates[goal] ?? workoutTemplates.tonicita_generale;
+  const rounds = preferredMinutes <= 10 ? 4 : preferredMinutes <= 15 ? 5 : 6;
+  return ids.slice(0, rounds).map((exerciseId, index) => {
+    const exercise = exerciseCatalog[exerciseId as keyof typeof exerciseCatalog];
+    const durationSeconds = gentleStart ? 35 : 40;
+    const restSeconds = gentleStart ? 25 : 20;
+    return {
+      id: `${exerciseId}-${index}`,
+      kind: "exercise" as const,
       exerciseId,
-      title: item.title,
-      summary: item.summary,
-      durationSeconds: workSeconds,
-      restSeconds: index === stepCount - 1 ? 0 : restSeconds,
-      bodyArea: item.bodyArea,
-      doseLabel: item.doseLabel,
-      caution: item.caution
-    } satisfies WorkoutStepPlan;
+      title: exercise.title,
+      summary: `Movimento guidato per ${exercise.bodyArea.toLowerCase()}.`,
+      durationSeconds,
+      restSeconds,
+      bodyArea: exercise.bodyArea,
+      doseLabel: `${durationSeconds} secondi`,
+      caution: exercise.caution
+    };
   });
-
-  const cautionNotes = Array.from(
-    new Set(
-      [
-        ...buildGlobalCautions(onboarding.limitations),
-        ...steps
-          .map((step) => step.caution)
-          .filter((value): value is string => typeof value === "string")
-      ].filter(Boolean)
-    )
-  );
-
-  return {
-    title: template.title,
-    focus: template.focus,
-    cautionNotes,
-    steps
-  };
-}
-
-function buildTemplateSequence(onboarding: PlannerContext["onboarding"]) {
-  switch (onboarding.focus_preference) {
-    case "glutei_gambe":
-      return ["glutei_foundation", "core_posture", "glutei_progression", "total_body", "core_posture"] as const;
-    case "pancia_core":
-      return ["core_posture", "gentle_reset", "core_posture", "total_body", "core_posture"] as const;
-    case "postura":
-      return ["core_posture", "recovery_flow", "total_body", "core_posture", "gentle_reset"] as const;
-    case "ripartenza_dolce":
-      return ["gentle_reset", "recovery_flow", "gentle_reset", "core_posture", "gentle_reset"] as const;
-    case "tonicita_generale":
-    default:
-      return ["total_body", "core_posture", "glutei_foundation", "total_body", "gentle_reset"] as const;
-  }
-}
-
-function buildAdjustments(
-  onboarding: PlannerContext["onboarding"],
-  recentFeelings: Feeling[],
-  adherenceAverage: number
-) {
-  const adjustments: string[] = [];
-
-  if (onboarding.gentle_start || onboarding.perceived_level === "molto_fuori_allenamento") {
-    adjustments.push("La progressione resta morbida per consolidare base e controllo.");
-  }
-
-  if (recentFeelings.filter((item) => item === "impegnativo").length >= 2) {
-    adjustments.push("Abbassiamo leggermente la richiesta per proteggere continuita e recupero.");
-  }
-
-  if (adherenceAverage > 84 && recentFeelings.includes("facile")) {
-    adjustments.push("Possiamo rendere il ritmo un po piu presente senza uscire da una soglia sostenibile.");
-  }
-
-  if (adjustments.length === 0) {
-    adjustments.push("Manteniamo una progressione lineare per rafforzare la costanza settimana dopo settimana.");
-  }
-
-  return adjustments;
-}
-
-function buildGlobalCautions(limitations: string[]) {
-  const notes = [
-    "Interrompi il movimento in caso di dolore.",
-    "Se compaiono fastidi addominali o pelvici, riduci il gesto o fermati.",
-    "In presenza di dubbi specifici, confrontati con un professionista qualificato."
-  ];
-
-  if (limitations.includes("addome_delicato") || limitations.includes("pavimento_pelvico")) {
-    notes.unshift("Mantieni il lavoro addominale su ampiezze piccole e respirazione morbida.");
-  }
-
-  if (limitations.includes("lombare_delicata")) {
-    notes.unshift("Privilegia appoggi stabili e ampiezze controllate per proteggere la zona lombare.");
-  }
-
-  if (limitations.includes("ginocchia_sensibili")) {
-    notes.unshift("Tieni piegamenti e affondi su profondita ridotte e ben controllate.");
-  }
-
-  return Array.from(new Set(notes));
-}
-
-function buildWorkoutCoachNote(
-  onboarding: PlannerContext["onboarding"],
-  phaseLabel: string
-) {
-  const focusMap: Record<Goal, string> = {
-    glutei_gambe: "Oggi diamo presenza a gambe e glutei, senza irrigidire il gesto.",
-    pancia_core: "Oggi il centro del corpo guida il ritmo con controllo e respiro.",
-    postura: "Oggi lavoriamo su appoggio, apertura e qualita del movimento.",
-    tonicita_generale: "Oggi il lavoro resta armonioso: tono diffuso, non intensita dura.",
-    ripartenza_dolce: "Oggi conta soprattutto sentirti stabile, non fare di piu."
-  };
-
-  return `${focusMap[onboarding.focus_preference]} ${phaseLabel} significa costruire costanza prima di aumentare il carico.`;
-}
-
-function resolvePhaseMeta(currentWeek: number) {
-  if (currentWeek <= 2) {
-    return {
-      id: "base_controllo",
-      label: "Base e controllo",
-      focus: "Stabilita, respiro e fiducia nel gesto",
-      reason: "Stai costruendo base e controllo, non intensita.",
-      note: "Il corpo risponde meglio quando il ritmo resta chiaro e ripetibile."
-    };
-  }
-
-  if (currentWeek <= 4) {
-    return {
-      id: "tono_costante",
-      label: "Tono costante",
-      focus: "Continuita, tono percepibile e sostegno del centro",
-      reason: "Stai consolidando il tono, prima di aumentare la richiesta.",
-      note: "Questa fase serve a rendere il lavoro piu presente senza perdere sostenibilita."
-    };
-  }
-
-  return {
-    id: "consolidamento",
-    label: "Consolidamento",
-    focus: "Piu presenza muscolare, stessa chiarezza",
-    reason: "Ora puoi dare piu pienezza al gesto, mantenendo equilibrio e precisione.",
-    note: "La progressione resta sobria: piu tono, stessa qualita di movimento."
-  };
-}
-
-function getWorkoutDayIndexes(daysPerWeek: number) {
-  const patternMap: Record<number, number[]> = {
-    2: [0, 3],
-    3: [0, 2, 4],
-    4: [0, 1, 3, 5],
-    5: [0, 1, 2, 4, 6]
-  };
-
-  return patternMap[daysPerWeek] ?? [0, 2, 4];
 }
 
 async function persistPlan(
-  adminClient: ReturnType<typeof createClient>,
+  client: ReturnType<typeof createClient>,
   userId: string,
-  plan: PlannerOutput
+  plan: PlannerOutput,
+  trigger: PlannerTrigger,
+  currentPlanId: string | null
 ) {
-  const archiveResult = await adminClient
-    .from("training_plans")
-    .update({ status: "archived" })
-    .eq("user_id", userId)
-    .eq("status", "active");
-
-  if (archiveResult.error) {
-    throw new Error(archiveResult.error.message);
+  if (currentPlanId) {
+    await client.from("training_plans").update({ status: "archived" }).eq("id", currentPlanId).eq("user_id", userId);
   }
 
-  const planInsert = await adminClient
+  const insertPlan = await client
     .from("training_plans")
     .insert({
       user_id: userId,
       status: "active",
-      source: hasAiConfig() ? "ai" : "fallback",
+      source: "fallback",
       current_phase: plan.current_phase,
       phase_label: plan.phase_label,
       phase_focus: plan.phase_focus,
+      phase_goal: plan.phase_goal,
+      user_profile_summary: plan.user_profile_summary,
       current_week: plan.current_week,
       total_weeks: plan.total_weeks,
       weekly_goal: plan.weekly_goal,
       weekly_goal_minutes: plan.weekly_goal_minutes,
       weekly_goal_sessions: plan.weekly_goal_sessions,
+      weekly_structure: plan.weekly_structure,
+      session_difficulty: plan.session_difficulty,
+      progression_strategy: plan.progression_strategy,
       progression_reason: plan.progression_reason,
-      motivational_note: plan.motivational_note,
-      caution_notes: plan.caution_notes,
-      adjustments: plan.adjustments
+      motivational_note: plan.motivational_message,
+      realistic_expected_outcomes: plan.realistic_expected_outcomes,
+      caution_notes: plan.caution_flags,
+      recovery_notes: plan.recovery_notes,
+      adherence_strategy: plan.adherence_strategy,
+      nutrition_tips: plan.nutrition_tips,
+      plan_explanation: plan.plan_explanation,
+      adjustments: plan.adjustments,
+      reassessment_due_in_days: plan.reassessment_due_in_days,
+      next_reassessment_at: nextReassessmentIso(plan.reassessment_due_in_days)
     })
     .select("id")
     .single();
 
-  if (planInsert.error || !planInsert.data) {
-    throw new Error(planInsert.error?.message ?? "Impossibile salvare il piano.");
-  }
+  if (insertPlan.error || !insertPlan.data) throw insertPlan.error ?? new Error("Piano non salvato.");
+  const planId = insertPlan.data.id;
 
-  const dayRows = plan.weekly_plan.map((day) => ({
-    user_id: userId,
-    plan_id: planInsert.data.id,
-    day_index: day.day_index,
-    scheduled_for: day.scheduled_for,
-    title: day.title,
-    focus: day.focus,
-    session_kind: day.session_kind,
-    estimated_minutes: day.estimated_minutes,
-    status: "planned",
-    coach_note: day.coach_note,
-    caution_notes: day.caution_notes,
-    workout_payload: {
+  await client.from("training_plan_days").insert(
+    plan.weekly_plan.map((day) => ({
+      user_id: userId,
+      plan_id: planId,
+      day_index: day.day_index,
+      scheduled_for: day.scheduled_for,
       title: day.title,
       focus: day.focus,
-      estimatedMinutes: day.estimated_minutes,
-      coachNote: day.coach_note,
-      cautionNotes: day.caution_notes,
-      steps: day.steps
-    }
-  }));
-
-  const dayInsert = await adminClient.from("training_plan_days").insert(dayRows);
-
-  if (dayInsert.error) {
-    throw new Error(dayInsert.error.message);
-  }
-
-  return planInsert.data.id;
-}
-
-function average(values: number[]) {
-  if (values.length === 0) {
-    return 0;
-  }
-
-  return values.reduce((total, value) => total + value, 0) / values.length;
-}
-
-function hasAiConfig() {
-  return Boolean(Deno.env.get("AI_API_URL") && Deno.env.get("AI_API_KEY"));
-}
-
-function isPlannerOutput(value: unknown): value is PlannerOutput {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const record = value as Record<string, unknown>;
-  return (
-    typeof record.current_phase === "string" &&
-    typeof record.phase_label === "string" &&
-    typeof record.phase_focus === "string" &&
-    typeof record.current_week === "number" &&
-    typeof record.total_weeks === "number" &&
-    typeof record.weekly_goal === "string" &&
-    Array.isArray(record.weekly_plan) &&
-    typeof record.progression_reason === "string" &&
-    typeof record.motivational_note === "string"
+      session_kind: day.session_kind,
+      estimated_minutes: day.estimated_minutes,
+      coach_note: day.coach_note,
+      caution_notes: day.caution_notes,
+      workout_payload: {
+        title: day.title,
+        focus: day.focus,
+        estimatedMinutes: day.estimated_minutes,
+        coachNote: day.coach_note,
+        cautionNotes: day.caution_notes,
+        steps: day.steps
+      }
+    }))
   );
+
+  const versionQuery = await client
+    .from("training_plan_versions")
+    .select("version_number")
+    .eq("user_id", userId)
+    .order("version_number", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const versionNumber = (versionQuery.data?.version_number ?? 0) + 1;
+
+  const versionInsert = await client
+    .from("training_plan_versions")
+    .insert({
+      plan_id: planId,
+      user_id: userId,
+      version_number: versionNumber,
+      trigger,
+      payload: plan as unknown as Json,
+      user_profile_summary: plan.user_profile_summary,
+      phase_goal: plan.phase_goal,
+      weekly_structure: plan.weekly_structure,
+      session_difficulty: plan.session_difficulty,
+      progression_strategy: plan.progression_strategy,
+      realistic_expected_outcomes: plan.realistic_expected_outcomes,
+      motivational_message: plan.motivational_message,
+      recovery_notes: plan.recovery_notes,
+      adherence_strategy: plan.adherence_strategy,
+      nutrition_tips: plan.nutrition_tips,
+      plan_explanation: plan.plan_explanation
+    })
+    .select("id")
+    .single();
+
+  const versionId = versionInsert.data?.id ?? null;
+
+  await client.from("plan_adjustments").insert(
+    plan.adjustments.slice(0, 3).map((description, index) => ({
+      user_id: userId,
+      plan_id: planId,
+      plan_version_id: versionId,
+      adjustment_type: index === 0 ? "focus" : "rhythm",
+      title: index === 0 ? "Piano aggiornato" : "Adattamento del ritmo",
+      description
+    }))
+  );
+
+  await client.from("support_tips").insert(
+    [
+      ...plan.nutrition_tips.slice(0, 2).map((body) => ({
+        user_id: userId,
+        plan_id: planId,
+        category: "alimentazione",
+        title: "Supporto semplice per il recupero",
+        body
+      })),
+      ...plan.recovery_notes.slice(0, 2).map((body) => ({
+        user_id: userId,
+        plan_id: planId,
+        category: "recupero",
+        title: "Un appoggio per tenere il ritmo",
+        body
+      }))
+    ]
+  );
+
+  return planId;
 }
 
-function jsonResponse(payload: unknown, status = 200) {
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: {
-      ...corsHeaders,
-      "Content-Type": "application/json"
-    }
-  });
+function buildUserProfileSummary(onboarding: Record<string, any>, deepProfile: Record<string, any> | null) {
+  const parts = [
+    onboarding.full_name ? `${onboarding.full_name}, ` : "",
+    `${onboarding.age_band?.replace("_", "-") ?? "adulta"} anni circa`,
+    `, livello ${String(onboarding.perceived_level).replaceAll("_", " ")}`,
+    `, focus ${formatFocus(onboarding.focus_preference)}`,
+    `, disponibilita reale ${onboarding.days_per_week} volte a settimana`
+  ];
+  if (deepProfile?.priority_area) parts.push(`, con attenzione extra su ${formatFocus(deepProfile.priority_area)}`);
+  return parts.join("");
+}
+
+function buildPhaseGoal(onboarding: Record<string, any>, deepProfile: Record<string, any> | null, phaseLabel: string) {
+  const tone = deepProfile?.training_preference === "piu_tonificante" ? "tono" : "controllo";
+  return `${phaseLabel}: costruire ${tone}, continuita e qualita del movimento senza partire troppo forte.`;
+}
+
+function buildWeeklyStructure(onboarding: Record<string, any>, goal: string) {
+  return [
+    `${onboarding.days_per_week} sessioni guidate da ${onboarding.preferred_minutes} minuti`,
+    `Focus principale su ${formatFocus(goal)}`,
+    "Giorni intermedi usati per recupero leggero e mobilita",
+    "Progressione basata su costanza, non su intensita improvvisa"
+  ];
+}
+
+function buildRealisticOutcomes(onboarding: Record<string, any>, deepProfile: Record<string, any> | null) {
+  const outcomes = [
+    "Più continuita nelle settimane e meno sensazione di ricominciare ogni volta.",
+    "Movimenti più puliti e stabili nelle sedute di base.",
+    "Percezione migliore del tono generale se l'aderenza resta buona."
+  ];
+  if (onboarding.focus_preference === "glutei_gambe") outcomes.push("Glutei e gambe più presenti nei gesti quotidiani.");
+  if (deepProfile?.posture_perception) outcomes.push("Maggiore controllo posturale e meno rigidita nelle giornate sedute.");
+  return outcomes;
+}
+
+function buildRecoveryNotes(onboarding: Record<string, any>, deepProfile: Record<string, any> | null) {
+  const notes = [
+    "Tieni almeno un giorno piu leggero tra le sessioni se l'energia e variabile.",
+    "Se arrivi stanca, scegli comunque la versione breve: conta piu la continuita della perfezione."
+  ];
+  if (deepProfile?.sensitivities?.includes?.("schiena")) notes.push("Nei giorni di schiena piu sensibile riduci ampiezza e velocita.");
+  return notes;
+}
+
+function buildNutritionTips(deepProfile: Record<string, any> | null) {
+  const notes = [
+    "Non saltare spesso i pasti: regolarita e recupero si aiutano a vicenda.",
+    "Dai spazio a una quota proteica semplice e sostenibile durante la giornata.",
+    "Ricordati di bere con continuita, soprattutto nei giorni piu pieni."
+  ];
+  if (deepProfile?.skips_meals) notes.unshift("Se tendi a rimandare i pasti, prova a tenere almeno un appoggio pratico gia pronto.");
+  return notes;
+}
+
+function describeDifficulty(onboarding: Record<string, any>, deepProfile: Record<string, any> | null, reassessment: Record<string, any> | null) {
+  if (reassessment?.plan_fit === "troppo_difficile") return "Ridotta di un gradino per darti piu controllo e continuita.";
+  if (deepProfile?.training_preference === "piu_energizzante") return "Base attiva ma ancora sostenibile.";
+  if (onboarding.gentle_start) return "Delicata, costruita per farti entrare nel ritmo senza strappi.";
+  return "Moderata e lineare, con carico percepito sostenibile.";
+}
+
+function describeAdherenceStrategy(onboarding: Record<string, any>) {
+  return `L'obiettivo non e fare di piu, ma proteggere ${onboarding.days_per_week} appuntamenti realistici nella fascia ${String(onboarding.preferred_time_of_day).replaceAll("_", " ")}.`;
+}
+
+function describeProgressionStrategy(phaseLabel: string) {
+  return `${phaseLabel}: prima consolidiamo gesto e costanza, poi alziamo volume o controllo solo se il corpo risponde bene.`;
+}
+
+function buildPlanExplanation(onboarding: Record<string, any>, deepProfile: Record<string, any> | null, phaseLabel: string) {
+  return `Partiamo da ${phaseLabel.toLowerCase()} perche, guardando energia, ritmo reale e focus, la cosa piu utile adesso non e spingere subito ma costruire base, controllo e costanza. Nelle prime settimane Mirya ti chiede sessioni chiare e sostenibili: quando il ritmo si stabilizza, il piano si aggiorna con piu tono, piu qualita del lavoro o una distribuzione diversa.`;
+}
+
+function buildAdjustments(trigger: PlannerTrigger, reassessment: Record<string, any> | null) {
+  const items = [
+    "Abbiamo mantenuto il piano semplice e leggibile, cosi oggi sai subito cosa fare.",
+    "Le sedute restano brevi per proteggere costanza ed energia, non solo intensita."
+  ];
+  if (trigger === "reassessment_completed" && reassessment?.plan_fit === "troppo_difficile") {
+    items.unshift("Il ritmo e stato alleggerito di un gradino per restare sostenibile davvero.");
+  }
+  if (trigger === "deep_profile_completed") {
+    items.unshift("Abbiamo raffinato il piano sulle aree che senti piu delicate o piu deboli.");
+  }
+  return items;
+}
+
+function buildGlobalCautions(onboarding: Record<string, any>, deepProfile: Record<string, any> | null, reassessment: Record<string, any> | null) {
+  const flags: string[] = [];
+  const limitations = onboarding.limitations ?? [];
+  if (limitations.includes("addome_delicato")) flags.push("Se senti pressione addominale, riduci subito leva e ampiezza.");
+  if (limitations.includes("pavimento_pelvico") || deepProfile?.pelvic_signals?.length) flags.push("Attenzione a eventuali fastidi pelvici: fermati se senti peso o disagio.");
+  if (limitations.includes("ginocchia_sensibili")) flags.push("Mantieni piegamenti piccoli e controllati se le ginocchia sono sensibili.");
+  if (reassessment?.caution_notes) flags.push("Monitora i segnali emersi nell'ultima rivalutazione prima di aumentare il lavoro.");
+  return flags;
+}
+
+function buildCoachMessage(onboarding: Record<string, any>) {
+  return `Oggi non serve fare tutto perfetto: ti basta seguire la sequenza e uscire dalla sessione con la sensazione di aver lavorato bene per te.`;
+}
+
+function buildWorkoutCoachNote(onboarding: Record<string, any>, deepProfile: Record<string, any> | null) {
+  if (deepProfile?.training_preference === "piu_posturale") return "Lavora con calma e cura del gesto: oggi conta piu la qualita della velocita.";
+  if (onboarding.energy_level === "molto_bassa" || onboarding.energy_level === "bassa") return "Tieni un ritmo morbido: l'obiettivo di oggi e attivarti senza svuotarti.";
+  return "Segui il ritmo indicato e resta in ascolto: oggi costruiamo tono senza irrigidirti.";
+}
+
+function resolvePhaseMeta(trigger: PlannerTrigger, sessionsCount: number, gentleStart: boolean, planFit?: string | null) {
+  if (trigger === "reassessment_completed" && planFit === "troppo_difficile") {
+    return { key: "riequilibrio", label: "Riequilibrio e continuita", reason: "Stiamo semplificando il ritmo per proteggere aderenza e qualita del gesto." };
+  }
+  if (sessionsCount >= 6) {
+    return { key: "consolidamento", label: "Consolidamento tecnico", reason: "Hai gia una base minima: adesso consolidiamo tono, controllo e continuita." };
+  }
+  if (gentleStart) {
+    return { key: "riattivazione", label: "Riattivazione e adattamento", reason: "Partiamo con un ingresso graduale per costruire controllo senza fatica inutile." };
+  }
+  return { key: "base", label: "Base e costanza", reason: "Lavoriamo su una base semplice ma seria prima di intensificare." };
+}
+
+function resolveWorkoutTitle(goal: string, phaseLabel: string) {
+  return `${formatFocus(goal)} · ${phaseLabel}`;
+}
+
+function resolveWorkoutFocus(goal: string) {
+  return formatFocus(goal);
+}
+
+function getWorkoutDayIndexes(daysPerWeek: number) {
+  if (daysPerWeek <= 2) return [1, 4];
+  if (daysPerWeek === 3) return [1, 3, 5];
+  if (daysPerWeek === 4) return [0, 2, 4, 6];
+  return [0, 1, 3, 4, 6];
+}
+
+function formatFocus(value: string) {
+  return value.replaceAll("_", " ");
+}
+
+function nextReassessmentIso(days: number) {
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function startOfWeek(date: Date) {
+  const next = new Date(date);
+  const day = next.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  next.setDate(next.getDate() + diff);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
+
+function addDays(date: Date, amount: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + amount);
+  return next;
 }
 
 function toDateKey(date: Date) {
@@ -768,4 +664,24 @@ function toDateKey(date: Date) {
   const month = `${date.getMonth() + 1}`.padStart(2, "0");
   const day = `${date.getDate()}`.padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function isPlannerOutput(value: unknown): value is PlannerOutput {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      "today_workout" in value &&
+      "weekly_plan" in value &&
+      "current_phase" in value
+  );
+}
+
+function jsonResponse(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json"
+    }
+  });
 }

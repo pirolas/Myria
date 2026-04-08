@@ -5,10 +5,13 @@ import { MiryaAppProvider, useMiryaApp } from "@/hooks/useMiryaApp";
 import { ActiveWorkoutPage } from "@/pages/ActiveWorkoutPage";
 import { AuthPage } from "@/pages/AuthPage";
 import { DashboardPage } from "@/pages/DashboardPage";
+import { DeepProfilePage } from "@/pages/DeepProfilePage";
 import { OnboardingPage } from "@/pages/OnboardingPage";
 import { PlanPage } from "@/pages/PlanPage";
+import { PlanStoryPage } from "@/pages/PlanStoryPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { ProgressPage } from "@/pages/ProgressPage";
+import { ReassessmentPage } from "@/pages/ReassessmentPage";
 import { TodayWorkoutPage } from "@/pages/TodayWorkoutPage";
 import { WelcomePage } from "@/pages/WelcomePage";
 
@@ -85,8 +88,11 @@ function AppRoutes() {
             <Route path="/today" element={<TodayWorkoutPage />} />
             <Route path="/session/:planDayId" element={<ActiveWorkoutPage />} />
             <Route path="/plan" element={<PlanPage />} />
+            <Route path="/plan/story" element={<PlanStoryPage />} />
             <Route path="/progress" element={<ProgressPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile/deep" element={<DeepProfilePage />} />
+            <Route path="/reassessment" element={<ReassessmentPage />} />
           </Route>
         </Route>
       </Route>

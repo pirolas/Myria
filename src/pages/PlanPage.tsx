@@ -53,6 +53,16 @@ export function PlanPage() {
             </ul>
           </div>
         ) : null}
+
+        <div className="mt-4 rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+            Difficolta attuale
+          </div>
+          <p className="mt-2 text-sm leading-6 text-ink">{data.activePlan.sessionDifficulty}</p>
+          <p className="mt-3 text-sm leading-6 text-muted">
+            {data.activePlan.adherenceStrategy}
+          </p>
+        </div>
       </section>
 
       <section className="space-y-3">
@@ -116,6 +126,39 @@ export function PlanPage() {
           </div>
         </div>
       </section>
+
+      <section className="surface px-5 py-5">
+        <SectionHeading
+          eyebrow="Outcome realistici"
+          title="Cosa ci aspettiamo da questa fase"
+          description="Niente promesse lampo: solo risultati coerenti con costanza, energia e situazione reale."
+        />
+        <ul className="mt-4 space-y-2 text-sm leading-6 text-muted">
+          {data.activePlan.realisticExpectedOutcomes.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </section>
+
+      {data.supportTips.length > 0 ? (
+        <section className="surface px-5 py-5">
+          <SectionHeading
+            eyebrow="Tips di supporto"
+            title="Piccoli accorgimenti che aiutano il piano a lavorare meglio"
+          />
+          <div className="mt-4 space-y-3">
+            {data.supportTips.slice(0, 4).map((tip) => (
+              <div
+                key={tip.id}
+                className="rounded-[22px] border border-line bg-white/78 px-4 py-4"
+              >
+                <div className="text-sm font-semibold text-ink">{tip.title}</div>
+                <p className="mt-2 text-sm leading-6 text-muted">{tip.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

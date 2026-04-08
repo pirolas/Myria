@@ -5,15 +5,24 @@ import type {
   ActiveTrainingPlan,
   BetaOnboardingInput,
   DashboardModel,
+  DeepProfileInput,
+  Goal,
   NotificationPreferenceRecord,
+  PlanAdjustment,
   PlannedWorkout,
   PlanDayStatus,
   ProfileRecord,
+  ReassessmentInput,
+  SupportTip,
   TrainingPlanDay,
+  TrainingPlanVersionRecord,
+  UserDeepProfileRecord,
   UserMilestone,
   UserOnboardingRecord,
   UserPreferenceRecord,
+  UserReassessmentRecord,
   WorkoutFeedbackInput,
+  WorkoutFeedbackRecord,
   WorkoutSessionRecord
 } from "@/types/domain";
 import type { Database, Json } from "@/types/supabase";
@@ -89,14 +98,25 @@ export async function loadDashboardModel(userId: string): Promise<DashboardModel
   const [
     profileResult,
     onboardingResult,
+    deepProfileResult,
+    reassessmentResult,
     preferencesResult,
     notificationsResult,
     activePlanResult,
     sessionsResult,
+    workoutFeedbackResult,
     milestonesResult
   ] = await Promise.all([
     client.from("profiles").select("*").eq("id", userId).maybeSingle(),
     client.from("user_onboarding").select("*").eq("user_id", userId).maybeSingle(),
+    client.from("user_deep_profile").select("*").eq("user_id", userId).maybeSingle(),
+    client
+      .from("user_reassessments")
+      .select("*")
+      .eq("user_id", userId)
+      .order("completed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
     client.from("user_preferences").select("*").eq("user_id", userId).maybeSingle(),
     client
       .from("notification_preferences")
@@ -118,6 +138,12 @@ export async function loadDashboardModel(userId: string): Promise<DashboardModel
       .order("started_at", { ascending: false })
       .limit(60),
     client
+      .from("workout_feedback")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(40),
+    client
       .from("user_milestones")
       .select("*")
       .eq("user_id", userId)
@@ -125,102 +151,159 @@ export async function loadDashboardModel(userId: string): Promise<DashboardModel
       .limit(8)
   ]);
 
-  throwIfSupabaseError(profileResult.error);
-  throwIfSupabaseError(onboardingResult.error);
-  throwIfSupabaseError(preferencesResult.error);
-  throwIfSupabaseError(notificationsResult.error);
-  throwIfSupabaseError(activePlanResult.error);
-  throwIfSupabaseError(sessionsResult.error);
-  throwIfSupabaseError(milestonesResult.error);
+  [
+    profileResult.error,
+    onboardingResult.error,
+    deepProfileResult.error,
+    reassessmentResult.error,
+    preferencesResult.error,
+    notificationsResult.error,
+    activePlanResult.error,
+    sessionsResult.error,
+    workoutFeedbackResult.error,
+    milestonesResult.error
+  ].forEach(throwIfSupabaseError);
 
   const activePlanRow = activePlanResult.data;
-  const planDaysResult = activePlanRow
-    ? await client
-        .from("training_plan_days")
-        .select("*")
-        .eq("plan_id", activePlanRow.id)
-        .order("day_index", { ascending: true })
-    : { data: [], error: null };
 
-  throwIfSupabaseError(planDaysResult.error);
+  const [
+    planDaysResult,
+    planVersionResult,
+    planAdjustmentsResult,
+    supportTipsResult
+  ] = activePlanRow
+    ? await Promise.all([
+        client
+          .from("training_plan_days")
+          .select("*")
+          .eq("plan_id", activePlanRow.id)
+          .order("day_index", { ascending: true }),
+        client
+          .from("training_plan_versions")
+          .select("*")
+          .eq("plan_id", activePlanRow.id)
+          .order("version_number", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        client
+          .from("plan_adjustments")
+          .select("*")
+          .eq("plan_id", activePlanRow.id)
+          .order("created_at", { ascending: false })
+          .limit(8),
+        client
+          .from("support_tips")
+          .select("*")
+          .eq("user_id", userId)
+          .or(`plan_id.eq.${activePlanRow.id},plan_id.is.null`)
+          .order("created_at", { ascending: false })
+          .limit(8)
+      ])
+    : [
+        { data: [], error: null },
+        { data: null, error: null },
+        { data: [], error: null },
+        { data: [], error: null }
+      ];
+
+  [
+    planDaysResult.error,
+    planVersionResult.error,
+    planAdjustmentsResult.error,
+    supportTipsResult.error
+  ].forEach(throwIfSupabaseError);
 
   const profile = mapProfile(profileResult.data);
   const onboarding = mapOnboarding(onboardingResult.data);
+  const deepProfile = mapDeepProfile(deepProfileResult.data);
+  const latestReassessment = mapReassessment(reassessmentResult.data);
   const preferences = mapPreferences(preferencesResult.data);
   const notifications = mapNotificationPreferences(notificationsResult.data);
   const activePlan = mapPlan(activePlanRow);
+  const activePlanVersion = mapPlanVersion(
+    planVersionResult.data as Database["public"]["Tables"]["training_plan_versions"]["Row"] | null
+  );
   const weekPlan = (planDaysResult.data ?? []).map(mapPlanDay);
   const todayPlanDay = resolveTodayPlanDay(weekPlan);
   const sessions = (sessionsResult.data ?? []).map(mapSession);
+  const workoutFeedback = (workoutFeedbackResult.data ?? []).map(mapWorkoutFeedback);
   const milestones = (milestonesResult.data ?? []).map(mapMilestone);
+  const planAdjustments = (planAdjustmentsResult.data ?? []).map(mapPlanAdjustment);
+  const supportTips = (supportTipsResult.data ?? []).map(mapSupportTip);
+
   const uncomfortableExerciseIds = Array.from(
     new Set(
-      sessions.flatMap((session) => {
-        const ids = session.sessionSummary?.uncomfortableExerciseIds;
-        return Array.isArray(ids)
-          ? ids.filter((value): value is string => typeof value === "string")
-          : [];
-      })
+      [
+        ...sessions.flatMap((session) => {
+          const ids = session.sessionSummary?.uncomfortableExerciseIds;
+          return Array.isArray(ids)
+            ? ids.filter((value): value is string => typeof value === "string")
+            : [];
+        }),
+        ...workoutFeedback.flatMap((feedback) => feedback.uncomfortableExerciseIds)
+      ]
     )
   );
 
   return {
     profile,
     onboarding,
+    deepProfile,
+    latestReassessment,
     preferences,
     activePlan,
+    activePlanVersion,
     weekPlan,
     todayPlanDay,
     sessions,
+    workoutFeedback,
     uncomfortableExerciseIds,
     milestones,
-    notifications
+    notifications,
+    planAdjustments,
+    supportTips
   };
 }
 
-export async function saveOnboarding(
-  userId: string,
-  input: BetaOnboardingInput
-) {
+export async function saveOnboarding(userId: string, input: BetaOnboardingInput) {
   const client = requireSupabaseClient();
   const limitations =
     input.limitations.length === 0 ? ["nessuna"] : sanitizeLimitations(input.limitations);
+
   const onboardingPayload = {
     user_id: userId,
+    full_name: input.fullName || null,
     age_band: input.ageBand,
+    height_cm: input.heightCm,
+    weight_kg: input.weightKg,
     perceived_level: input.perceivedLevel,
     primary_goal: input.primaryGoal,
     secondary_goals: input.secondaryGoals,
     days_per_week: input.daysPerWeek,
     preferred_minutes: input.preferredMinutes,
     energy_level: input.energyLevel,
+    past_experience: input.pastExperience,
+    lifestyle: input.lifestyle,
     gentle_start: input.gentleStart,
     limitations,
     focus_preference: input.focusPreference,
+    sleep_quality: input.sleepQuality,
+    stress_level: input.stressLevel,
+    consistency_score: input.consistencyScore,
+    weekly_availability: input.weeklyAvailability,
+    preferred_time_of_day: input.preferredTimeOfDay,
     notes: input.notes || null
   };
 
-  let onboardingResult = await client
-    .from("user_onboarding")
-    .upsert(onboardingPayload, { onConflict: "user_id" });
-
-  if (
-    onboardingResult.error?.message.includes("secondary_goals") ||
-    onboardingResult.error?.message.includes("schema cache")
-  ) {
-    const fallbackPayload = {
-      ...onboardingPayload,
-      notes: buildOnboardingNotes(input)
-    };
-
-    delete (fallbackPayload as { secondary_goals?: string[] }).secondary_goals;
-
-    onboardingResult = await client
-      .from("user_onboarding")
-      .upsert(fallbackPayload, { onConflict: "user_id" });
-  }
-
-  const [preferenceResult] = await Promise.all([
+  const [profileResult, onboardingResult, preferenceResult] = await Promise.all([
+    client.from("profiles").upsert(
+      {
+        id: userId,
+        full_name: input.fullName || null
+      },
+      { onConflict: "id" }
+    ),
+    client.from("user_onboarding").upsert(onboardingPayload, { onConflict: "user_id" }),
     client.from("user_preferences").upsert(
       {
         user_id: userId,
@@ -231,8 +314,65 @@ export async function saveOnboarding(
     )
   ]);
 
-  throwIfSupabaseError(onboardingResult.error);
-  throwIfSupabaseError(preferenceResult.error);
+  [profileResult.error, onboardingResult.error, preferenceResult.error].forEach(
+    throwIfSupabaseError
+  );
+}
+
+export async function saveDeepProfile(userId: string, input: DeepProfileInput) {
+  const client = requireSupabaseClient();
+
+  const result = await client.from("user_deep_profile").upsert(
+    {
+      user_id: userId,
+      weak_area: input.weakArea,
+      priority_area: input.priorityArea,
+      movement_discomforts: input.movementDiscomforts || null,
+      posture_perception: input.posturePerception,
+      mobility_perception: input.mobilityPerception,
+      coordination_level: input.coordinationLevel,
+      sensitivities: input.sensitivities,
+      pregnancies_count: input.pregnanciesCount,
+      cesareans_count: input.cesareansCount,
+      months_since_last_birth: input.monthsSinceLastBirth,
+      diastasis_status: input.diastasisStatus,
+      pelvic_signals: input.pelvicSignals,
+      scar_discomfort: input.scarDiscomfort,
+      body_confidence: input.bodyConfidence,
+      dropout_reasons: input.dropoutReasons,
+      nutrition_pattern: input.nutritionPattern,
+      nervous_hunger: input.nervousHunger,
+      skips_meals: input.skipsMeals,
+      hydration_pattern: input.hydrationPattern,
+      training_preference: input.trainingPreference,
+      notes: input.notes || null
+    },
+    { onConflict: "user_id" }
+  );
+
+  throwIfSupabaseError(result.error);
+}
+
+export async function saveReassessment(userId: string, input: ReassessmentInput) {
+  const client = requireSupabaseClient();
+  const result = await client.from("user_reassessments").insert({
+    user_id: userId,
+    plan_fit: input.planFit,
+    feels_more_stable: input.feelsMoreStable,
+    feels_more_toned: input.feelsMoreToned,
+    feels_more_energetic: input.feelsMoreEnergetic,
+    effective_exercises: input.effectiveExercises,
+    uncomfortable_exercises: input.uncomfortableExercises,
+    consistency_keeping: input.consistencyKeeping,
+    main_obstacle: input.mainObstacle,
+    improvements: input.improvements,
+    caution_notes: input.cautionNotes || null,
+    keep_current_focus: input.keepCurrentFocus,
+    new_focus: input.newFocus,
+    realistic_minutes_now: input.realisticMinutesNow
+  });
+
+  throwIfSupabaseError(result.error);
 }
 
 export async function updateTimerSound(userId: string, enabled: boolean) {
@@ -248,10 +388,7 @@ export async function updateTimerSound(userId: string, enabled: boolean) {
   throwIfSupabaseError(result.error);
 }
 
-export async function startWorkoutSession(
-  userId: string,
-  planDay: TrainingPlanDay
-) {
+export async function startWorkoutSession(userId: string, planDay: TrainingPlanDay) {
   const client = requireSupabaseClient();
 
   const sessionResult = await client
@@ -278,26 +415,23 @@ export async function startWorkoutSession(
     throw new Error("Non siamo riusciti a creare la sessione workout.");
   }
 
-  const sessionId = sessionResult.data.id;
-  const exerciseRows = planDay.workout.steps.map((step, index) => ({
-    user_id: userId,
-    session_id: sessionId,
-    exercise_id: step.exerciseId,
-    exercise_name: step.title,
-    position_index: index,
-    prescribed_duration_seconds: step.durationSeconds,
-    rest_seconds: step.restSeconds,
-    completed: false,
-    skipped: false
-  }));
-
-  const exercisesResult = await client
-    .from("workout_session_exercises")
-    .insert(exerciseRows);
+  const exercisesResult = await client.from("workout_session_exercises").insert(
+    planDay.workout.steps.map((step, index) => ({
+      user_id: userId,
+      session_id: sessionResult.data.id,
+      exercise_id: step.exerciseId,
+      exercise_name: step.title,
+      position_index: index,
+      prescribed_duration_seconds: step.durationSeconds,
+      rest_seconds: step.restSeconds,
+      completed: false,
+      skipped: false
+    }))
+  );
 
   throwIfSupabaseError(exercisesResult.error);
 
-  return sessionId;
+  return sessionResult.data.id;
 }
 
 export async function completeWorkoutSession(
@@ -328,34 +462,44 @@ export async function completeWorkoutSession(
     uncomfortableExerciseIds: feedback.uncomfortableExerciseIds
   };
 
-  const sessionResult = await client
-    .from("workout_sessions")
-    .update({
-      status: "completed",
-      completed_at: new Date().toISOString(),
-      duration_minutes: durationMinutes,
+  const [sessionResult, planDayResult, workoutFeedbackResult] = await Promise.all([
+    client
+      .from("workout_sessions")
+      .update({
+        status: "completed",
+        completed_at: new Date().toISOString(),
+        duration_minutes: durationMinutes,
+        feeling: feedback.feeling,
+        energy_final: feedback.energyFinal,
+        discomfort_notes: feedback.discomfortNotes || null,
+        stop_reason: feedback.stopReason || null,
+        adherence_score: adherenceScore,
+        session_summary: summary
+      })
+      .eq("id", sessionId)
+      .eq("user_id", userId),
+    client
+      .from("training_plan_days")
+      .update({
+        status: "completed",
+        completed_session_id: sessionId
+      })
+      .eq("id", planDay.id)
+      .eq("user_id", userId),
+    client.from("workout_feedback").insert({
+      session_id: sessionId,
+      user_id: userId,
       feeling: feedback.feeling,
       energy_final: feedback.energyFinal,
       discomfort_notes: feedback.discomfortNotes || null,
       stop_reason: feedback.stopReason || null,
-      adherence_score: adherenceScore,
-      session_summary: summary
+      uncomfortable_exercise_ids: feedback.uncomfortableExerciseIds
     })
-    .eq("id", sessionId)
-    .eq("user_id", userId);
+  ]);
 
-  throwIfSupabaseError(sessionResult.error);
-
-  const planDayResult = await client
-    .from("training_plan_days")
-    .update({
-      status: "completed",
-      completed_session_id: sessionId
-    })
-    .eq("id", planDay.id)
-    .eq("user_id", userId);
-
-  throwIfSupabaseError(planDayResult.error);
+  [sessionResult.error, planDayResult.error, workoutFeedbackResult.error].forEach(
+    throwIfSupabaseError
+  );
 
   const exerciseUpdates = planDay.workout.steps.map((step) =>
     client
@@ -397,40 +541,99 @@ export async function completeWorkoutSession(
 function mapProfile(
   row: Database["public"]["Tables"]["profiles"]["Row"] | null
 ): ProfileRecord | null {
-  if (!row) {
-    return null;
-  }
-
-  return {
-    id: row.id,
-    fullName: row.full_name,
-    email: row.email,
-    createdAt: row.created_at
-  };
+  if (!row) return null;
+  return { id: row.id, fullName: row.full_name, email: row.email, createdAt: row.created_at };
 }
 
 function mapOnboarding(
   row: Database["public"]["Tables"]["user_onboarding"]["Row"] | null
 ): UserOnboardingRecord | null {
-  if (!row) {
-    return null;
-  }
+  if (!row) return null;
 
   return {
     userId: row.user_id,
+    fullName: row.full_name ?? "",
     ageBand: row.age_band as UserOnboardingRecord["ageBand"],
+    heightCm: row.height_cm,
+    weightKg: row.weight_kg,
     perceivedLevel: row.perceived_level as UserOnboardingRecord["perceivedLevel"],
     primaryGoal: row.primary_goal as UserOnboardingRecord["primaryGoal"],
-    secondaryGoals: (row.secondary_goals ?? []).filter(
-      (value): value is UserOnboardingRecord["primaryGoal"] => typeof value === "string"
-    ),
+    secondaryGoals: sanitizeGoalArray(row.secondary_goals, row.primary_goal),
     daysPerWeek: row.days_per_week,
     preferredMinutes: row.preferred_minutes as UserOnboardingRecord["preferredMinutes"],
     energyLevel: row.energy_level as UserOnboardingRecord["energyLevel"],
+    pastExperience:
+      (row.past_experience as UserOnboardingRecord["pastExperience"]) ?? "mai_costante",
+    lifestyle: (row.lifestyle as UserOnboardingRecord["lifestyle"]) ?? "molto_sedentaria",
+    focusPreference: row.focus_preference as UserOnboardingRecord["focusPreference"],
     gentleStart: row.gentle_start,
     limitations: sanitizeLimitations(row.limitations) as UserOnboardingRecord["limitations"],
-    focusPreference: row.focus_preference as UserOnboardingRecord["focusPreference"],
+    sleepQuality:
+      (row.sleep_quality as UserOnboardingRecord["sleepQuality"]) ?? "discontinua",
+    stressLevel: (row.stress_level as UserOnboardingRecord["stressLevel"]) ?? "medio",
+    consistencyScore: (row.consistency_score as 1 | 2 | 3 | 4 | 5 | null) ?? 3,
+    weeklyAvailability:
+      (row.weekly_availability as UserOnboardingRecord["weeklyAvailability"]) ??
+      "alcuni_spazi",
+    preferredTimeOfDay:
+      (row.preferred_time_of_day as UserOnboardingRecord["preferredTimeOfDay"]) ??
+      "variabile",
     notes: row.notes ?? "",
+    completedAt: row.completed_at
+  };
+}
+
+function mapDeepProfile(
+  row: Database["public"]["Tables"]["user_deep_profile"]["Row"] | null
+): UserDeepProfileRecord | null {
+  if (!row) return null;
+  return {
+    userId: row.user_id,
+    weakArea: row.weak_area as UserDeepProfileRecord["weakArea"],
+    priorityArea: row.priority_area as UserDeepProfileRecord["priorityArea"],
+    movementDiscomforts: row.movement_discomforts ?? "",
+    posturePerception: row.posture_perception as UserDeepProfileRecord["posturePerception"],
+    mobilityPerception: row.mobility_perception as UserDeepProfileRecord["mobilityPerception"],
+    coordinationLevel: row.coordination_level as UserDeepProfileRecord["coordinationLevel"],
+    sensitivities: (row.sensitivities ?? []) as UserDeepProfileRecord["sensitivities"],
+    pregnanciesCount: row.pregnancies_count,
+    cesareansCount: row.cesareans_count,
+    monthsSinceLastBirth: row.months_since_last_birth,
+    diastasisStatus: row.diastasis_status as UserDeepProfileRecord["diastasisStatus"],
+    pelvicSignals: (row.pelvic_signals ?? []) as UserDeepProfileRecord["pelvicSignals"],
+    scarDiscomfort: row.scar_discomfort,
+    bodyConfidence: row.body_confidence as UserDeepProfileRecord["bodyConfidence"],
+    dropoutReasons: (row.dropout_reasons ?? []) as UserDeepProfileRecord["dropoutReasons"],
+    nutritionPattern: row.nutrition_pattern as UserDeepProfileRecord["nutritionPattern"],
+    nervousHunger: row.nervous_hunger,
+    skipsMeals: row.skips_meals,
+    hydrationPattern: row.hydration_pattern as UserDeepProfileRecord["hydrationPattern"],
+    trainingPreference: row.training_preference as UserDeepProfileRecord["trainingPreference"],
+    notes: row.notes ?? "",
+    updatedAt: row.updated_at
+  };
+}
+
+function mapReassessment(
+  row: Database["public"]["Tables"]["user_reassessments"]["Row"] | null
+): UserReassessmentRecord | null {
+  if (!row) return null;
+  return {
+    id: row.id,
+    userId: row.user_id,
+    planFit: row.plan_fit as UserReassessmentRecord["planFit"],
+    feelsMoreStable: row.feels_more_stable,
+    feelsMoreToned: row.feels_more_toned,
+    feelsMoreEnergetic: row.feels_more_energetic,
+    effectiveExercises: row.effective_exercises ?? [],
+    uncomfortableExercises: row.uncomfortable_exercises ?? [],
+    consistencyKeeping: row.consistency_keeping as 1 | 2 | 3 | 4 | 5,
+    mainObstacle: row.main_obstacle as UserReassessmentRecord["mainObstacle"],
+    improvements: (row.improvements ?? []) as UserReassessmentRecord["improvements"],
+    cautionNotes: row.caution_notes ?? "",
+    keepCurrentFocus: row.keep_current_focus,
+    newFocus: row.new_focus as UserReassessmentRecord["newFocus"],
+    realisticMinutesNow: row.realistic_minutes_now as UserReassessmentRecord["realisticMinutesNow"],
     completedAt: row.completed_at
   };
 }
@@ -438,10 +641,7 @@ function mapOnboarding(
 function mapPreferences(
   row: Database["public"]["Tables"]["user_preferences"]["Row"] | null
 ): UserPreferenceRecord | null {
-  if (!row) {
-    return null;
-  }
-
+  if (!row) return null;
   return {
     userId: row.user_id,
     timerSoundEnabled: row.timer_sound_enabled,
@@ -454,10 +654,7 @@ function mapPreferences(
 function mapNotificationPreferences(
   row: Database["public"]["Tables"]["notification_preferences"]["Row"] | null
 ): NotificationPreferenceRecord | null {
-  if (!row) {
-    return null;
-  }
-
+  if (!row) return null;
   return {
     userId: row.user_id,
     remindersEnabled: row.reminders_enabled,
@@ -467,9 +664,7 @@ function mapNotificationPreferences(
 }
 
 function mapPlan(row: PlanRow | null): ActiveTrainingPlan | null {
-  if (!row) {
-    return null;
-  }
+  if (!row) return null;
 
   return {
     id: row.id,
@@ -478,15 +673,51 @@ function mapPlan(row: PlanRow | null): ActiveTrainingPlan | null {
     currentPhase: row.current_phase,
     phaseLabel: row.phase_label,
     phaseFocus: row.phase_focus,
+    phaseGoal: row.phase_goal ?? "",
+    userProfileSummary: row.user_profile_summary ?? "",
     currentWeek: row.current_week,
     totalWeeks: row.total_weeks,
     weeklyGoal: row.weekly_goal,
     weeklyGoalMinutes: row.weekly_goal_minutes,
     weeklyGoalSessions: row.weekly_goal_sessions,
+    weeklyStructure: readStringArray(row.weekly_structure),
+    sessionDifficulty: row.session_difficulty ?? "",
+    progressionStrategy: row.progression_strategy ?? "",
     progressionReason: row.progression_reason,
     motivationalNote: row.motivational_note,
+    realisticExpectedOutcomes: readStringArray(row.realistic_expected_outcomes),
     cautionNotes: readStringArray(row.caution_notes),
-    adjustments: readStringArray(row.adjustments)
+    recoveryNotes: readStringArray(row.recovery_notes),
+    adherenceStrategy: row.adherence_strategy ?? "",
+    nutritionTips: readStringArray(row.nutrition_tips),
+    planExplanation: row.plan_explanation ?? "",
+    adjustments: readStringArray(row.adjustments),
+    reassessmentDueInDays: row.reassessment_due_in_days,
+    nextReassessmentDate: row.next_reassessment_at
+  };
+}
+
+function mapPlanVersion(
+  row: Database["public"]["Tables"]["training_plan_versions"]["Row"] | null
+): TrainingPlanVersionRecord | null {
+  if (!row) return null;
+  return {
+    id: row.id,
+    planId: row.plan_id,
+    versionNumber: row.version_number,
+    trigger: row.trigger as TrainingPlanVersionRecord["trigger"],
+    userProfileSummary: row.user_profile_summary,
+    phaseGoal: row.phase_goal,
+    weeklyStructure: readStringArray(row.weekly_structure),
+    sessionDifficulty: row.session_difficulty,
+    progressionStrategy: row.progression_strategy,
+    realisticExpectedOutcomes: readStringArray(row.realistic_expected_outcomes),
+    motivationalMessage: row.motivational_message,
+    recoveryNotes: readStringArray(row.recovery_notes),
+    adherenceStrategy: row.adherence_strategy,
+    nutritionTips: readStringArray(row.nutrition_tips),
+    planExplanation: row.plan_explanation,
+    createdAt: row.created_at
   };
 }
 
@@ -574,6 +805,22 @@ function mapSession(row: SessionRow): WorkoutSessionRecord {
   };
 }
 
+function mapWorkoutFeedback(
+  row: Database["public"]["Tables"]["workout_feedback"]["Row"]
+): WorkoutFeedbackRecord {
+  return {
+    id: row.id,
+    sessionId: row.session_id,
+    userId: row.user_id,
+    feeling: row.feeling as WorkoutFeedbackRecord["feeling"],
+    energyFinal: row.energy_final as WorkoutFeedbackRecord["energyFinal"],
+    discomfortNotes: row.discomfort_notes,
+    stopReason: row.stop_reason,
+    uncomfortableExerciseIds: row.uncomfortable_exercise_ids ?? [],
+    completedAt: row.created_at
+  };
+}
+
 function mapMilestone(
   row: Database["public"]["Tables"]["user_milestones"]["Row"]
 ): UserMilestone {
@@ -586,6 +833,29 @@ function mapMilestone(
   };
 }
 
+function mapPlanAdjustment(
+  row: Database["public"]["Tables"]["plan_adjustments"]["Row"]
+): PlanAdjustment {
+  return {
+    id: row.id,
+    adjustmentType: row.adjustment_type,
+    title: row.title,
+    description: row.description,
+    createdAt: row.created_at
+  };
+}
+
+function mapSupportTip(
+  row: Database["public"]["Tables"]["support_tips"]["Row"]
+): SupportTip {
+  return {
+    id: row.id,
+    category: row.category as SupportTip["category"],
+    title: row.title,
+    body: row.body
+  };
+}
+
 function resolveTodayPlanDay(days: TrainingPlanDay[]) {
   if (days.length === 0) {
     return null;
@@ -593,24 +863,16 @@ function resolveTodayPlanDay(days: TrainingPlanDay[]) {
 
   const todayKey = toDateKey(new Date());
   const exact = days.find((day) => day.scheduledFor === todayKey);
+  if (exact) return exact;
 
-  if (exact) {
-    return exact;
-  }
-
-  const nextPlanned = days.find(
-    (day) => day.status === "planned" && day.scheduledFor >= todayKey
+  return (
+    days.find((day) => day.status === "planned" && day.scheduledFor >= todayKey) ??
+    days[0]
   );
-
-  return nextPlanned ?? days[0];
 }
 
 function toPlanDayStatus(status: string): PlanDayStatus {
-  if (status === "completed" || status === "skipped") {
-    return status;
-  }
-
-  return "planned";
+  return status === "completed" || status === "skipped" ? status : "planned";
 }
 
 function sanitizeLimitations(values: string[]) {
@@ -618,14 +880,9 @@ function sanitizeLimitations(values: string[]) {
   return filtered.length > 0 ? filtered : ["nessuna"];
 }
 
-function buildOnboardingNotes(input: BetaOnboardingInput) {
-  const secondaryGoalLabel =
-    input.secondaryGoals.length > 1
-      ? `Focus aggiuntivi: ${input.secondaryGoals.slice(1).join(", ")}.`
-      : "";
-  const cleanNotes = input.notes.trim();
-
-  return [cleanNotes, secondaryGoalLabel].filter(Boolean).join("\n");
+function sanitizeGoalArray(values: string[] | null, primaryGoal: string): Goal[] {
+  const normalized = (values ?? []).filter((value): value is Goal => typeof value === "string");
+  return normalized.length > 0 ? normalized : [primaryGoal as Goal];
 }
 
 async function upsertMilestones(userId: string) {
@@ -643,9 +900,7 @@ async function upsertMilestones(userId: string) {
     (milestone) => completedCount >= milestone.threshold
   );
 
-  if (unlocked.length === 0) {
-    return;
-  }
+  if (unlocked.length === 0) return;
 
   const result = await client.from("user_milestones").upsert(
     unlocked.map((milestone) => ({
@@ -654,9 +909,7 @@ async function upsertMilestones(userId: string) {
       title: milestone.title,
       description: milestone.description
     })),
-    {
-      onConflict: "user_id,milestone_code"
-    }
+    { onConflict: "user_id,milestone_code" }
   );
 
   throwIfSupabaseError(result.error);
