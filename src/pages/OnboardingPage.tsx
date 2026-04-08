@@ -673,6 +673,7 @@ export function OnboardingPage() {
 
             <MultiSelectCards
               title="Fastidi o attenzioni da proteggere"
+              description="Puoi selezionare più voci, se senti che più di un'area chiede attenzione."
               items={limitationOptions}
               selected={form.limitations}
               onToggle={(value) => toggleLimitation(value as LimitationTag)}
@@ -733,18 +734,25 @@ export function OnboardingPage() {
 
 function MultiSelectCards({
   title,
+  description,
   items,
   selected,
   onToggle
 }: {
   title: string;
+  description?: string;
   items: Array<{ value: string; label: string; description: string }>;
   selected: string[];
   onToggle: (value: string) => void;
 }) {
   return (
     <div className="space-y-3">
-      <div className="text-sm font-semibold text-ink">{title}</div>
+      <div className="space-y-1.5">
+        <div className="text-sm font-semibold text-ink">{title}</div>
+        {description ? (
+          <p className="max-w-[22rem] text-sm leading-6 text-muted">{description}</p>
+        ) : null}
+      </div>
       <div className="grid gap-3">
         {items.map((item) => {
           const isSelected = selected.includes(item.value);
