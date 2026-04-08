@@ -1,8 +1,4 @@
-import {
-  FunctionsFetchError,
-  FunctionsHttpError,
-  FunctionsRelayError
-} from "@supabase/supabase-js";
+import { getSupabaseEnv } from "@/lib/env";
 import { requireSupabaseClient } from "@/lib/supabase";
 import type { PlannerOutput, PlannerTrigger } from "@/types/domain";
 
@@ -48,72 +44,69 @@ async function resolveAccessToken(providedToken?: string | null) {
   );
 }
 
-async function resolvePlannerError(error: unknown) {
-  if (error instanceof FunctionsHttpError) {
-    const response = error.context;
-    const status = response.status;
-    const payload = await response
-      .clone()
-      .json()
-      .catch(async () => ({ error: await response.clone().text().catch(() => "") }));
-    const message =
-      payload && typeof payload === "object" && "error" in payload
-        ? String(payload.error)
-        : "";
-
-    if (status === 401) {
-      return new Error(
-        message || "La sessione non risulta valida per generare il piano. Esci e rientra in Mirya, poi riprova."
-      );
-    }
-
-    if (status === 403) {
-      return new Error(
-        message || "Questo aggiornamento del percorso non è disponibile con il tuo accesso attuale."
-      );
-    }
-
-    if (status >= 500) {
-      return new Error(
-        message || "La funzione che genera il piano ha avuto un problema interno. Ora riusciamo almeno a capire che l'errore arriva dal server."
-      );
-    }
-
-    return new Error(message || "La generazione del piano non è riuscita.");
+function readPayloadError(payload: unknown) {
+  if (payload && typeof payload === "object" && "error" in payload) {
+    return String(payload.error ?? "");
   }
 
-  if (error instanceof FunctionsFetchError || error instanceof FunctionsRelayError) {
-    return new Error(
-      "La funzione che genera il piano non è raggiungibile in questo momento. Controlla che `plan-personalization` sia pubblicata su Supabase e che il progetto risponda correttamente."
-    );
-  }
+  return "";
+}
 
-  if (error instanceof Error) {
-    return error;
-  }
-
-  return new Error("Non siamo riusciti a generare il piano in questo momento.");
+async function parseJsonResponse(response: Response) {
+  return response
+    .clone()
+    .json()
+    .catch(async () => ({ error: await response.clone().text().catch(() => "") }));
 }
 
 export async function generatePersonalizedPlan(
   trigger: PlannerTrigger,
   accessToken?: string | null
 ) {
-  const client = requireSupabaseClient();
   const resolvedAccessToken = await resolveAccessToken(accessToken);
-  const { data, error } = await client.functions.invoke<PlannerInvocationResponse>(
-    "plan-personalization",
-    {
-      body: { trigger },
-      headers: {
-        Authorization: `Bearer ${resolvedAccessToken}`
-      }
-    }
-  );
+  const { url, anonKey } = getSupabaseEnv();
+  const response = await fetch(`${url}/functions/v1/plan-personalization`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: anonKey,
+      Authorization: `Bearer ${resolvedAccessToken}`
+    },
+    body: JSON.stringify({ trigger })
+  }).catch(() => null);
 
-  if (error) {
-    throw await resolvePlannerError(error);
+  if (!response) {
+    throw new Error(
+      "La funzione che genera il piano non è raggiungibile in questo momento. Riprova tra un attimo."
+    );
   }
+
+  const payload = await parseJsonResponse(response);
+  const message = readPayloadError(payload);
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error(
+        message || "La sessione non risulta valida per generare il piano. Esci e rientra in Mirya, poi riprova."
+      );
+    }
+
+    if (response.status === 403) {
+      throw new Error(
+        message || "Questo aggiornamento del percorso non è disponibile con il tuo accesso attuale."
+      );
+    }
+
+    if (response.status >= 500) {
+      throw new Error(
+        message || "La funzione che genera il piano ha avuto un problema interno."
+      );
+    }
+
+    throw new Error(message || "La generazione del piano non è riuscita.");
+  }
+
+  const data = payload as PlannerInvocationResponse;
 
   if (!data?.plan) {
     throw new Error("Il planner non ha restituito un piano valido.");
