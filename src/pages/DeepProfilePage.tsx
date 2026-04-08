@@ -433,15 +433,20 @@ function TagGroup({
             key={item.value}
             type="button"
             onClick={() => onToggle(item.value)}
+            aria-pressed={isSelected}
             className={[
               "surface px-4 py-4 text-left transition",
               isSelected
-                ? "border-[rgba(94,184,178,0.48)] bg-white"
-                : "hover:border-accent/30 hover:bg-white/80"
+                ? "selection-card-selected"
+                : "selection-card-idle"
             ].join(" ")}
           >
-            <div className="text-sm font-semibold text-ink">{item.label}</div>
-            <p className="mt-2 text-sm leading-6 text-muted">{item.description}</p>
+            <div className={isSelected ? "text-sm font-semibold text-accent-deep" : "text-sm font-semibold text-ink"}>
+              {item.label}
+            </div>
+            <p className={isSelected ? "mt-2 text-sm leading-6 text-ink/78" : "mt-2 text-sm leading-6 text-muted"}>
+              {item.description}
+            </p>
           </button>
         );
       })}

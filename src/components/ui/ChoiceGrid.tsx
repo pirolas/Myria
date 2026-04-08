@@ -33,16 +33,17 @@ export function ChoiceGrid<TValue extends string | number | boolean>({
               "surface relative text-left transition duration-200",
               "min-h-[104px] px-4 py-4",
               isSelected
-                ? "border-[rgba(94,184,178,0.5)] bg-white"
-                : "hover:border-accent/30 hover:bg-white/80"
+                ? "selection-card-selected"
+                : "selection-card-idle"
             )}
             onClick={() => onChange(option.value)}
+            aria-pressed={isSelected}
           >
             <div
               className={cn(
-                "absolute right-4 top-4 inline-flex h-7 w-7 items-center justify-center rounded-full border transition",
+                "absolute right-4 top-4 inline-flex h-7 w-7 items-center justify-center rounded-full border transition shadow-sm",
                 isSelected
-                  ? "border-accent bg-accent text-white"
+                  ? "border-accent-deep bg-accent-deep text-white"
                   : "border-line bg-white/80 text-transparent"
               )}
             >
@@ -50,8 +51,12 @@ export function ChoiceGrid<TValue extends string | number | boolean>({
             </div>
 
             <div className="max-w-[15rem] pr-10">
-              <div className="text-sm font-semibold text-ink">{option.label}</div>
-              <p className="mt-2 text-sm leading-6 text-muted">{option.description}</p>
+              <div className={cn("text-sm font-semibold", isSelected ? "text-accent-deep" : "text-ink")}>
+                {option.label}
+              </div>
+              <p className={cn("mt-2 text-sm leading-6", isSelected ? "text-ink/78" : "text-muted")}>
+                {option.description}
+              </p>
             </div>
           </button>
         );

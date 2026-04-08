@@ -704,15 +704,20 @@ function MultiSelectCards({
               key={item.value}
               type="button"
               onClick={() => onToggle(item.value)}
+              aria-pressed={isSelected}
               className={[
                 "surface px-4 py-4 text-left transition",
                 isSelected
-                  ? "border-[rgba(94,184,178,0.48)] bg-white"
-                  : "hover:border-accent/30 hover:bg-white/80"
+                  ? "selection-card-selected"
+                  : "selection-card-idle"
               ].join(" ")}
             >
-              <div className="text-sm font-semibold text-ink">{item.label}</div>
-              <p className="mt-2 text-sm leading-6 text-muted">{item.description}</p>
+              <div className={isSelected ? "text-sm font-semibold text-accent-deep" : "text-sm font-semibold text-ink"}>
+                {item.label}
+              </div>
+              <p className={isSelected ? "mt-2 text-sm leading-6 text-ink/78" : "mt-2 text-sm leading-6 text-muted"}>
+                {item.description}
+              </p>
             </button>
           );
         })}
@@ -744,10 +749,11 @@ function MultiSelectInline({
               key={item.value}
               type="button"
               onClick={() => onToggle(item.value)}
+              aria-pressed={isSelected}
               className={[
                 "rounded-full border px-3 py-2 text-sm font-semibold transition",
                 isSelected
-                  ? "border-[rgba(94,184,178,0.48)] bg-white text-accent-deep"
+                  ? "selection-chip-selected"
                   : "border-line bg-white/78 text-muted"
               ].join(" ")}
             >
@@ -776,9 +782,10 @@ function BooleanToggleRow({
         <button
           type="button"
           onClick={() => onChange(true)}
+          aria-pressed={value}
           className={[
             "rounded-full px-3 py-2 text-sm font-semibold transition",
-            value ? "bg-accent-soft text-accent-deep" : "bg-[rgba(246,250,249,0.9)] text-muted"
+            value ? "selection-pill-selected" : "bg-[rgba(246,250,249,0.9)] text-muted"
           ].join(" ")}
         >
           Sì
@@ -786,9 +793,10 @@ function BooleanToggleRow({
         <button
           type="button"
           onClick={() => onChange(false)}
+          aria-pressed={!value}
           className={[
             "rounded-full px-3 py-2 text-sm font-semibold transition",
-            !value ? "bg-accent-soft text-accent-deep" : "bg-[rgba(246,250,249,0.9)] text-muted"
+            !value ? "selection-pill-selected" : "bg-[rgba(246,250,249,0.9)] text-muted"
           ].join(" ")}
         >
           No
