@@ -1,0 +1,229 @@
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode
+} from "react";
+import { buildProgressSnapshot } from "@/lib/myria";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  completeWorkoutSession,
+  ensureUserRecords,
+  loadDashboardModel,
+  saveOnboarding,
+  startWorkoutSession,
+  updateTimerSound
+} from "@/services/app";
+import { generatePersonalizedPlan } from "@/services/planner";
+import type {
+  BetaOnboardingInput,
+  DashboardModel,
+  PlannerTrigger,
+  TrainingPlanDay,
+  WorkoutFeedbackInput
+} from "@/types/domain";
+
+type MyriaStatus = "idle" | "loading" | "ready" | "saving" | "error";
+
+interface MyriaAppContextValue {
+  status: MyriaStatus;
+  data: DashboardModel | null;
+  error: string | null;
+  progress: ReturnType<typeof buildProgressSnapshot>;
+  refresh: () => Promise<void>;
+  completeOnboarding: (input: BetaOnboardingInput) => Promise<void>;
+  regeneratePlan: (trigger?: PlannerTrigger) => Promise<void>;
+  setTimerSoundEnabled: (enabled: boolean) => Promise<void>;
+  startSession: (planDay: TrainingPlanDay) => Promise<string>;
+  completeSession: (
+    sessionId: string,
+    planDay: TrainingPlanDay,
+    feedback: WorkoutFeedbackInput
+  ) => Promise<void>;
+}
+
+const MyriaAppContext = createContext<MyriaAppContextValue | undefined>(undefined);
+
+export function MyriaAppProvider({ children }: { children: ReactNode }) {
+  const { status: authStatus, user } = useAuth();
+  const [status, setStatus] = useState<MyriaStatus>("idle");
+  const [data, setData] = useState<DashboardModel | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    if (!user) {
+      setData(null);
+      setStatus("idle");
+      return;
+    }
+
+    setStatus((current) => (current === "saving" ? current : "loading"));
+    setError(null);
+
+    try {
+      await ensureUserRecords(user);
+      let nextData = await loadDashboardModel(user.id);
+
+      if (nextData.onboarding && !nextData.activePlan) {
+        await generatePersonalizedPlan("weekly_refresh");
+        nextData = await loadDashboardModel(user.id);
+      }
+
+      setData(nextData);
+      setStatus("ready");
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Non siamo riusciti a caricare il tuo percorso."
+      );
+      setStatus("error");
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (authStatus === "signed_in" && user) {
+      void refresh();
+      return;
+    }
+
+    if (authStatus === "signed_out" || authStatus === "missing_config") {
+      setData(null);
+      setStatus("idle");
+      setError(null);
+    }
+  }, [authStatus, refresh, user]);
+
+  const value = useMemo<MyriaAppContextValue>(
+    () => ({
+      status,
+      data,
+      error,
+      progress: buildProgressSnapshot(data),
+      async refresh() {
+        await refresh();
+      },
+      async completeOnboarding(input) {
+        if (!user) {
+          throw new Error("Devi accedere per completare l'onboarding.");
+        }
+
+        setStatus("saving");
+        setError(null);
+
+        try {
+          await saveOnboarding(user.id, input);
+          await generatePersonalizedPlan("onboarding_completed");
+          await refresh();
+        } catch (submitError) {
+          setError(
+            submitError instanceof Error
+              ? submitError.message
+              : "Non siamo riusciti a creare il tuo percorso."
+          );
+          setStatus("error");
+          throw submitError;
+        }
+      },
+      async regeneratePlan(trigger = "weekly_refresh") {
+        if (!user) {
+          throw new Error("Devi accedere per aggiornare il percorso.");
+        }
+
+        setStatus("saving");
+        setError(null);
+
+        try {
+          await generatePersonalizedPlan(trigger);
+          await refresh();
+        } catch (plannerError) {
+          setError(
+            plannerError instanceof Error
+              ? plannerError.message
+              : "Non siamo riusciti ad aggiornare il piano."
+          );
+          setStatus("error");
+          throw plannerError;
+        }
+      },
+      async setTimerSoundEnabled(enabled) {
+        if (!user) {
+          throw new Error("Devi accedere per aggiornare le preferenze.");
+        }
+
+        setData((current) =>
+          current
+            ? {
+                ...current,
+                preferences: current.preferences
+                  ? {
+                      ...current.preferences,
+                      timerSoundEnabled: enabled
+                    }
+                  : null
+              }
+            : current
+        );
+
+        try {
+          await updateTimerSound(user.id, enabled);
+        } catch (toggleError) {
+          setError(
+            toggleError instanceof Error
+              ? toggleError.message
+              : "Non siamo riusciti a salvare questa preferenza."
+          );
+          await refresh();
+          throw toggleError;
+        }
+      },
+      async startSession(planDay) {
+        if (!user) {
+          throw new Error("Devi accedere per iniziare la sessione.");
+        }
+
+        return startWorkoutSession(user.id, planDay);
+      },
+      async completeSession(sessionId, planDay, feedback) {
+        if (!user) {
+          throw new Error("Devi accedere per salvare la sessione.");
+        }
+
+        setStatus("saving");
+        setError(null);
+
+        try {
+          await completeWorkoutSession(user.id, sessionId, planDay, feedback);
+          await generatePersonalizedPlan("post_workout_feedback");
+          await refresh();
+        } catch (sessionError) {
+          setError(
+            sessionError instanceof Error
+              ? sessionError.message
+              : "Non siamo riusciti a salvare il workout."
+          );
+          setStatus("error");
+          throw sessionError;
+        }
+      }
+    }),
+    [data, error, refresh, status, user]
+  );
+
+  return (
+    <MyriaAppContext.Provider value={value}>{children}</MyriaAppContext.Provider>
+  );
+}
+
+export function useMyriaApp() {
+  const context = useContext(MyriaAppContext);
+
+  if (!context) {
+    throw new Error("useMyriaApp deve essere usato dentro MyriaAppProvider.");
+  }
+
+  return context;
+}
