@@ -3,6 +3,7 @@ import { Check, Sparkles } from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { ChoiceGrid } from "@/components/ui/ChoiceGrid";
+import { QuestionBlock } from "@/components/ui/QuestionBlock";
 import {
   bodyAreaFocusOptions,
   bodyConfidenceOptions,
@@ -107,48 +108,60 @@ export function DeepProfilePage() {
           Non cambia chi sei: ci aiuta solo a capire quanto margine reale c'è oggi.
         </p>
 
-        <ChoiceGrid
-          options={pastExperienceOptions}
-          value={onboardingForm.pastExperience}
-          onChange={(pastExperience) =>
-            setOnboardingForm((current) => ({ ...current, pastExperience }))
-          }
-        />
-        <ChoiceGrid
-          options={lifestyleOptions}
-          value={onboardingForm.lifestyle}
-          onChange={(lifestyle) =>
-            setOnboardingForm((current) => ({ ...current, lifestyle }))
-          }
-        />
-        <ChoiceGrid
-          options={weeklyAvailabilityOptions}
-          value={onboardingForm.weeklyAvailability}
-          onChange={(weeklyAvailability) =>
-            setOnboardingForm((current) => ({ ...current, weeklyAvailability }))
-          }
-        />
-        <ChoiceGrid
-          options={timePreferenceOptions}
-          value={onboardingForm.preferredTimeOfDay}
-          onChange={(preferredTimeOfDay) =>
-            setOnboardingForm((current) => ({ ...current, preferredTimeOfDay }))
-          }
-        />
-        <ChoiceGrid
-          options={sleepQualityOptions}
-          value={onboardingForm.sleepQuality}
-          onChange={(sleepQuality) =>
-            setOnboardingForm((current) => ({ ...current, sleepQuality }))
-          }
-        />
-        <ChoiceGrid
-          options={stressLevelOptions}
-          value={onboardingForm.stressLevel}
-          onChange={(stressLevel) =>
-            setOnboardingForm((current) => ({ ...current, stressLevel }))
-          }
-        />
+        <QuestionBlock title="Esperienza passata" description="Quanto il tuo corpo ha già familiarità con una routine.">
+          <ChoiceGrid
+            options={pastExperienceOptions}
+            value={onboardingForm.pastExperience}
+            onChange={(pastExperience) =>
+              setOnboardingForm((current) => ({ ...current, pastExperience }))
+            }
+          />
+        </QuestionBlock>
+        <QuestionBlock title="Stile di vita" description="Per capire quanto movimento c'è già nella tua giornata.">
+          <ChoiceGrid
+            options={lifestyleOptions}
+            value={onboardingForm.lifestyle}
+            onChange={(lifestyle) =>
+              setOnboardingForm((current) => ({ ...current, lifestyle }))
+            }
+          />
+        </QuestionBlock>
+        <QuestionBlock title="Disponibilità reale" description="Quanto spazio riesci davvero a proteggere durante la settimana.">
+          <ChoiceGrid
+            options={weeklyAvailabilityOptions}
+            value={onboardingForm.weeklyAvailability}
+            onChange={(weeklyAvailability) =>
+              setOnboardingForm((current) => ({ ...current, weeklyAvailability }))
+            }
+          />
+        </QuestionBlock>
+        <QuestionBlock title="Momento più adatto" description="Il momento del giorno che senti più gestibile.">
+          <ChoiceGrid
+            options={timePreferenceOptions}
+            value={onboardingForm.preferredTimeOfDay}
+            onChange={(preferredTimeOfDay) =>
+              setOnboardingForm((current) => ({ ...current, preferredTimeOfDay }))
+            }
+          />
+        </QuestionBlock>
+        <QuestionBlock title="Qualità del sonno" description="Ci aiuta a capire quanto margine di recupero hai oggi.">
+          <ChoiceGrid
+            options={sleepQualityOptions}
+            value={onboardingForm.sleepQuality}
+            onChange={(sleepQuality) =>
+              setOnboardingForm((current) => ({ ...current, sleepQuality }))
+            }
+          />
+        </QuestionBlock>
+        <QuestionBlock title="Livello di stress" description="Per dosare il piano dentro la tua realtà, non sopra di essa.">
+          <ChoiceGrid
+            options={stressLevelOptions}
+            value={onboardingForm.stressLevel}
+            onChange={(stressLevel) =>
+              setOnboardingForm((current) => ({ ...current, stressLevel }))
+            }
+          />
+        </QuestionBlock>
 
         <label className="block rounded-[22px] border border-line bg-white/78 px-4 py-4">
           <div className="text-sm font-semibold text-ink">
@@ -202,45 +215,57 @@ export function DeepProfilePage() {
           qualcosa in più.
         </p>
 
-        <ChoiceGrid
-          options={bodyAreaFocusOptions}
-          value={deepForm.weakArea ?? "glutei_gambe"}
-          onChange={(weakArea) => setDeepForm((current) => ({ ...current, weakArea }))}
-        />
-        <ChoiceGrid
-          options={bodyAreaFocusOptions}
-          value={deepForm.priorityArea ?? "glutei_gambe"}
-          onChange={(priorityArea) =>
-            setDeepForm((current) => ({ ...current, priorityArea }))
-          }
-        />
-        <ChoiceGrid
-          options={posturePerceptionOptions}
-          value={deepForm.posturePerception ?? "variabile"}
-          onChange={(posturePerception) =>
-            setDeepForm((current) => ({ ...current, posturePerception }))
-          }
-        />
-        <ChoiceGrid
-          options={mobilityPerceptionOptions}
-          value={deepForm.mobilityPerception ?? "media"}
-          onChange={(mobilityPerception) =>
-            setDeepForm((current) => ({ ...current, mobilityPerception }))
-          }
-        />
-        <ChoiceGrid
-          options={coordinationOptions}
-          value={deepForm.coordinationLevel ?? "discreta"}
-          onChange={(coordinationLevel) =>
-            setDeepForm((current) => ({ ...current, coordinationLevel }))
-          }
-        />
+        <QuestionBlock title="Area che senti più debole" description="Quella che oggi percepisci meno presente o meno sostenuta.">
+          <ChoiceGrid
+            options={bodyAreaFocusOptions}
+            value={deepForm.weakArea ?? "glutei_gambe"}
+            onChange={(weakArea) => setDeepForm((current) => ({ ...current, weakArea }))}
+          />
+        </QuestionBlock>
+        <QuestionBlock title="Area che vuoi migliorare di più" description="Quella su cui desideri vedere il cambiamento più chiaro.">
+          <ChoiceGrid
+            options={bodyAreaFocusOptions}
+            value={deepForm.priorityArea ?? "glutei_gambe"}
+            onChange={(priorityArea) =>
+              setDeepForm((current) => ({ ...current, priorityArea }))
+            }
+          />
+        </QuestionBlock>
+        <QuestionBlock title="Percezione della postura" description="Come ti senti nella giornata, soprattutto dopo tante ore seduta o ferma.">
+          <ChoiceGrid
+            options={posturePerceptionOptions}
+            value={deepForm.posturePerception ?? "variabile"}
+            onChange={(posturePerception) =>
+              setDeepForm((current) => ({ ...current, posturePerception }))
+            }
+          />
+        </QuestionBlock>
+        <QuestionBlock title="Percezione della mobilità" description="Quanto ti senti fluida o frenata nei movimenti.">
+          <ChoiceGrid
+            options={mobilityPerceptionOptions}
+            value={deepForm.mobilityPerception ?? "media"}
+            onChange={(mobilityPerception) =>
+              setDeepForm((current) => ({ ...current, mobilityPerception }))
+            }
+          />
+        </QuestionBlock>
+        <QuestionBlock title="Equilibrio e coordinazione" description="Ci serve per capire quanto tenere il lavoro stabile e semplice.">
+          <ChoiceGrid
+            options={coordinationOptions}
+            value={deepForm.coordinationLevel ?? "discreta"}
+            onChange={(coordinationLevel) =>
+              setDeepForm((current) => ({ ...current, coordinationLevel }))
+            }
+          />
+        </QuestionBlock>
       </section>
 
       <section className="surface px-5 py-5 space-y-4">
         <div className="text-base font-semibold text-ink">Segnali utili da tenere presenti</div>
 
         <TagGroup
+          title="Zone sensibili"
+          description="Solo se c'è qualche area che preferisci proteggere di più."
           items={sensitivityOptions}
           selected={deepForm.sensitivities}
           onToggle={(value) =>
@@ -251,6 +276,8 @@ export function DeepProfilePage() {
           }
         />
         <TagGroup
+          title="Segnali pelvici"
+          description="Solo se li senti presenti e vuoi farli tenere in considerazione."
           items={pelvicSignalOptions}
           selected={deepForm.pelvicSignals}
           onToggle={(value) =>
@@ -260,13 +287,15 @@ export function DeepProfilePage() {
             }))
           }
         />
-        <ChoiceGrid
-          options={diastasisOptions}
-          value={deepForm.diastasisStatus ?? "no"}
-          onChange={(diastasisStatus) =>
-            setDeepForm((current) => ({ ...current, diastasisStatus }))
-          }
-        />
+        <QuestionBlock title="Addome e diastasi" description="Una lettura prudente, senza farla diventare clinica.">
+          <ChoiceGrid
+            options={diastasisOptions}
+            value={deepForm.diastasisStatus ?? "no"}
+            onChange={(diastasisStatus) =>
+              setDeepForm((current) => ({ ...current, diastasisStatus }))
+            }
+          />
+        </QuestionBlock>
 
         <div className="grid grid-cols-3 gap-3">
           <NumericField
@@ -314,14 +343,18 @@ export function DeepProfilePage() {
       <section className="surface px-5 py-5 space-y-4">
         <div className="text-base font-semibold text-ink">Stile del percorso</div>
 
-        <ChoiceGrid
-          options={bodyConfidenceOptions}
-          value={deepForm.bodyConfidence ?? "variabile"}
-          onChange={(bodyConfidence) =>
-            setDeepForm((current) => ({ ...current, bodyConfidence }))
-          }
-        />
+        <QuestionBlock title="Confidenza con il corpo" description="Per capire quanto il percorso deve anche rassicurarti, non solo attivarti.">
+          <ChoiceGrid
+            options={bodyConfidenceOptions}
+            value={deepForm.bodyConfidence ?? "variabile"}
+            onChange={(bodyConfidence) =>
+              setDeepForm((current) => ({ ...current, bodyConfidence }))
+            }
+          />
+        </QuestionBlock>
         <TagGroup
+          title="Cosa tende a farti mollare"
+          description="Serve a proteggere meglio la costanza, non a etichettarti."
           items={dropoutReasonOptions}
           selected={deepForm.dropoutReasons}
           onToggle={(value) =>
@@ -331,27 +364,33 @@ export function DeepProfilePage() {
             }))
           }
         />
-        <ChoiceGrid
-          options={nutritionPatternOptions}
-          value={deepForm.nutritionPattern ?? "abbastanza_equilibrata"}
-          onChange={(nutritionPattern) =>
-            setDeepForm((current) => ({ ...current, nutritionPattern }))
-          }
-        />
-        <ChoiceGrid
-          options={hydrationPatternOptions}
-          value={deepForm.hydrationPattern ?? "altalenante"}
-          onChange={(hydrationPattern) =>
-            setDeepForm((current) => ({ ...current, hydrationPattern }))
-          }
-        />
-        <ChoiceGrid
-          options={trainingPreferenceOptions}
-          value={deepForm.trainingPreference ?? "piu_dolce"}
-          onChange={(trainingPreference) =>
-            setDeepForm((current) => ({ ...current, trainingPreference }))
-          }
-        />
+        <QuestionBlock title="Ritmo alimentare percepito" description="Una lettura semplice per non costruire un piano scollegato dal tuo quotidiano.">
+          <ChoiceGrid
+            options={nutritionPatternOptions}
+            value={deepForm.nutritionPattern ?? "abbastanza_equilibrata"}
+            onChange={(nutritionPattern) =>
+              setDeepForm((current) => ({ ...current, nutritionPattern }))
+            }
+          />
+        </QuestionBlock>
+        <QuestionBlock title="Idratazione" description="Solo per capire se c'è un punto facile da migliorare a supporto del percorso.">
+          <ChoiceGrid
+            options={hydrationPatternOptions}
+            value={deepForm.hydrationPattern ?? "altalenante"}
+            onChange={(hydrationPattern) =>
+              setDeepForm((current) => ({ ...current, hydrationPattern }))
+            }
+          />
+        </QuestionBlock>
+        <QuestionBlock title="Taglio del percorso" description="Il modo in cui preferisci sentire il lavoro nelle prossime settimane.">
+          <ChoiceGrid
+            options={trainingPreferenceOptions}
+            value={deepForm.trainingPreference ?? "piu_dolce"}
+            onChange={(trainingPreference) =>
+              setDeepForm((current) => ({ ...current, trainingPreference }))
+            }
+          />
+        </QuestionBlock>
         <label className="block">
           <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
             Esercizi che temi o che ti mettono in allerta
@@ -415,17 +454,28 @@ export function DeepProfilePage() {
 }
 
 function TagGroup({
+  title,
+  description,
   items,
   selected,
   onToggle
 }: {
+  title: string;
+  description?: string;
   items: Array<{ value: string; label: string; description: string }>;
   selected: string[];
   onToggle: (value: string) => void;
 }) {
   return (
-    <div className="grid gap-3">
-      {items.map((item) => {
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <div className="text-sm font-semibold text-ink">{title}</div>
+        {description ? (
+          <p className="max-w-[22rem] text-sm leading-6 text-muted">{description}</p>
+        ) : null}
+      </div>
+      <div className="grid gap-3">
+        {items.map((item) => {
         const isSelected = selected.includes(item.value);
 
         return (
@@ -463,7 +513,8 @@ function TagGroup({
             </p>
           </button>
         );
-      })}
+        })}
+      </div>
     </div>
   );
 }

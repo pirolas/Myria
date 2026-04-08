@@ -3,6 +3,7 @@ import { Check, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { ChoiceGrid } from "@/components/ui/ChoiceGrid";
+import { QuestionBlock } from "@/components/ui/QuestionBlock";
 import {
   ageBandLabels,
   ageBandOptions,
@@ -433,28 +434,33 @@ export function OnboardingPage() {
       case "goal":
         return (
           <div className="space-y-4">
-            <ChoiceGrid
-              options={primaryBodyGoalOptions}
-              value={form.primaryBodyGoal}
-              onChange={(primaryBodyGoal) =>
-                setForm((current) => {
-                  const focusAreas = deriveFocusAreasFromObjectives(
-                    current.secondaryObjectives,
-                    primaryBodyGoal
-                  );
-                  const derived = derivePlanGoalsFromFocusAreas(focusAreas);
+            <QuestionBlock
+              title="Obiettivo principale"
+              description="La direzione che conta di più in questo momento."
+            >
+              <ChoiceGrid
+                options={primaryBodyGoalOptions}
+                value={form.primaryBodyGoal}
+                onChange={(primaryBodyGoal) =>
+                  setForm((current) => {
+                    const focusAreas = deriveFocusAreasFromObjectives(
+                      current.secondaryObjectives,
+                      primaryBodyGoal
+                    );
+                    const derived = derivePlanGoalsFromFocusAreas(focusAreas);
 
-                  return {
-                    ...current,
-                    primaryBodyGoal,
-                    focusAreas,
-                    primaryGoal: derived.primaryGoal,
-                    secondaryGoals: derived.secondaryGoals,
-                    focusPreference: derived.focusPreference
-                  };
-                })
-              }
-            />
+                    return {
+                      ...current,
+                      primaryBodyGoal,
+                      focusAreas,
+                      primaryGoal: derived.primaryGoal,
+                      secondaryGoals: derived.secondaryGoals,
+                      focusPreference: derived.focusPreference
+                    };
+                  })
+                }
+              />
+            </QuestionBlock>
 
             <MultiSelectCards
               title="Cosa vuoi sentire di più, oltre all'obiettivo principale"
@@ -487,27 +493,42 @@ export function OnboardingPage() {
       case "rhythm":
         return (
           <div className="space-y-4">
-            <ChoiceGrid
-              options={trainingDayOptions}
-              value={form.daysPerWeek}
-              onChange={(daysPerWeek) => setForm((current) => ({ ...current, daysPerWeek }))}
-              columns="two"
-            />
-            <ChoiceGrid
-              options={minuteOptions}
-              value={form.preferredMinutes}
-              onChange={(preferredMinutes) =>
-                setForm((current) => ({ ...current, preferredMinutes }))
-              }
-              columns="two"
-            />
-            <ChoiceGrid
-              options={timePreferenceOptions}
-              value={form.preferredTimeOfDay}
-              onChange={(preferredTimeOfDay) =>
-                setForm((current) => ({ ...current, preferredTimeOfDay }))
-              }
-            />
+            <QuestionBlock
+              title="Giorni a settimana"
+              description="Quanti giorni riesci davvero a proteggere con continuità."
+            >
+              <ChoiceGrid
+                options={trainingDayOptions}
+                value={form.daysPerWeek}
+                onChange={(daysPerWeek) => setForm((current) => ({ ...current, daysPerWeek }))}
+                columns="two"
+              />
+            </QuestionBlock>
+            <QuestionBlock
+              title="Tempo per ogni sessione"
+              description="Meglio partire da un tempo che senti davvero sostenibile."
+            >
+              <ChoiceGrid
+                options={minuteOptions}
+                value={form.preferredMinutes}
+                onChange={(preferredMinutes) =>
+                  setForm((current) => ({ ...current, preferredMinutes }))
+                }
+                columns="two"
+              />
+            </QuestionBlock>
+            <QuestionBlock
+              title="Momento della giornata"
+              description="Il momento in cui hai più probabilità di riuscirci davvero."
+            >
+              <ChoiceGrid
+                options={timePreferenceOptions}
+                value={form.preferredTimeOfDay}
+                onChange={(preferredTimeOfDay) =>
+                  setForm((current) => ({ ...current, preferredTimeOfDay }))
+                }
+              />
+            </QuestionBlock>
             <MultiSelectInline
               title="Se hai giorni più facili da proteggere"
               items={preferredDayOptions}
@@ -542,87 +563,113 @@ export function OnboardingPage() {
       case "context":
         return (
           <div className="space-y-4">
-            <ChoiceGrid
-              options={levelOptions}
-              value={form.perceivedLevel}
-              onChange={(perceivedLevel) =>
-                setForm((current) => ({ ...current, perceivedLevel }))
-              }
-            />
-            <ChoiceGrid
-              options={pastExperienceOptions}
-              value={form.pastExperience}
-              onChange={(pastExperience) =>
-                setForm((current) => ({ ...current, pastExperience }))
-              }
-            />
+            <QuestionBlock
+              title="Livello percepito"
+              description="Ci serve per decidere quanto chiederti subito."
+            >
+              <ChoiceGrid
+                options={levelOptions}
+                value={form.perceivedLevel}
+                onChange={(perceivedLevel) =>
+                  setForm((current) => ({ ...current, perceivedLevel }))
+                }
+              />
+            </QuestionBlock>
+            <QuestionBlock
+              title="Esperienza passata"
+              description="Non per giudicarti, ma per capire da dove ripartire."
+            >
+              <ChoiceGrid
+                options={pastExperienceOptions}
+                value={form.pastExperience}
+                onChange={(pastExperience) =>
+                  setForm((current) => ({ ...current, pastExperience }))
+                }
+              />
+            </QuestionBlock>
             <MultiSelectInline
               title="Allenamenti già provati"
               items={pastTrainingTypeOptions}
               selected={form.pastTrainingTypes}
               onToggle={(value) => togglePastTrainingType(value as PastTrainingType)}
             />
-            <ChoiceGrid
-              options={energyOptions}
-              value={form.energyLevel}
-              onChange={(energyLevel) =>
-                setForm((current) => ({ ...current, energyLevel }))
-              }
-            />
-            <ChoiceGrid
-              options={sleepQualityOptions}
-              value={form.sleepQuality}
-              onChange={(sleepQuality) =>
-                setForm((current) => ({ ...current, sleepQuality }))
-              }
-            />
-            <ChoiceGrid
-              options={stressLevelOptions}
-              value={form.stressLevel}
-              onChange={(stressLevel) =>
-                setForm((current) => ({ ...current, stressLevel }))
-              }
-            />
+            <QuestionBlock title="Energia media" description="Quanto margine senti durante la giornata.">
+              <ChoiceGrid
+                options={energyOptions}
+                value={form.energyLevel}
+                onChange={(energyLevel) =>
+                  setForm((current) => ({ ...current, energyLevel }))
+                }
+              />
+            </QuestionBlock>
+            <QuestionBlock title="Qualità del sonno" description="Ci aiuta a dosare meglio tono e recupero.">
+              <ChoiceGrid
+                options={sleepQualityOptions}
+                value={form.sleepQuality}
+                onChange={(sleepQuality) =>
+                  setForm((current) => ({ ...current, sleepQuality }))
+                }
+              />
+            </QuestionBlock>
+            <QuestionBlock title="Livello di stress" description="Un piano buono deve stare dentro la tua realtà, non contro di lei.">
+              <ChoiceGrid
+                options={stressLevelOptions}
+                value={form.stressLevel}
+                onChange={(stressLevel) =>
+                  setForm((current) => ({ ...current, stressLevel }))
+                }
+              />
+            </QuestionBlock>
           </div>
         );
       case "preferences":
         return (
           <div className="space-y-4">
-            <ChoiceGrid
-              options={gentleStartOptions}
-              value={form.gentleStart}
-              onChange={(gentleStart) =>
-                setForm((current) => ({ ...current, gentleStart }))
-              }
-            />
-            <ChoiceGrid
-              options={simpleExerciseOptions}
-              value={form.preferSimpleExercises}
-              onChange={(preferSimpleExercises) =>
-                setForm((current) => ({ ...current, preferSimpleExercises }))
-              }
-            />
-            <ChoiceGrid
-              options={sessionStyleOptions}
-              value={form.sessionStyle}
-              onChange={(sessionStyle) =>
-                setForm((current) => ({ ...current, sessionStyle }))
-              }
-            />
-            <ChoiceGrid
-              options={sessionToneOptions}
-              value={form.sessionTone}
-              onChange={(sessionTone) =>
-                setForm((current) => ({ ...current, sessionTone }))
-              }
-            />
-            <ChoiceGrid
-              options={avoidJumpOptions}
-              value={form.avoidJumps}
-              onChange={(avoidJumps) =>
-                setForm((current) => ({ ...current, avoidJumps }))
-              }
-            />
+            <QuestionBlock title="Partenza" description="Quanto dolcemente vuoi entrare nelle prime settimane.">
+              <ChoiceGrid
+                options={gentleStartOptions}
+                value={form.gentleStart}
+                onChange={(gentleStart) =>
+                  setForm((current) => ({ ...current, gentleStart }))
+                }
+              />
+            </QuestionBlock>
+            <QuestionBlock title="Tipo di esercizi" description="Per capire se privilegiare semplicità e sicurezza oppure un lavoro un po' più vario.">
+              <ChoiceGrid
+                options={simpleExerciseOptions}
+                value={form.preferSimpleExercises}
+                onChange={(preferSimpleExercises) =>
+                  setForm((current) => ({ ...current, preferSimpleExercises }))
+                }
+              />
+            </QuestionBlock>
+            <QuestionBlock title="Struttura della sessione" description="Più lineare a circuito oppure con passaggi più lenti e controllati.">
+              <ChoiceGrid
+                options={sessionStyleOptions}
+                value={form.sessionStyle}
+                onChange={(sessionStyle) =>
+                  setForm((current) => ({ ...current, sessionStyle }))
+                }
+              />
+            </QuestionBlock>
+            <QuestionBlock title="Tono del lavoro" description="Quanto presente vuoi sentire il lavoro già da subito.">
+              <ChoiceGrid
+                options={sessionToneOptions}
+                value={form.sessionTone}
+                onChange={(sessionTone) =>
+                  setForm((current) => ({ ...current, sessionTone }))
+                }
+              />
+            </QuestionBlock>
+            <QuestionBlock title="Movimenti da evitare" description="Per esempio se preferisci un percorso senza salti.">
+              <ChoiceGrid
+                options={avoidJumpOptions}
+                value={form.avoidJumps}
+                onChange={(avoidJumps) =>
+                  setForm((current) => ({ ...current, avoidJumps }))
+                }
+              />
+            </QuestionBlock>
 
             <MultiSelectCards
               title="Fastidi o attenzioni da proteggere"
@@ -631,20 +678,24 @@ export function OnboardingPage() {
               onToggle={(value) => toggleLimitation(value as LimitationTag)}
             />
 
-            <ChoiceGrid
-              options={eatingPerceptionOptions}
-              value={form.eatingPerception}
-              onChange={(eatingPerception) =>
-                setForm((current) => ({ ...current, eatingPerception }))
-              }
-            />
-            <ChoiceGrid
-              options={proteinPerceptionOptions}
-              value={form.lowProteinIntake}
-              onChange={(lowProteinIntake) =>
-                setForm((current) => ({ ...current, lowProteinIntake }))
-              }
-            />
+            <QuestionBlock title="Come senti il tuo ritmo alimentare" description="Solo per evitare che il percorso venga sabotato da abitudini troppo instabili.">
+              <ChoiceGrid
+                options={eatingPerceptionOptions}
+                value={form.eatingPerception}
+                onChange={(eatingPerception) =>
+                  setForm((current) => ({ ...current, eatingPerception }))
+                }
+              />
+            </QuestionBlock>
+            <QuestionBlock title="Proteine nella giornata" description="Una lettura semplice, senza trasformarla in una dieta.">
+              <ChoiceGrid
+                options={proteinPerceptionOptions}
+                value={form.lowProteinIntake}
+                onChange={(lowProteinIntake) =>
+                  setForm((current) => ({ ...current, lowProteinIntake }))
+                }
+              />
+            </QuestionBlock>
 
             <BooleanToggleRow
               label="Ti capita di saltare spesso i pasti?"

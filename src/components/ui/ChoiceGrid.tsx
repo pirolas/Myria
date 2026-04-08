@@ -31,7 +31,7 @@ export function ChoiceGrid<TValue extends string | number | boolean>({
             type="button"
             className={cn(
               "surface relative text-left transition duration-200",
-              "min-h-[104px] px-4 py-4",
+              "h-full min-h-[104px] px-4 py-4",
               isSelected
                 ? "selection-card-selected"
                 : "selection-card-idle"
@@ -50,11 +50,21 @@ export function ChoiceGrid<TValue extends string | number | boolean>({
               <Check size={14} strokeWidth={2.5} />
             </div>
 
-            <div className="max-w-[15rem] pr-10">
-              <div className={cn("text-sm font-semibold", isSelected ? "text-accent-deep" : "text-ink")}>
+            <div className="flex h-full max-w-[15rem] flex-col pr-10">
+              <div
+                className={cn(
+                  "min-h-[2.5rem] text-sm font-semibold leading-5",
+                  isSelected ? "text-accent-deep" : "text-ink"
+                )}
+              >
                 {option.label}
               </div>
-              <p className={cn("mt-2 text-sm leading-6", isSelected ? "text-ink/78" : "text-muted")}>
+              <p
+                className={cn(
+                  "mt-2 flex-1 text-sm leading-6",
+                  isSelected ? "text-ink/78" : "text-muted"
+                )}
+              >
                 {option.description}
               </p>
             </div>

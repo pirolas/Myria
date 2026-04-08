@@ -3,6 +3,7 @@ import { Check } from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { ChoiceGrid } from "@/components/ui/ChoiceGrid";
+import { QuestionBlock } from "@/components/ui/QuestionBlock";
 import {
   goalOptions,
   improvementOptions,
@@ -84,36 +85,44 @@ export function ReassessmentPage() {
       </section>
 
       <section className="surface px-5 py-5 space-y-4">
-        <ChoiceGrid
-          options={reassessmentFitOptions}
-          value={form.planFit}
-          onChange={(planFit) => setForm((current) => ({ ...current, planFit }))}
-        />
+        <QuestionBlock title="Come senti il piano, oggi?" description="Ci serve a capire se confermarlo o alleggerirlo.">
+          <ChoiceGrid
+            options={reassessmentFitOptions}
+            value={form.planFit}
+            onChange={(planFit) => setForm((current) => ({ ...current, planFit }))}
+          />
+        </QuestionBlock>
 
-        <ChoiceGrid
-          options={consistencyOptions}
-          value={form.consistencyKeeping}
-          onChange={(consistencyKeeping) =>
-            setForm((current) => ({ ...current, consistencyKeeping }))
-          }
-        />
+        <QuestionBlock title="Quanto stai riuscendo a proteggerlo" description="Così distinguiamo il piano giusto dal piano difficile da tenere.">
+          <ChoiceGrid
+            options={consistencyOptions}
+            value={form.consistencyKeeping}
+            onChange={(consistencyKeeping) =>
+              setForm((current) => ({ ...current, consistencyKeeping }))
+            }
+          />
+        </QuestionBlock>
 
-        <ChoiceGrid
-          options={minuteOptions}
-          value={form.realisticMinutesNow}
-          onChange={(realisticMinutesNow) =>
-            setForm((current) => ({ ...current, realisticMinutesNow }))
-          }
-          columns="two"
-        />
+        <QuestionBlock title="Tempo realistico in questo momento" description="Anche qui ci interessa la realtà, non l'ideale.">
+          <ChoiceGrid
+            options={minuteOptions}
+            value={form.realisticMinutesNow}
+            onChange={(realisticMinutesNow) =>
+              setForm((current) => ({ ...current, realisticMinutesNow }))
+            }
+            columns="two"
+          />
+        </QuestionBlock>
 
-        <ChoiceGrid
-          options={obstacleOptions}
-          value={form.mainObstacle ?? "mancanza_tempo"}
-          onChange={(mainObstacle) =>
-            setForm((current) => ({ ...current, mainObstacle }))
-          }
-        />
+        <QuestionBlock title="Ostacolo principale" description="Il punto che oggi rischia di interrompere più facilmente il percorso.">
+          <ChoiceGrid
+            options={obstacleOptions}
+            value={form.mainObstacle ?? "mancanza_tempo"}
+            onChange={(mainObstacle) =>
+              setForm((current) => ({ ...current, mainObstacle }))
+            }
+          />
+        </QuestionBlock>
       </section>
 
       <section className="surface px-5 py-5 space-y-4">
@@ -159,33 +168,37 @@ export function ReassessmentPage() {
           })}
         </div>
 
-        <ChoiceGrid
-          options={[
-            {
-              value: true,
-              label: "Manteniamo il focus attuale",
-              description: "Per adesso mi sembra ancora quello giusto."
-            },
-            {
-              value: false,
-              label: "Vorrei spostarlo",
-              description: "Il mio bisogno principale è cambiato un po'."
-            }
-          ]}
-          value={form.keepCurrentFocus}
-          onChange={(keepCurrentFocus) =>
-            setForm((current) => ({ ...current, keepCurrentFocus }))
-          }
-        />
-
-        {!form.keepCurrentFocus ? (
+        <QuestionBlock title="Direzione del percorso" description="Capire se il focus attuale ha ancora senso oppure no.">
           <ChoiceGrid
-            options={goalOptions}
-            value={form.newFocus ?? data?.onboarding?.focusPreference ?? "glutei_gambe"}
-            onChange={(newFocus) =>
-              setForm((current) => ({ ...current, newFocus: newFocus as Goal }))
+            options={[
+              {
+                value: true,
+                label: "Manteniamo il focus attuale",
+                description: "Per adesso mi sembra ancora quello giusto."
+              },
+              {
+                value: false,
+                label: "Vorrei spostarlo",
+                description: "Il mio bisogno principale è cambiato un po'."
+              }
+            ]}
+            value={form.keepCurrentFocus}
+            onChange={(keepCurrentFocus) =>
+              setForm((current) => ({ ...current, keepCurrentFocus }))
             }
           />
+        </QuestionBlock>
+
+        {!form.keepCurrentFocus ? (
+          <QuestionBlock title="Nuovo focus da dare al piano">
+            <ChoiceGrid
+              options={goalOptions}
+              value={form.newFocus ?? data?.onboarding?.focusPreference ?? "glutei_gambe"}
+              onChange={(newFocus) =>
+                setForm((current) => ({ ...current, newFocus: newFocus as Goal }))
+              }
+            />
+          </QuestionBlock>
         ) : null}
 
         <label className="block">
