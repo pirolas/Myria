@@ -26,11 +26,16 @@ export function PlanPage() {
 
         <div className="mt-5 flex flex-wrap gap-2">
           <span className="rounded-full bg-accent-soft px-3 py-2 text-xs font-semibold text-accent-deep">
-            {data.activePlan.phaseLabel}
+            {data.activePlan.planOverview?.phase_name ?? data.activePlan.phaseLabel}
           </span>
           <span className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-muted">
             {data.activePlan.weeklyGoal}
           </span>
+          {data.activePlan.planOverview ? (
+            <span className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-muted">
+              {data.activePlan.planOverview.intensity}
+            </span>
+          ) : null}
         </div>
       </section>
 
@@ -96,7 +101,20 @@ export function PlanPage() {
                 <span className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-muted">
                   {day.sessionKind === "recovery" ? "Recupero guidato" : "Workout"}
                 </span>
+                {day.workout.steps[0] ? (
+                  <span className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-muted">
+                    {day.workout.steps[0].sets} serie · {day.workout.steps[0].repsLabel}
+                  </span>
+                ) : null}
               </div>
+
+              {day.workout.steps.length > 0 ? (
+                <div className="mt-4 rounded-[18px] bg-[rgba(248,252,251,0.9)] px-4 py-3 text-sm leading-6 text-muted">
+                  <span className="font-semibold text-ink">Primo blocco:</span>{" "}
+                  {day.workout.steps[0].title}. {day.workout.steps[0].sets} serie,{" "}
+                  {day.workout.steps[0].repsLabel}, recupero {day.workout.steps[0].restSeconds}s.
+                </div>
+              ) : null}
 
               <div className="mt-4 flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2 text-muted">

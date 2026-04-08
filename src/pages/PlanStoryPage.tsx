@@ -39,9 +39,9 @@ export function PlanStoryPage() {
 
         <div className="mt-5 grid gap-3">
           {[
-            ["Fase attuale", data.activePlan.phaseLabel],
+            ["Fase attuale", data.activePlan.planOverview?.phase_name ?? data.activePlan.phaseLabel],
             ["Obiettivo della fase", data.activePlan.phaseGoal],
-            ["Difficolta iniziale", data.activePlan.sessionDifficulty],
+            ["Intensita iniziale", data.activePlan.planOverview?.intensity ?? data.activePlan.sessionDifficulty],
             ["Strategia di aderenza", data.activePlan.adherenceStrategy]
           ].map(([label, value]) => (
             <div
@@ -55,6 +55,28 @@ export function PlanStoryPage() {
             </div>
           ))}
         </div>
+
+        {data.activePlan.profileSummary ? (
+          <div className="mt-4 rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+              Profilo sintetico
+            </div>
+            <div className="mt-3 grid gap-3 text-sm leading-6 text-muted">
+              <div>
+                <span className="font-semibold text-ink">Obiettivo letto:</span>{" "}
+                {data.activePlan.profileSummary.main_goal}
+              </div>
+              <div>
+                <span className="font-semibold text-ink">Focus principali:</span>{" "}
+                {data.activePlan.profileSummary.focus_areas.join(", ")}
+              </div>
+              <div>
+                <span className="font-semibold text-ink">Ritmo considerato:</span>{" "}
+                {data.activePlan.profileSummary.weekly_availability}
+              </div>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       <section className="surface px-5 py-5">
@@ -85,7 +107,10 @@ export function PlanStoryPage() {
         <SectionHeading
           eyebrow="Prime settimane"
           title="Come si muovera il percorso da qui"
-          description={data.activePlan.progressionStrategy}
+          description={
+            data.activePlan.planOverview?.strategy_explanation ??
+            data.activePlan.progressionStrategy
+          }
         />
 
         <div className="mt-5 space-y-3">
@@ -109,7 +134,8 @@ export function PlanStoryPage() {
           title="Cosa ha senso aspettarsi se il ritmo resta buono"
         />
         <ul className="mt-4 space-y-3 text-sm leading-6 text-muted">
-          {data.activePlan.realisticExpectedOutcomes.map((item) => (
+          {(data.activePlan.planOverview?.realistic_expectations ??
+            data.activePlan.realisticExpectedOutcomes).map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ul>

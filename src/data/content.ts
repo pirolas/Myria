@@ -29,7 +29,16 @@ import type {
   TrainingPreference,
   WeeklyAvailability,
   BodyConfidence,
-  DiastasisStatus
+  DiastasisStatus,
+  EatingPerception,
+  FocusArea,
+  PastTrainingType,
+  PreferredDay,
+  PrimaryBodyGoal,
+  ProteinPerception,
+  SecondaryObjective,
+  SessionStyle,
+  SessionTone
 } from "@/types/domain";
 
 export const brand = {
@@ -64,6 +73,98 @@ export const goalOptions: PreferenceOption<Goal>[] = [
 ];
 
 export const focusOptions = goalOptions;
+
+export const primaryBodyGoalOptions: PreferenceOption<PrimaryBodyGoal>[] = [
+  {
+    value: "dimagrire",
+    label: "Dimagrire",
+    description: "Per alleggerire il corpo con un percorso progressivo e sostenibile."
+  },
+  {
+    value: "massa_muscolare",
+    label: "Aumentare massa muscolare",
+    description: "Per costruire piu presenza muscolare, soprattutto se oggi ti senti vuota o troppo esile."
+  },
+  {
+    value: "tonicita_rassodare",
+    label: "Aumentare tonicita e rassodare",
+    description: "Per sentirti meno flaccida e piu sostenuta, anche se il peso non e il punto centrale."
+  },
+  {
+    value: "aumentare_peso_sano",
+    label: "Aumentare di peso in modo sano",
+    description: "Per uscire da una sensazione di corpo troppo scarico, con lavoro graduale e nutrimento migliore."
+  },
+  {
+    value: "ricomposizione_corporea",
+    label: "Ricomposizione corporea",
+    description: "Per migliorare forma, tono e distribuzione del lavoro sul corpo, senza inseguire solo la bilancia."
+  }
+];
+
+export const secondaryObjectiveOptions: MultiPreferenceOption<SecondaryObjective>[] = [
+  { value: "glutei_piu_sodi", label: "Glutei piu sodi", description: "Percepire piu sostegno e tono nella parte bassa." },
+  { value: "gambe_piu_toniche", label: "Gambe piu toniche", description: "Sentire le gambe piu presenti e meno spente." },
+  { value: "addome_piu_stabile", label: "Addome piu stabile", description: "Ritrovare un centro piu controllato e sostenuto." },
+  { value: "postura_migliore", label: "Postura migliore", description: "Alleggerire chiusure e rigidita nella giornata." },
+  { value: "piu_energia", label: "Piu energia", description: "Uscire dalle sessioni sentendoti piu attiva, non svuotata." },
+  { value: "meno_flaccidita", label: "Sentirti meno flaccida", description: "Lavorare sul tono quando il problema non e perdere peso ma dare piu forma al corpo." },
+  { value: "piu_forza", label: "Sentirti piu forte", description: "Avere piu sicurezza nei movimenti e nel lavoro muscolare." },
+  { value: "maggiore_costanza", label: "Maggiore costanza", description: "Rendere la routine praticabile e non solo desiderata." },
+  { value: "ridurre_rigidita", label: "Ridurre rigidita", description: "Sciogliere tensioni e chiusure da sedentarieta o stress." },
+  { value: "migliorare_mobilita", label: "Migliorare mobilita", description: "Muoversi con piu fluidita e meno freno." }
+];
+
+export const focusAreaOptions: MultiPreferenceOption<FocusArea>[] = [
+  { value: "glutei", label: "Glutei", description: "Per dare piu sostegno e forma alla parte posteriore." },
+  { value: "gambe", label: "Gambe", description: "Per gambe piu toniche e presenti." },
+  { value: "addome_core", label: "Addome e core", description: "Per stabilita e controllo nel centro del corpo." },
+  { value: "postura", label: "Postura", description: "Per alleggerire chiusure e rigidita." },
+  { value: "braccia", label: "Braccia", description: "Per completare il lavoro di tonicita in modo armonioso." },
+  { value: "total_body", label: "Total body", description: "Per un percorso equilibrato su tutto il corpo." }
+];
+
+export const preferredDayOptions: PreferenceOption<PreferredDay>[] = [
+  { value: "lun", label: "Lunedi", description: "Inizio settimana." },
+  { value: "mar", label: "Martedi", description: "Secondo giorno." },
+  { value: "mer", label: "Mercoledi", description: "Meta settimana." },
+  { value: "gio", label: "Giovedi", description: "Verso il finale." },
+  { value: "ven", label: "Venerdi", description: "Chiusura della settimana attiva." },
+  { value: "sab", label: "Sabato", description: "Più flessibilita nel weekend." },
+  { value: "dom", label: "Domenica", description: "Ritmo morbido del weekend." }
+];
+
+export const pastTrainingTypeOptions: MultiPreferenceOption<PastTrainingType>[] = [
+  { value: "nessuno", label: "Nessuno", description: "Non ho una vera esperienza da richiamare." },
+  { value: "camminata", label: "Camminata", description: "Mi sono mossa soprattutto camminando." },
+  { value: "home_workout", label: "Workout a casa", description: "Ho gia provato routine guidate a casa." },
+  { value: "pesi_macchine", label: "Pesi o macchine", description: "Ho fatto sala o lavoro con carichi." },
+  { value: "pilates_yoga", label: "Pilates o yoga", description: "Ho piu familiarita con lavoro controllato e posturale." },
+  { value: "corsi_fitness", label: "Corsi fitness", description: "Ho seguito lezioni o corsi di gruppo." }
+];
+
+export const sessionStyleOptions: PreferenceOption<SessionStyle>[] = [
+  { value: "circuiti", label: "Circuiti semplici", description: "Mi va bene un ritmo lineare, con passaggi chiari tra gli esercizi." },
+  { value: "sequenze_lente", label: "Sequenze piu lente", description: "Preferisco piu controllo e meno fretta tra uno step e l'altro." }
+];
+
+export const sessionToneOptions: PreferenceOption<SessionTone>[] = [
+  { value: "soft", label: "Piu soft", description: "Voglio partire con un tono calmo e sostenibile." },
+  { value: "tonificante", label: "Piu tonificante", description: "Posso sentire un po piu di lavoro, restando guidata." }
+];
+
+export const eatingPerceptionOptions: PreferenceOption<EatingPerception>[] = [
+  { value: "troppo_poco", label: "Spesso troppo poco", description: "Rischio di mangiare meno di quanto mi serva davvero." },
+  { value: "abbastanza", label: "Abbastanza", description: "Nel complesso il mio ritmo alimentare e discreto." },
+  { value: "troppo", label: "Spesso troppo", description: "Sento di eccedere piu di quanto vorrei." },
+  { value: "disordinato", label: "In modo disordinato", description: "Il punto principale e la mancanza di regolarita." }
+];
+
+export const proteinPerceptionOptions: PreferenceOption<ProteinPerception>[] = [
+  { value: "si", label: "Sì, abbastanza", description: "Credo di introdurre una quota proteica sufficiente." },
+  { value: "no", label: "No, probabilmente poche", description: "Penso di restare spesso troppo bassa." },
+  { value: "non_so", label: "Non saprei", description: "Non ho ben chiaro se bastano davvero." }
+];
 
 export const levelOptions: PreferenceOption<Level>[] = [
   {
@@ -163,6 +264,16 @@ export const timePreferenceOptions: PreferenceOption<TimePreference>[] = [
   { value: "pomeriggio", label: "Pomeriggio", description: "Riesco piu facilmente nel pomeriggio." },
   { value: "sera", label: "Sera", description: "Trovo spazio soprattutto verso sera." },
   { value: "variabile", label: "Variabile", description: "Preferisco che il piano resti flessibile." }
+];
+
+export const simpleExerciseOptions: PreferenceOption<boolean>[] = [
+  { value: true, label: "Si, esercizi semplici e sicuri", description: "Mi sento meglio se i movimenti sono molto chiari e facili da seguire." },
+  { value: false, label: "Va bene anche un po piu vario", description: "Posso gestire anche qualcosa di leggermente piu ricco, se resta ben spiegato." }
+];
+
+export const avoidJumpOptions: PreferenceOption<boolean>[] = [
+  { value: true, label: "Senza salti", description: "Preferisco un lavoro controllato e gentile su articolazioni e pavimento pelvico." },
+  { value: false, label: "Non e una priorita", description: "Va bene anche qualche passaggio piu dinamico, se dosato." }
 ];
 
 export const bodyAreaFocusOptions: PreferenceOption<BodyAreaFocus>[] = [
@@ -281,6 +392,36 @@ export const goalLabels: Record<Goal, string> = {
   postura: "Postura",
   tonicita_generale: "Tonicita generale",
   ripartenza_dolce: "Ripartenza dolce"
+};
+
+export const primaryBodyGoalLabels: Record<PrimaryBodyGoal, string> = {
+  dimagrire: "Dimagrire",
+  massa_muscolare: "Aumentare massa muscolare",
+  tonicita_rassodare: "Aumentare tonicita e rassodare",
+  aumentare_peso_sano: "Aumentare di peso in modo sano",
+  ricomposizione_corporea: "Ricomposizione corporea"
+};
+
+export const secondaryObjectiveLabels: Record<SecondaryObjective, string> = {
+  glutei_piu_sodi: "Glutei piu sodi",
+  gambe_piu_toniche: "Gambe piu toniche",
+  addome_piu_stabile: "Addome piu stabile",
+  postura_migliore: "Postura migliore",
+  piu_energia: "Piu energia",
+  meno_flaccidita: "Sentirti meno flaccida",
+  piu_forza: "Sentirti piu forte",
+  maggiore_costanza: "Maggiore costanza",
+  ridurre_rigidita: "Ridurre rigidita",
+  migliorare_mobilita: "Migliorare mobilita"
+};
+
+export const focusAreaLabels: Record<FocusArea, string> = {
+  glutei: "Glutei",
+  gambe: "Gambe",
+  addome_core: "Addome e core",
+  postura: "Postura",
+  braccia: "Braccia",
+  total_body: "Total body"
 };
 
 export const levelLabels: Record<Level, string> = {

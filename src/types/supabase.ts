@@ -46,6 +46,9 @@ export interface Database {
           age_band: string;
           height_cm: number | null;
           weight_kg: number | null;
+          primary_body_goal: string;
+          computed_body_goal: string;
+          secondary_objectives: string[];
           perceived_level: string;
           primary_goal: string;
           secondary_goals: string[];
@@ -62,6 +65,19 @@ export interface Database {
           consistency_score: number | null;
           weekly_availability: string | null;
           preferred_time_of_day: string | null;
+          preferred_days: string[];
+          focus_areas: string[];
+          past_training_types: string[];
+          prefer_simple_exercises: boolean;
+          session_style: string;
+          session_tone: string;
+          avoid_jumps: boolean;
+          eating_perception: string;
+          skips_meals: boolean;
+          nervous_hunger: boolean;
+          low_water_intake: boolean;
+          low_protein_intake: string;
+          wants_timer_sound: boolean;
           notes: string | null;
           completed_at: string;
           updated_at: string;
@@ -72,6 +88,9 @@ export interface Database {
           age_band: string;
           height_cm?: number | null;
           weight_kg?: number | null;
+          primary_body_goal?: string;
+          computed_body_goal?: string;
+          secondary_objectives?: string[];
           perceived_level: string;
           primary_goal: string;
           secondary_goals?: string[];
@@ -88,6 +107,19 @@ export interface Database {
           consistency_score?: number | null;
           weekly_availability?: string | null;
           preferred_time_of_day?: string | null;
+          preferred_days?: string[];
+          focus_areas?: string[];
+          past_training_types?: string[];
+          prefer_simple_exercises?: boolean;
+          session_style?: string;
+          session_tone?: string;
+          avoid_jumps?: boolean;
+          eating_perception?: string;
+          skips_meals?: boolean;
+          nervous_hunger?: boolean;
+          low_water_intake?: boolean;
+          low_protein_intake?: string;
+          wants_timer_sound?: boolean;
           notes?: string | null;
           completed_at?: string;
           updated_at?: string;
@@ -98,6 +130,9 @@ export interface Database {
           age_band?: string;
           height_cm?: number | null;
           weight_kg?: number | null;
+          primary_body_goal?: string;
+          computed_body_goal?: string;
+          secondary_objectives?: string[];
           perceived_level?: string;
           primary_goal?: string;
           secondary_goals?: string[];
@@ -114,6 +149,19 @@ export interface Database {
           consistency_score?: number | null;
           weekly_availability?: string | null;
           preferred_time_of_day?: string | null;
+          preferred_days?: string[];
+          focus_areas?: string[];
+          past_training_types?: string[];
+          prefer_simple_exercises?: boolean;
+          session_style?: string;
+          session_tone?: string;
+          avoid_jumps?: boolean;
+          eating_perception?: string;
+          skips_meals?: boolean;
+          nervous_hunger?: boolean;
+          low_water_intake?: boolean;
+          low_protein_intake?: string;
+          wants_timer_sound?: boolean;
           notes?: string | null;
           completed_at?: string;
           updated_at?: string;
@@ -142,6 +190,9 @@ export interface Database {
           skips_meals: boolean | null;
           hydration_pattern: string | null;
           training_preference: string | null;
+          feared_exercises: string | null;
+          disliked_exercises: string | null;
+          relevant_interventions: string | null;
           notes: string | null;
           updated_at: string;
         },
@@ -167,6 +218,9 @@ export interface Database {
           skips_meals?: boolean | null;
           hydration_pattern?: string | null;
           training_preference?: string | null;
+          feared_exercises?: string | null;
+          disliked_exercises?: string | null;
+          relevant_interventions?: string | null;
           notes?: string | null;
           updated_at?: string;
         },
@@ -192,6 +246,9 @@ export interface Database {
           skips_meals?: boolean | null;
           hydration_pattern?: string | null;
           training_preference?: string | null;
+          feared_exercises?: string | null;
+          disliked_exercises?: string | null;
+          relevant_interventions?: string | null;
           notes?: string | null;
           updated_at?: string;
         }
@@ -319,11 +376,16 @@ export interface Database {
           user_id: string;
           status: string;
           source: string;
+          primary_body_goal: string;
+          computed_body_goal: string;
           current_phase: string;
           phase_label: string;
           phase_focus: string;
           phase_goal: string | null;
           user_profile_summary: string | null;
+          profile_summary_payload: Json;
+          plan_overview_payload: Json;
+          support_tips_payload: Json;
           current_week: number;
           total_weeks: number;
           weekly_goal: string;
@@ -351,11 +413,16 @@ export interface Database {
           user_id: string;
           status?: string;
           source?: string;
+          primary_body_goal?: string;
+          computed_body_goal?: string;
           current_phase: string;
           phase_label: string;
           phase_focus: string;
           phase_goal?: string | null;
           user_profile_summary?: string | null;
+          profile_summary_payload?: Json;
+          plan_overview_payload?: Json;
+          support_tips_payload?: Json;
           current_week: number;
           total_weeks?: number;
           weekly_goal: string;
@@ -383,11 +450,16 @@ export interface Database {
           user_id?: string;
           status?: string;
           source?: string;
+          primary_body_goal?: string;
+          computed_body_goal?: string;
           current_phase?: string;
           phase_label?: string;
           phase_focus?: string;
           phase_goal?: string | null;
           user_profile_summary?: string | null;
+          profile_summary_payload?: Json;
+          plan_overview_payload?: Json;
+          support_tips_payload?: Json;
           current_week?: number;
           total_weeks?: number;
           weekly_goal?: string;
@@ -471,6 +543,65 @@ export interface Database {
           nutrition_tips?: Json;
           plan_explanation?: string;
           created_at?: string;
+        }
+      >;
+      training_plan_exercises: TableDef<
+        {
+          id: string;
+          user_id: string;
+          plan_id: string;
+          plan_day_id: string;
+          position_index: number;
+          exercise_id: string;
+          exercise_name: string;
+          sets: number;
+          reps_label: string;
+          duration_seconds_estimate: number;
+          rest_seconds: number;
+          execution_note: string | null;
+          easier_option: string | null;
+          body_area: string | null;
+          caution: string | null;
+          created_at: string;
+          updated_at: string;
+        },
+        {
+          id?: string;
+          user_id: string;
+          plan_id: string;
+          plan_day_id: string;
+          position_index: number;
+          exercise_id: string;
+          exercise_name: string;
+          sets?: number;
+          reps_label: string;
+          duration_seconds_estimate?: number;
+          rest_seconds?: number;
+          execution_note?: string | null;
+          easier_option?: string | null;
+          body_area?: string | null;
+          caution?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        },
+        {
+          id?: string;
+          user_id?: string;
+          plan_id?: string;
+          plan_day_id?: string;
+          position_index?: number;
+          exercise_id?: string;
+          exercise_name?: string;
+          sets?: number;
+          reps_label?: string;
+          duration_seconds_estimate?: number;
+          rest_seconds?: number;
+          execution_note?: string | null;
+          easier_option?: string | null;
+          body_area?: string | null;
+          caution?: string | null;
+          created_at?: string;
+          updated_at?: string;
         }
       >;
       training_plan_days: TableDef<

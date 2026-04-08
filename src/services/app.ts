@@ -303,6 +303,7 @@ export async function saveOnboarding(userId: string, input: BetaOnboardingInput)
   const client = requireSupabaseClient();
   const limitations =
     input.limitations.length === 0 ? ["nessuna"] : sanitizeLimitations(input.limitations);
+  const computedBodyGoal = computeBodyGoal(input);
 
   const onboardingPayload = {
     user_id: userId,
@@ -310,6 +311,9 @@ export async function saveOnboarding(userId: string, input: BetaOnboardingInput)
     age_band: input.ageBand,
     height_cm: input.heightCm,
     weight_kg: input.weightKg,
+    primary_body_goal: input.primaryBodyGoal,
+    computed_body_goal: computedBodyGoal,
+    secondary_objectives: input.secondaryObjectives,
     perceived_level: input.perceivedLevel,
     primary_goal: input.primaryGoal,
     secondary_goals: input.secondaryGoals,
@@ -326,6 +330,19 @@ export async function saveOnboarding(userId: string, input: BetaOnboardingInput)
     consistency_score: input.consistencyScore,
     weekly_availability: input.weeklyAvailability,
     preferred_time_of_day: input.preferredTimeOfDay,
+    preferred_days: input.preferredDays,
+    focus_areas: input.focusAreas,
+    past_training_types: input.pastTrainingTypes,
+    prefer_simple_exercises: input.preferSimpleExercises,
+    session_style: input.sessionStyle,
+    session_tone: input.sessionTone,
+    avoid_jumps: input.avoidJumps,
+    eating_perception: input.eatingPerception,
+    skips_meals: input.skipsMeals,
+    nervous_hunger: input.nervousHunger,
+    low_water_intake: input.lowWaterIntake,
+    low_protein_intake: input.lowProteinIntake,
+    wants_timer_sound: input.wantsTimerSound,
     notes: input.notes || null
   };
 
@@ -341,7 +358,7 @@ export async function saveOnboarding(userId: string, input: BetaOnboardingInput)
     client.from("user_preferences").upsert(
       {
         user_id: userId,
-        timer_sound_enabled: true,
+        timer_sound_enabled: input.wantsTimerSound,
         reminders_enabled: true
       },
       { onConflict: "user_id" }
@@ -379,6 +396,9 @@ export async function saveDeepProfile(userId: string, input: DeepProfileInput) {
       skips_meals: input.skipsMeals,
       hydration_pattern: input.hydrationPattern,
       training_preference: input.trainingPreference,
+      feared_exercises: input.fearedExercises || null,
+      disliked_exercises: input.dislikedExercises || null,
+      relevant_interventions: input.relevantInterventions || null,
       notes: input.notes || null
     },
     { onConflict: "user_id" }
@@ -624,6 +644,13 @@ function mapOnboarding(
     ageBand: row.age_band as UserOnboardingRecord["ageBand"],
     heightCm: row.height_cm,
     weightKg: row.weight_kg,
+    primaryBodyGoal:
+      (row.primary_body_goal as UserOnboardingRecord["primaryBodyGoal"]) ??
+      "tonicita_rassodare",
+    computedBodyGoal:
+      (row.computed_body_goal as UserOnboardingRecord["computedBodyGoal"]) ?? "toning",
+    secondaryObjectives:
+      (row.secondary_objectives ?? []) as UserOnboardingRecord["secondaryObjectives"],
     perceivedLevel: row.perceived_level as UserOnboardingRecord["perceivedLevel"],
     primaryGoal: row.primary_goal as UserOnboardingRecord["primaryGoal"],
     secondaryGoals: sanitizeGoalArray(row.secondary_goals, row.primary_goal),
@@ -646,6 +673,23 @@ function mapOnboarding(
     preferredTimeOfDay:
       (row.preferred_time_of_day as UserOnboardingRecord["preferredTimeOfDay"]) ??
       "variabile",
+    preferredDays: (row.preferred_days ?? []) as UserOnboardingRecord["preferredDays"],
+    pastTrainingTypes:
+      (row.past_training_types ?? []) as UserOnboardingRecord["pastTrainingTypes"],
+    focusAreas: (row.focus_areas ?? []) as UserOnboardingRecord["focusAreas"],
+    preferSimpleExercises: row.prefer_simple_exercises ?? true,
+    sessionStyle:
+      (row.session_style as UserOnboardingRecord["sessionStyle"]) ?? "sequenze_lente",
+    sessionTone: (row.session_tone as UserOnboardingRecord["sessionTone"]) ?? "soft",
+    avoidJumps: row.avoid_jumps ?? true,
+    eatingPerception:
+      (row.eating_perception as UserOnboardingRecord["eatingPerception"]) ?? "abbastanza",
+    skipsMeals: row.skips_meals ?? false,
+    lowWaterIntake: row.low_water_intake ?? false,
+    nervousHunger: row.nervous_hunger ?? false,
+    lowProteinIntake:
+      (row.low_protein_intake as UserOnboardingRecord["lowProteinIntake"]) ?? "non_so",
+    wantsTimerSound: row.wants_timer_sound ?? true,
     notes: row.notes ?? "",
     completedAt: row.completed_at
   };
@@ -677,6 +721,9 @@ function mapDeepProfile(
     skipsMeals: row.skips_meals,
     hydrationPattern: row.hydration_pattern as UserDeepProfileRecord["hydrationPattern"],
     trainingPreference: row.training_preference as UserDeepProfileRecord["trainingPreference"],
+    fearedExercises: row.feared_exercises ?? "",
+    dislikedExercises: row.disliked_exercises ?? "",
+    relevantInterventions: row.relevant_interventions ?? "",
     notes: row.notes ?? "",
     updatedAt: row.updated_at
   };
@@ -781,6 +828,9 @@ function mapPlan(row: PlanRow | null): ActiveTrainingPlan | null {
     id: row.id,
     status: row.status as ActiveTrainingPlan["status"],
     source: row.source as ActiveTrainingPlan["source"],
+    primaryBodyGoal: row.primary_body_goal ?? "tonicita_rassodare",
+    computedBodyGoal:
+      (row.computed_body_goal as ActiveTrainingPlan["computedBodyGoal"]) ?? "toning",
     currentPhase: row.current_phase,
     phaseLabel: row.phase_label,
     phaseFocus: row.phase_focus,
@@ -804,7 +854,16 @@ function mapPlan(row: PlanRow | null): ActiveTrainingPlan | null {
     planExplanation: row.plan_explanation ?? "",
     adjustments: readStringArray(row.adjustments),
     reassessmentDueInDays: row.reassessment_due_in_days,
-    nextReassessmentDate: row.next_reassessment_at
+    nextReassessmentDate: row.next_reassessment_at,
+    planOverview: isRecord(row.plan_overview_payload)
+      ? (row.plan_overview_payload as unknown as ActiveTrainingPlan["planOverview"])
+      : null,
+    profileSummary: isRecord(row.profile_summary_payload)
+      ? (row.profile_summary_payload as unknown as ActiveTrainingPlan["profileSummary"])
+      : null,
+    supportTips: isRecord(row.support_tips_payload)
+      ? (row.support_tips_payload as unknown as ActiveTrainingPlan["supportTips"])
+      : null
   };
 }
 
@@ -868,11 +927,17 @@ function mapWorkoutPayload(payload: Json, row: PlanDayRow): PlannedWorkout {
         typeof item.exerciseId === "string" ? item.exerciseId : "esercizio-generico",
       title: typeof item.title === "string" ? item.title : "Esercizio",
       summary: typeof item.summary === "string" ? item.summary : "",
+      sets: typeof item.sets === "number" ? item.sets : 2,
+      repsLabel: typeof item.repsLabel === "string" ? item.repsLabel : "8-10 ripetizioni",
       durationSeconds:
         typeof item.durationSeconds === "number" ? item.durationSeconds : 40,
       restSeconds: typeof item.restSeconds === "number" ? item.restSeconds : 20,
       bodyArea: typeof item.bodyArea === "string" ? item.bodyArea : "",
       doseLabel: typeof item.doseLabel === "string" ? item.doseLabel : "",
+      executionNote:
+        typeof item.executionNote === "string" ? item.executionNote : undefined,
+      easierOption:
+        typeof item.easierOption === "string" ? item.easierOption : undefined,
       caution: typeof item.caution === "string" ? item.caution : undefined
     });
 
@@ -942,6 +1007,34 @@ function mapMilestone(
     description: row.description,
     achievedAt: row.achieved_at
   };
+}
+
+function computeBodyGoal(input: BetaOnboardingInput): UserOnboardingRecord["computedBodyGoal"] {
+  const heightM = input.heightCm && input.heightCm > 0 ? input.heightCm / 100 : null;
+  const bmi = heightM && input.weightKg ? input.weightKg / (heightM * heightM) : null;
+  const wantsToneRebuild =
+    input.primaryBodyGoal === "tonicita_rassodare" &&
+    input.secondaryObjectives.includes("meno_flaccidita") &&
+    bmi !== null &&
+    bmi < 22;
+
+  if (wantsToneRebuild) {
+    return "tone_rebuild_for_lean_body";
+  }
+
+  if (input.primaryBodyGoal === "ricomposizione_corporea") {
+    return bmi !== null && bmi < 22 ? "tone_rebuild_for_lean_body" : "recomposition";
+  }
+
+  if (input.primaryBodyGoal === "massa_muscolare" || input.primaryBodyGoal === "aumentare_peso_sano") {
+    return "muscle_gain";
+  }
+
+  if (input.primaryBodyGoal === "dimagrire") {
+    return bmi !== null && bmi < 23 ? "recomposition" : "fat_loss";
+  }
+
+  return bmi !== null && bmi < 22 ? "tone_rebuild_for_lean_body" : "toning";
 }
 
 function mapPlanAdjustment(

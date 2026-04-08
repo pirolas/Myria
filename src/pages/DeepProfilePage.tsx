@@ -54,6 +54,9 @@ const defaultDeepInput: DeepProfileInput = {
   skipsMeals: null,
   hydrationPattern: null,
   trainingPreference: null,
+  fearedExercises: "",
+  dislikedExercises: "",
+  relevantInterventions: "",
   notes: ""
 };
 
@@ -288,6 +291,24 @@ export function DeepProfilePage() {
             }
           />
         </div>
+
+        <label className="block">
+          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+            Interventi, cicatrici o dettagli fisici che vuoi farci tenere presenti
+          </span>
+          <textarea
+            value={deepForm.relevantInterventions}
+            onChange={(event) =>
+              setDeepForm((current) => ({
+                ...current,
+                relevantInterventions: event.target.value
+              }))
+            }
+            rows={3}
+            className="mt-2 w-full rounded-[20px] border border-line bg-white px-4 py-3 text-sm leading-6 text-ink outline-none transition focus:border-accent"
+            placeholder="Per esempio: cicatrice addominale sensibile, fastidio residuo dopo un intervento, oppure niente di rilevante."
+          />
+        </label>
       </section>
 
       <section className="surface px-5 py-5 space-y-4">
@@ -331,6 +352,34 @@ export function DeepProfilePage() {
             setDeepForm((current) => ({ ...current, trainingPreference }))
           }
         />
+        <label className="block">
+          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+            Esercizi che temi o che ti mettono in allerta
+          </span>
+          <textarea
+            value={deepForm.fearedExercises}
+            onChange={(event) =>
+              setDeepForm((current) => ({ ...current, fearedExercises: event.target.value }))
+            }
+            rows={3}
+            className="mt-2 w-full rounded-[20px] border border-line bg-white px-4 py-3 text-sm leading-6 text-ink outline-none transition focus:border-accent"
+            placeholder="Per esempio: plank, affondi profondi, movimenti veloci."
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+            Esercizi che non gradisci
+          </span>
+          <textarea
+            value={deepForm.dislikedExercises}
+            onChange={(event) =>
+              setDeepForm((current) => ({ ...current, dislikedExercises: event.target.value }))
+            }
+            rows={3}
+            className="mt-2 w-full rounded-[20px] border border-line bg-white px-4 py-3 text-sm leading-6 text-ink outline-none transition focus:border-accent"
+            placeholder="Per esempio: movimenti troppo ripetitivi, lavori lunghi sulle gambe, esercizi a terra."
+          />
+        </label>
         <label className="block">
           <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
             Se c'e qualcosa che vuoi farci capire meglio

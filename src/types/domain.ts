@@ -5,6 +5,55 @@ export type Goal =
   | "tonicita_generale"
   | "ripartenza_dolce";
 
+export type PrimaryBodyGoal =
+  | "dimagrire"
+  | "massa_muscolare"
+  | "tonicita_rassodare"
+  | "aumentare_peso_sano"
+  | "ricomposizione_corporea";
+
+export type ComputedBodyGoal =
+  | "fat_loss"
+  | "muscle_gain"
+  | "toning"
+  | "recomposition"
+  | "tone_rebuild_for_lean_body";
+
+export type SecondaryObjective =
+  | "glutei_piu_sodi"
+  | "gambe_piu_toniche"
+  | "addome_piu_stabile"
+  | "postura_migliore"
+  | "piu_energia"
+  | "meno_flaccidita"
+  | "piu_forza"
+  | "maggiore_costanza"
+  | "ridurre_rigidita"
+  | "migliorare_mobilita";
+
+export type FocusArea =
+  | "glutei"
+  | "gambe"
+  | "addome_core"
+  | "postura"
+  | "braccia"
+  | "total_body";
+
+export type PreferredDay = "lun" | "mar" | "mer" | "gio" | "ven" | "sab" | "dom";
+
+export type PastTrainingType =
+  | "nessuno"
+  | "camminata"
+  | "home_workout"
+  | "pesi_macchine"
+  | "pilates_yoga"
+  | "corsi_fitness";
+
+export type SessionStyle = "circuiti" | "sequenze_lente";
+export type SessionTone = "soft" | "tonificante";
+export type EatingPerception = "troppo_poco" | "abbastanza" | "troppo" | "disordinato";
+export type ProteinPerception = "si" | "no" | "non_so";
+
 export type Level =
   | "molto_fuori_allenamento"
   | "principiante"
@@ -144,6 +193,8 @@ export interface BetaOnboardingInput {
   ageBand: AgeBand;
   heightCm: number | null;
   weightKg: number | null;
+  primaryBodyGoal: PrimaryBodyGoal;
+  secondaryObjectives: SecondaryObjective[];
   primaryGoal: Goal;
   secondaryGoals: Goal[];
   perceivedLevel: Level;
@@ -160,6 +211,19 @@ export interface BetaOnboardingInput {
   consistencyScore: 1 | 2 | 3 | 4 | 5;
   weeklyAvailability: WeeklyAvailability;
   preferredTimeOfDay: TimePreference;
+  preferredDays: PreferredDay[];
+  pastTrainingTypes: PastTrainingType[];
+  focusAreas: FocusArea[];
+  preferSimpleExercises: boolean;
+  sessionStyle: SessionStyle;
+  sessionTone: SessionTone;
+  avoidJumps: boolean;
+  eatingPerception: EatingPerception;
+  skipsMeals: boolean;
+  lowWaterIntake: boolean;
+  nervousHunger: boolean;
+  lowProteinIntake: ProteinPerception;
+  wantsTimerSound: boolean;
   notes: string;
 }
 
@@ -184,6 +248,9 @@ export interface DeepProfileInput {
   skipsMeals: boolean | null;
   hydrationPattern: HydrationPattern | null;
   trainingPreference: TrainingPreference | null;
+  fearedExercises: string;
+  dislikedExercises: string;
+  relevantInterventions: string;
   notes: string;
 }
 
@@ -264,10 +331,14 @@ export interface WorkoutStepPlan {
   exerciseId: string;
   title: string;
   summary: string;
+  sets: number;
+  repsLabel: string;
   durationSeconds: number;
   restSeconds: number;
   bodyArea: string;
   doseLabel: string;
+  executionNote?: string;
+  easierOption?: string;
   caution?: string;
 }
 
@@ -332,6 +403,8 @@ export interface ActiveTrainingPlan {
   id: string;
   status: PlanStatus;
   source: "ai" | "fallback";
+  primaryBodyGoal: string;
+  computedBodyGoal: ComputedBodyGoal;
   currentPhase: string;
   phaseLabel: string;
   phaseFocus: string;
@@ -356,46 +429,85 @@ export interface ActiveTrainingPlan {
   reassessmentDueInDays: number;
   nextReassessmentDate: string | null;
   planExplanation: string;
+  planOverview: PlannerPlanOverview | null;
+  profileSummary: PlannerProfileSummary | null;
+  supportTips: PlannerSupportTipsPayload | null;
+}
+
+export interface PlannerProfileSummary {
+  main_goal: string;
+  computed_body_goal: ComputedBodyGoal;
+  secondary_goals: string[];
+  training_level: string;
+  weekly_availability: string;
+  focus_areas: string[];
+  notes: string[];
+}
+
+export interface PlannerPlanOverview {
+  phase_name: string;
+  phase_duration_weeks: number;
+  weekly_sessions: number;
+  session_duration_minutes: number;
+  intensity: string;
+  strategy_explanation: string;
+  realistic_expectations: string[];
+}
+
+export interface PlannerExerciseOutput {
+  name: string;
+  exercise_id: string;
+  sets: number;
+  reps: string;
+  duration_seconds_estimate: number;
+  rest_seconds: number;
+  notes: string;
+  easier_option: string;
+  body_area: string;
+  caution: string | null;
 }
 
 export interface PlannerDayOutput {
   day_index: number;
   scheduled_for: string;
   title: string;
+  label: string;
   focus: string;
   session_kind: "workout" | "recovery";
-  estimated_minutes: number;
+  estimated_duration_minutes: number;
   coach_note: string;
   caution_notes: string[];
-  steps: WorkoutStepPlan[];
+  exercises: PlannerExerciseOutput[];
+}
+
+export interface PlannerSupportTipsPayload {
+  nutrition: string[];
+  recovery: string[];
+  consistency: string[];
+}
+
+export interface PlannerReassessment {
+  days_until_checkin: number;
+  checkin_focus: string[];
 }
 
 export interface PlannerOutput {
-  user_profile_summary: string;
-  current_phase: string;
-  phase_label: string;
-  phase_focus: string;
-  phase_goal: string;
-  current_week: number;
-  total_weeks: number;
-  weekly_goal: string;
-  weekly_goal_minutes: number;
-  weekly_goal_sessions: number;
-  weekly_structure: string[];
-  today_workout: PlannerDayOutput;
+  profile_summary: PlannerProfileSummary;
+  plan_overview: PlannerPlanOverview;
   weekly_plan: PlannerDayOutput[];
-  session_difficulty: string;
+  phase_goal: string;
+  phase_focus: string;
+  weekly_structure: string[];
+  current_phase: string;
   progression_strategy: string;
   progression_reason: string;
+  plan_explanation: string;
   realistic_expected_outcomes: string[];
+  support_tips: PlannerSupportTipsPayload;
   motivational_message: string;
   caution_flags: string[];
-  recovery_notes: string[];
-  adherence_strategy: string;
-  nutrition_tips: string[];
-  plan_explanation: string;
   adjustments: string[];
-  reassessment_due_in_days: number;
+  reassessment: PlannerReassessment;
 }
 
 export interface ProfileRecord {
@@ -407,6 +519,7 @@ export interface ProfileRecord {
 
 export interface UserOnboardingRecord extends BetaOnboardingInput {
   userId: string;
+  computedBodyGoal: ComputedBodyGoal;
   completedAt: string;
 }
 

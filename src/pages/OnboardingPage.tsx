@@ -6,37 +6,84 @@ import { ChoiceGrid } from "@/components/ui/ChoiceGrid";
 import {
   ageBandLabels,
   ageBandOptions,
+  avoidJumpOptions,
+  eatingPerceptionOptions,
   energyLabels,
   energyOptions,
-  focusOptions,
+  focusAreaLabels,
+  focusAreaOptions,
   gentleStartOptions,
-  goalLabels,
-  goalOptions,
   levelLabels,
   levelOptions,
   limitationOptions,
   minuteOptions,
+  pastExperienceOptions,
+  pastTrainingTypeOptions,
+  preferredDayOptions,
+  primaryBodyGoalLabels,
+  primaryBodyGoalOptions,
+  proteinPerceptionOptions,
+  secondaryObjectiveLabels,
+  secondaryObjectiveOptions,
+  sessionStyleOptions,
+  sessionToneOptions,
+  simpleExerciseOptions,
+  sleepQualityOptions,
+  stressLevelOptions,
+  timePreferenceOptions,
   trainingDayOptions
 } from "@/data/content";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
-import type { BetaOnboardingInput, Goal, LimitationTag } from "@/types/domain";
+import type {
+  BetaOnboardingInput,
+  FocusArea,
+  Goal,
+  LimitationTag,
+  PastTrainingType,
+  PreferredDay,
+  SecondaryObjective
+} from "@/types/domain";
 
-type StepKey = "identity" | "goals" | "rhythm" | "care";
+type StepKey = "identity" | "goal" | "rhythm" | "context" | "preferences";
 
-function buildInitialInput(input: BetaOnboardingInput | null | undefined): BetaOnboardingInput {
-  if (input) {
-    return {
-      ...input,
-      secondaryGoals:
-        input.secondaryGoals.length > 0 ? input.secondaryGoals : [input.primaryGoal]
-    };
+function derivePlanGoals(focusAreas: FocusArea[]): {
+  primaryGoal: Goal;
+  secondaryGoals: Goal[];
+  focusPreference: Goal;
+} {
+  const goals = new Set<Goal>();
+
+  if (focusAreas.includes("glutei") || focusAreas.includes("gambe")) {
+    goals.add("glutei_gambe");
+  }
+  if (focusAreas.includes("addome_core")) {
+    goals.add("pancia_core");
+  }
+  if (focusAreas.includes("postura")) {
+    goals.add("postura");
+  }
+  if (focusAreas.includes("braccia") || focusAreas.includes("total_body")) {
+    goals.add("tonicita_generale");
   }
 
+  const derivedGoals = Array.from(goals);
+  const primaryGoal = derivedGoals[0] ?? "tonicita_generale";
+
   return {
+    primaryGoal,
+    secondaryGoals: derivedGoals.length > 0 ? derivedGoals : [primaryGoal],
+    focusPreference: primaryGoal
+  };
+}
+
+function buildInitialInput(input: BetaOnboardingInput | null | undefined): BetaOnboardingInput {
+  const defaults: BetaOnboardingInput = {
     fullName: "",
     ageBand: "35_44",
     heightCm: null,
     weightKg: null,
+    primaryBodyGoal: "tonicita_rassodare",
+    secondaryObjectives: ["meno_flaccidita", "maggiore_costanza"],
     primaryGoal: "glutei_gambe",
     secondaryGoals: ["glutei_gambe"],
     perceivedLevel: "principiante",
@@ -53,7 +100,37 @@ function buildInitialInput(input: BetaOnboardingInput | null | undefined): BetaO
     consistencyScore: 3,
     weeklyAvailability: "alcuni_spazi",
     preferredTimeOfDay: "variabile",
+    preferredDays: [],
+    pastTrainingTypes: [],
+    focusAreas: ["glutei", "gambe"],
+    preferSimpleExercises: true,
+    sessionStyle: "sequenze_lente",
+    sessionTone: "soft",
+    avoidJumps: true,
+    eatingPerception: "abbastanza",
+    skipsMeals: false,
+    lowWaterIntake: false,
+    nervousHunger: false,
+    lowProteinIntake: "non_so",
+    wantsTimerSound: true,
     notes: ""
+  };
+
+  const next = { ...defaults, ...input };
+  const derived = derivePlanGoals(next.focusAreas);
+
+  return {
+    ...next,
+    primaryGoal: input?.primaryGoal ?? derived.primaryGoal,
+    secondaryGoals:
+      input?.secondaryGoals && input.secondaryGoals.length > 0
+        ? input.secondaryGoals
+        : derived.secondaryGoals,
+    focusPreference: input?.focusPreference ?? derived.focusPreference,
+    secondaryObjectives:
+      input?.secondaryObjectives && input.secondaryObjectives.length > 0
+        ? input.secondaryObjectives
+        : defaults.secondaryObjectives
   };
 }
 
@@ -70,31 +147,38 @@ export function OnboardingPage() {
       [
         {
           key: "identity",
-          eyebrow: "Ingresso essenziale",
-          title: "Partiamo leggero, ma con una direzione chiara.",
+          eyebrow: "Base essenziale",
+          title: "Partiamo da pochi dati chiari, quelli che servono davvero.",
           description:
-            "Ci bastano pochissime informazioni per comporre un primo piano che non sembri generico."
+            "Ci aiutano a calibrare tono, margine e struttura iniziale del piano."
         },
         {
-          key: "goals",
-          eyebrow: "Quello che vuoi sentire",
-          title: "Quale cambiamento vuoi percepire per primo nel tuo corpo?",
+          key: "goal",
+          eyebrow: "Obiettivo reale",
+          title: "Che cambiamento vuoi costruire nel modo piu concreto possibile?",
           description:
-            "Puoi indicare piu aree. Mirya ne usera una come guida, senza perdere di vista il resto."
+            "Qui distinguiamo perdita di peso, tono, massa e ricomposizione. E da qui che il piano smette di sembrare generico."
         },
         {
           key: "rhythm",
           eyebrow: "Ritmo reale",
-          title: "Quanti giorni a settimana riesci davvero a proteggere?",
+          title: "Proteggiamo un ritmo che possa davvero stare nella tua settimana.",
           description:
-            "Scegliamo un ritmo realistico per la tua settimana. Durata e tono iniziale li adattiamo noi con equilibrio."
+            "Meglio un percorso ben dosato che un piano ideale ma impossibile da seguire."
         },
         {
-          key: "care",
-          eyebrow: "Ultimo filtro utile",
-          title: "Solo quello che serve per partire in modo rispettoso.",
+          key: "context",
+          eyebrow: "Contesto quotidiano",
+          title: "Energia, storia e stile di vita cambiano moltissimo il modo di partire.",
           description:
-            "Non ti chiediamo tutto subito. Le informazioni piu precise le raccoglieremo in un secondo momento."
+            "Ci aiutano a capire quanto possiamo chiederti subito e cosa invece va costruito con calma."
+        },
+        {
+          key: "preferences",
+          eyebrow: "Come vuoi lavorare",
+          title: "Ultimi dettagli per rendere il piano prudente, leggibile e davvero tuo.",
+          description:
+            "Queste scelte ci aiutano a comporre sessioni che ti sembrino accessibili e sensate gia dal primo giorno."
         }
       ] as Array<{
         key: StepKey;
@@ -110,33 +194,68 @@ export function OnboardingPage() {
 
   const summaryChips = [
     form.fullName || "Percorso personale",
-    ageBandLabels[form.ageBand],
+    primaryBodyGoalLabels[form.primaryBodyGoal],
     `${form.daysPerWeek} giorni`,
     `${form.preferredMinutes} minuti`
   ];
 
   const currentSummary = {
-    identity: form.fullName || ageBandLabels[form.ageBand],
-    goals: form.secondaryGoals.map((goal) => goalLabels[goal]).join(", "),
-    rhythm: `${levelLabels[form.perceivedLevel]} • ${form.daysPerWeek} giorni • ${form.preferredMinutes} min`,
-    care: `${energyLabels[form.energyLevel]} • ${form.gentleStart ? "inizio graduale" : "base attiva"}`
+    identity: `${ageBandLabels[form.ageBand]}${form.heightCm ? ` · ${form.heightCm} cm` : ""}`,
+    goal: `${primaryBodyGoalLabels[form.primaryBodyGoal]} · ${form.focusAreas
+      .slice(0, 2)
+      .map((item) => focusAreaLabels[item])
+      .join(", ")}`,
+    rhythm: `${form.daysPerWeek} giorni · ${form.preferredMinutes} min`,
+    context: `${levelLabels[form.perceivedLevel]} · ${energyLabels[form.energyLevel]}`,
+    preferences: `${form.gentleStart ? "inizio graduale" : "base attiva"} · ${
+      form.avoidJumps ? "senza salti" : "piu libero"
+    }`
   }[currentStep.key];
 
-  const toggleGoal = (value: Goal) => {
+  const toggleValue = <T extends string,>(items: T[], value: T) =>
+    items.includes(value) ? items.filter((item) => item !== value) : [...items, value];
+
+  const updateFocusAreas = (value: FocusArea) => {
     setForm((current) => {
-      const exists = current.secondaryGoals.includes(value);
-      const nextGoals = exists
-        ? current.secondaryGoals.filter((item) => item !== value)
-        : [...current.secondaryGoals, value];
-      const normalizedGoals = nextGoals.length > 0 ? nextGoals : [value];
+      const focusAreas = toggleValue(current.focusAreas, value);
+      const normalizedFocusAreas = focusAreas.length > 0 ? focusAreas : [value];
+      const derived = derivePlanGoals(normalizedFocusAreas);
 
       return {
         ...current,
-        secondaryGoals: normalizedGoals,
-        primaryGoal: normalizedGoals[0],
-        focusPreference: normalizedGoals.includes(current.focusPreference)
-          ? current.focusPreference
-          : normalizedGoals[0]
+        focusAreas: normalizedFocusAreas,
+        primaryGoal: derived.primaryGoal,
+        secondaryGoals: derived.secondaryGoals,
+        focusPreference: derived.focusPreference
+      };
+    });
+  };
+
+  const toggleSecondaryObjective = (value: SecondaryObjective) => {
+    setForm((current) => {
+      const nextValues = toggleValue(current.secondaryObjectives, value);
+      return {
+        ...current,
+        secondaryObjectives: nextValues.length > 0 ? nextValues : [value]
+      };
+    });
+  };
+
+  const togglePreferredDay = (value: PreferredDay) => {
+    setForm((current) => ({
+      ...current,
+      preferredDays: toggleValue(current.preferredDays, value)
+    }));
+  };
+
+  const togglePastTrainingType = (value: PastTrainingType) => {
+    setForm((current) => {
+      const nextValues = toggleValue(current.pastTrainingTypes, value);
+      return {
+        ...current,
+        pastTrainingTypes: nextValues.includes("nessuno") && nextValues.length > 1
+          ? nextValues.filter((item) => item !== "nessuno")
+          : nextValues
       };
     });
   };
@@ -174,13 +293,14 @@ export function OnboardingPage() {
         <section className="surface-strong soft-gradient overflow-hidden px-5 py-6">
           <div className="flex items-start justify-between gap-4">
             <div className="max-w-[15rem]">
-              <div className="eyebrow">Onboarding leggero</div>
+              <div className="eyebrow">Ingresso guidato</div>
               <h1 className="mt-3 font-serif text-[2rem] leading-tight text-ink">
-                Entriamo nel tuo ritmo senza appesantire l'inizio.
+                Mirya usa pochi dati ben scelti per comporre il tuo primo piano.
               </h1>
               <p className="mt-3 text-sm leading-7 text-muted">
-                Mirya costruisce il primo piano sui dati essenziali. Quello che puo
-                renderlo ancora piu preciso te lo chiede dopo, con calma.
+                Non ti chiede di costruirlo da sola. Legge il tuo obiettivo, il tuo
+                ritmo e il tuo punto di partenza, poi li trasforma in una settimana
+                concreta da seguire.
               </p>
             </div>
             <div className="rounded-[1.3rem] bg-[rgba(255,255,255,0.82)] p-3 text-accent-deep shadow-sm">
@@ -226,15 +346,29 @@ export function OnboardingPage() {
 
           <div className="mt-5">{renderStep()}</div>
 
-          <div className="mt-5 rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
-            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-              Cosa succede dopo
+          {stepIndex === steps.length - 1 ? (
+            <div className="mt-5 rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                Prima di generare il piano
+              </div>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                Useremo il tuo obiettivo principale, il focus corporeo che senti piu
+                importante, il ritmo che puoi davvero sostenere e le attenzioni da
+                proteggere. Poi Mirya comporra una prima settimana concreta, con
+                struttura, giorni, esercizi e progressione iniziale.
+              </p>
             </div>
-            <p className="mt-2 text-sm leading-6 text-muted">
-              Ricevi subito un primo piano guidato. Poi, se vuoi, aggiungi qualche
-              dettaglio mirato per farlo assomigliare ancora di piu a te.
-            </p>
-          </div>
+          ) : (
+            <div className="mt-5 rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                Cosa succede dopo
+              </div>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                Alla fine ricevi un piano gia costruito per te, non una libreria da
+                interpretare da sola.
+              </p>
+            </div>
+          )}
 
           {error ? (
             <div className="mt-4 rounded-[18px] bg-[rgba(183,98,98,0.1)] px-4 py-3 text-sm leading-6 text-[rgba(116,63,63,0.96)]">
@@ -260,7 +394,7 @@ export function OnboardingPage() {
 
             <Button
               fullWidth
-              onClick={handleContinue}
+              onClick={() => void handleContinue()}
               disabled={status === "saving"}
               icon={
                 stepIndex === steps.length - 1 ? (
@@ -272,9 +406,9 @@ export function OnboardingPage() {
               className="justify-between"
             >
               {status === "saving"
-                ? "Stiamo creando il tuo piano..."
+                ? "Stiamo componendo il tuo piano..."
                 : stepIndex === steps.length - 1
-                  ? "Ricevi il tuo piano"
+                  ? "Genera il mio piano"
                   : "Continua"}
             </Button>
           </div>
@@ -308,67 +442,52 @@ export function OnboardingPage() {
               value={form.ageBand}
               onChange={(ageBand) => setForm((current) => ({ ...current, ageBand }))}
             />
+
+            <div className="grid grid-cols-2 gap-3">
+              <NumericField
+                label="Altezza"
+                placeholder="cm"
+                value={form.heightCm}
+                onChange={(heightCm) => setForm((current) => ({ ...current, heightCm }))}
+              />
+              <NumericField
+                label="Peso"
+                placeholder="kg"
+                value={form.weightKg}
+                onChange={(weightKg) => setForm((current) => ({ ...current, weightKg }))}
+              />
+            </div>
           </div>
         );
-      case "goals":
+      case "goal":
         return (
           <div className="space-y-4">
-            <div className="grid gap-3">
-              {goalOptions.map((option) => {
-                const isSelected = form.secondaryGoals.includes(option.value);
-                const isPrimary = form.primaryGoal === option.value;
-
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => toggleGoal(option.value)}
-                    className={[
-                      "surface px-4 py-4 text-left transition",
-                      isSelected
-                        ? "border-[rgba(94,184,178,0.48)] bg-white"
-                        : "hover:border-accent/30 hover:bg-white/80"
-                    ].join(" ")}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold text-ink">{option.label}</div>
-                        <p className="mt-2 text-sm leading-6 text-muted">
-                          {option.description}
-                        </p>
-                      </div>
-                      {isPrimary ? (
-                        <span className="rounded-full bg-[rgba(215,239,236,0.82)] px-3 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-accent-deep">
-                          guida
-                        </span>
-                      ) : null}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
             <ChoiceGrid
-              options={focusOptions.filter((option) =>
-                form.secondaryGoals.includes(option.value)
-              )}
-              value={form.focusPreference}
-              onChange={(focusPreference) =>
-                setForm((current) => ({ ...current, focusPreference }))
+              options={primaryBodyGoalOptions}
+              value={form.primaryBodyGoal}
+              onChange={(primaryBodyGoal) =>
+                setForm((current) => ({ ...current, primaryBodyGoal }))
               }
+            />
+
+            <MultiSelectCards
+              title="Obiettivi secondari"
+              items={secondaryObjectiveOptions}
+              selected={form.secondaryObjectives}
+              onToggle={(value) => toggleSecondaryObjective(value as SecondaryObjective)}
+            />
+
+            <MultiSelectCards
+              title="Aree su cui vuoi piu attenzione"
+              items={focusAreaOptions}
+              selected={form.focusAreas}
+              onToggle={(value) => updateFocusAreas(value as FocusArea)}
             />
           </div>
         );
       case "rhythm":
         return (
           <div className="space-y-4">
-            <ChoiceGrid
-              options={levelOptions}
-              value={form.perceivedLevel}
-              onChange={(perceivedLevel) =>
-                setForm((current) => ({ ...current, perceivedLevel }))
-              }
-            />
             <ChoiceGrid
               options={trainingDayOptions}
               value={form.daysPerWeek}
@@ -383,11 +502,67 @@ export function OnboardingPage() {
               }
               columns="two"
             />
+            <ChoiceGrid
+              options={timePreferenceOptions}
+              value={form.preferredTimeOfDay}
+              onChange={(preferredTimeOfDay) =>
+                setForm((current) => ({ ...current, preferredTimeOfDay }))
+              }
+            />
+            <MultiSelectInline
+              title="Se hai giorni piu facili da proteggere"
+              items={preferredDayOptions}
+              selected={form.preferredDays}
+              onToggle={(value) => togglePreferredDay(value as PreferredDay)}
+            />
+            <label className="block rounded-[22px] border border-line bg-white/78 px-4 py-4">
+              <div className="text-sm font-semibold text-ink">
+                Quanto senti di riuscire a mantenere il ritmo, oggi?
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={5}
+                step={1}
+                value={form.consistencyScore}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    consistencyScore: Number(event.target.value) as 1 | 2 | 3 | 4 | 5
+                  }))
+                }
+                className="mt-4 w-full accent-[var(--color-accent)]"
+              />
+              <div className="mt-2 flex items-center justify-between text-xs font-semibold text-muted">
+                <span>fragile</span>
+                <span>stabile</span>
+              </div>
+            </label>
           </div>
         );
-      case "care":
+      case "context":
         return (
           <div className="space-y-4">
+            <ChoiceGrid
+              options={levelOptions}
+              value={form.perceivedLevel}
+              onChange={(perceivedLevel) =>
+                setForm((current) => ({ ...current, perceivedLevel }))
+              }
+            />
+            <ChoiceGrid
+              options={pastExperienceOptions}
+              value={form.pastExperience}
+              onChange={(pastExperience) =>
+                setForm((current) => ({ ...current, pastExperience }))
+              }
+            />
+            <MultiSelectInline
+              title="Allenamenti gia provati"
+              items={pastTrainingTypeOptions}
+              selected={form.pastTrainingTypes}
+              onToggle={(value) => togglePastTrainingType(value as PastTrainingType)}
+            />
             <ChoiceGrid
               options={energyOptions}
               value={form.energyLevel}
@@ -395,7 +570,25 @@ export function OnboardingPage() {
                 setForm((current) => ({ ...current, energyLevel }))
               }
             />
-
+            <ChoiceGrid
+              options={sleepQualityOptions}
+              value={form.sleepQuality}
+              onChange={(sleepQuality) =>
+                setForm((current) => ({ ...current, sleepQuality }))
+              }
+            />
+            <ChoiceGrid
+              options={stressLevelOptions}
+              value={form.stressLevel}
+              onChange={(stressLevel) =>
+                setForm((current) => ({ ...current, stressLevel }))
+              }
+            />
+          </div>
+        );
+      case "preferences":
+        return (
+          <div className="space-y-4">
             <ChoiceGrid
               options={gentleStartOptions}
               value={form.gentleStart}
@@ -403,41 +596,234 @@ export function OnboardingPage() {
                 setForm((current) => ({ ...current, gentleStart }))
               }
             />
+            <ChoiceGrid
+              options={simpleExerciseOptions}
+              value={form.preferSimpleExercises}
+              onChange={(preferSimpleExercises) =>
+                setForm((current) => ({ ...current, preferSimpleExercises }))
+              }
+            />
+            <ChoiceGrid
+              options={sessionStyleOptions}
+              value={form.sessionStyle}
+              onChange={(sessionStyle) =>
+                setForm((current) => ({ ...current, sessionStyle }))
+              }
+            />
+            <ChoiceGrid
+              options={sessionToneOptions}
+              value={form.sessionTone}
+              onChange={(sessionTone) =>
+                setForm((current) => ({ ...current, sessionTone }))
+              }
+            />
+            <ChoiceGrid
+              options={avoidJumpOptions}
+              value={form.avoidJumps}
+              onChange={(avoidJumps) =>
+                setForm((current) => ({ ...current, avoidJumps }))
+              }
+            />
 
-            <div className="grid gap-3">
-              {limitationOptions.map((option) => {
-                const isSelected = form.limitations.includes(option.value);
+            <MultiSelectCards
+              title="Fastidi o attenzioni da proteggere"
+              items={limitationOptions}
+              selected={form.limitations}
+              onToggle={(value) => toggleLimitation(value as LimitationTag)}
+            />
 
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => toggleLimitation(option.value)}
-                    className={[
-                      "surface px-4 py-4 text-left transition",
-                      isSelected
-                        ? "border-[rgba(94,184,178,0.48)] bg-white"
-                        : "hover:border-accent/30 hover:bg-white/80"
-                    ].join(" ")}
-                  >
-                    <div className="text-sm font-semibold text-ink">{option.label}</div>
-                    <p className="mt-2 text-sm leading-6 text-muted">
-                      {option.description}
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
+            <ChoiceGrid
+              options={eatingPerceptionOptions}
+              value={form.eatingPerception}
+              onChange={(eatingPerception) =>
+                setForm((current) => ({ ...current, eatingPerception }))
+              }
+            />
+            <ChoiceGrid
+              options={proteinPerceptionOptions}
+              value={form.lowProteinIntake}
+              onChange={(lowProteinIntake) =>
+                setForm((current) => ({ ...current, lowProteinIntake }))
+              }
+            />
 
-            <p className="rounded-[20px] bg-[rgba(255,255,255,0.78)] px-4 py-4 text-sm leading-6 text-muted">
-              Dopo il primo piano potrai aggiungere dettagli su sonno, stress,
-              postura, eventuali sensibilita e stile di allenamento. Lo facciamo
-              solo se ti va, e solo quando ha davvero senso.
-            </p>
+            <BooleanToggleRow
+              label="Ti capita di saltare spesso i pasti?"
+              value={form.skipsMeals}
+              onChange={(skipsMeals) => setForm((current) => ({ ...current, skipsMeals }))}
+            />
+            <BooleanToggleRow
+              label="Ti accorgi di bere poca acqua?"
+              value={form.lowWaterIntake}
+              onChange={(lowWaterIntake) =>
+                setForm((current) => ({ ...current, lowWaterIntake }))
+              }
+            />
+            <BooleanToggleRow
+              label="Senti fame nervosa in alcuni momenti?"
+              value={form.nervousHunger}
+              onChange={(nervousHunger) =>
+                setForm((current) => ({ ...current, nervousHunger }))
+              }
+            />
+            <BooleanToggleRow
+              label="Vuoi i suoni nel timer?"
+              value={form.wantsTimerSound}
+              onChange={(wantsTimerSound) =>
+                setForm((current) => ({ ...current, wantsTimerSound }))
+              }
+            />
           </div>
         );
       default:
         return null;
     }
   }
+}
+
+function MultiSelectCards({
+  title,
+  items,
+  selected,
+  onToggle
+}: {
+  title: string;
+  items: Array<{ value: string; label: string; description: string }>;
+  selected: string[];
+  onToggle: (value: string) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="text-sm font-semibold text-ink">{title}</div>
+      <div className="grid gap-3">
+        {items.map((item) => {
+          const isSelected = selected.includes(item.value);
+
+          return (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => onToggle(item.value)}
+              className={[
+                "surface px-4 py-4 text-left transition",
+                isSelected
+                  ? "border-[rgba(94,184,178,0.48)] bg-white"
+                  : "hover:border-accent/30 hover:bg-white/80"
+              ].join(" ")}
+            >
+              <div className="text-sm font-semibold text-ink">{item.label}</div>
+              <p className="mt-2 text-sm leading-6 text-muted">{item.description}</p>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function MultiSelectInline({
+  title,
+  items,
+  selected,
+  onToggle
+}: {
+  title: string;
+  items: Array<{ value: string; label: string }>;
+  selected: string[];
+  onToggle: (value: string) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="text-sm font-semibold text-ink">{title}</div>
+      <div className="flex flex-wrap gap-2">
+        {items.map((item) => {
+          const isSelected = selected.includes(item.value);
+
+          return (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => onToggle(item.value)}
+              className={[
+                "rounded-full border px-3 py-2 text-sm font-semibold transition",
+                isSelected
+                  ? "border-[rgba(94,184,178,0.48)] bg-white text-accent-deep"
+                  : "border-line bg-white/78 text-muted"
+              ].join(" ")}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function BooleanToggleRow({
+  label,
+  value,
+  onChange
+}: {
+  label: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <div className="rounded-[22px] border border-line bg-white/78 px-4 py-4">
+      <div className="text-sm font-semibold text-ink">{label}</div>
+      <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          onClick={() => onChange(true)}
+          className={[
+            "rounded-full px-3 py-2 text-sm font-semibold transition",
+            value ? "bg-accent-soft text-accent-deep" : "bg-[rgba(246,250,249,0.9)] text-muted"
+          ].join(" ")}
+        >
+          Si
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange(false)}
+          className={[
+            "rounded-full px-3 py-2 text-sm font-semibold transition",
+            !value ? "bg-accent-soft text-accent-deep" : "bg-[rgba(246,250,249,0.9)] text-muted"
+          ].join(" ")}
+        >
+          No
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function NumericField({
+  label,
+  value,
+  onChange,
+  placeholder
+}: {
+  label: string;
+  value: number | null;
+  onChange: (value: number | null) => void;
+  placeholder?: string;
+}) {
+  return (
+    <label className="block">
+      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+        {label}
+      </span>
+      <input
+        type="number"
+        inputMode="numeric"
+        value={value ?? ""}
+        onChange={(event) =>
+          onChange(event.target.value ? Number(event.target.value) : null)
+        }
+        className="mt-2 h-12 w-full rounded-[18px] border border-line bg-white px-4 text-sm text-ink outline-none transition focus:border-accent"
+        placeholder={placeholder}
+      />
+    </label>
+  );
 }

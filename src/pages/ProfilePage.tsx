@@ -4,10 +4,13 @@ import { Button } from "@/components/ui/Button";
 import {
   ageBandLabels,
   energyLabels,
+  focusAreaLabels,
   goalLabels,
   levelLabels,
   limitationLabels,
   lifestyleLabels,
+  primaryBodyGoalLabels,
+  secondaryObjectiveLabels,
   sleepQualityLabels,
   stressLabels,
   timePreferenceLabels,
@@ -54,10 +57,14 @@ export function ProfilePage() {
             ["Nome", onboarding.fullName || "Non indicato"],
             ["Fascia d'eta", ageBandLabels[onboarding.ageBand]],
             ["Livello percepito", levelLabels[onboarding.perceivedLevel]],
-            ["Obiettivo principale", goalLabels[onboarding.primaryGoal]],
+            ["Obiettivo principale", primaryBodyGoalLabels[onboarding.primaryBodyGoal]],
             [
               "Obiettivi secondari",
-              onboarding.secondaryGoals.map((goal) => goalLabels[goal]).join(", ")
+              onboarding.secondaryObjectives.map((goal) => secondaryObjectiveLabels[goal]).join(", ")
+            ],
+            [
+              "Aree prioritarie",
+              onboarding.focusAreas.map((focus) => focusAreaLabels[focus]).join(", ")
             ],
             ["Focus del percorso", goalLabels[onboarding.focusPreference]],
             ["Ritmo", `${onboarding.daysPerWeek} giorni a settimana`],

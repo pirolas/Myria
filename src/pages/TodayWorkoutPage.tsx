@@ -109,13 +109,27 @@ export function TodayWorkoutPage() {
                   <div className="mt-1 text-sm font-semibold text-ink">{step.title}</div>
                 </div>
                 <div className="text-sm font-semibold text-accent-deep">
-                  {step.durationSeconds}s
+                  {step.sets} serie
                 </div>
               </div>
               <p className="mt-2 text-sm leading-6 text-muted">{step.summary}</p>
-              <p className="mt-2 text-xs uppercase tracking-[0.14em] text-muted">
-                {step.doseLabel}
-              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="rounded-full bg-[rgba(246,250,249,0.92)] px-3 py-2 text-xs font-semibold text-muted">
+                  {step.repsLabel}
+                </span>
+                <span className="rounded-full bg-[rgba(246,250,249,0.92)] px-3 py-2 text-xs font-semibold text-muted">
+                  recupero {step.restSeconds}s
+                </span>
+              </div>
+              {step.executionNote ? (
+                <p className="mt-3 text-sm leading-6 text-muted">{step.executionNote}</p>
+              ) : null}
+              {step.easierOption ? (
+                <p className="mt-2 text-sm leading-6 text-muted">
+                  <span className="font-semibold text-ink">Variante piu facile:</span>{" "}
+                  {step.easierOption}
+                </p>
+              ) : null}
             </div>
           ))}
         </div>
