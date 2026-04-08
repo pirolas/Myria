@@ -85,9 +85,9 @@ export function OnboardingPage() {
         {
           key: "rhythm",
           eyebrow: "Ritmo reale",
-          title: "Costruiamo un piano che stia davvero dentro le tue giornate.",
+          title: "Quanti giorni a settimana riesci davvero a proteggere?",
           description:
-            "Qui decidiamo tono iniziale, frequenza e durata. Il resto lo rifiniamo dopo, se vorrai."
+            "Scegliamo un ritmo realistico per la tua settimana. Durata e tono iniziale li adattiamo noi con equilibrio."
         },
         {
           key: "care",
