@@ -295,19 +295,26 @@ serve(async (request) => {
       throw new Error("Configurazione Supabase incompleta.");
     }
 
-    const authHeader = request.headers.get("Authorization") ?? "";
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    const authHeader = request.headers.get("Authorization") ?? "";
+    const accessToken = authHeader.replace(/^Bearer\s+/i, "").trim();
+
+    if (!accessToken) {
+      return jsonResponse({ error: "Token utente mancante." }, 401);
+    }
 
     const {
       data: { user },
       error: authError
-    } = await userClient.auth.getUser();
+    } = await adminClient.auth.getUser(accessToken);
 
     if (authError || !user) {
-      return jsonResponse({ error: "Utente non autenticata." }, 401);
+      return jsonResponse(
+        {
+          error: authError?.message || "Utente non autenticata."
+        },
+        401
+      );
     }
 
     const body = (await request.json().catch(() => ({}))) as PlannerRequestBody;
