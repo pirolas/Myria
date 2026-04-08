@@ -39,6 +39,7 @@ interface MiryaAppContextValue {
   error: string | null;
   progress: ReturnType<typeof buildProgressSnapshot>;
   refresh: () => Promise<void>;
+  recoverInitialPlan: () => Promise<void>;
   completeOnboarding: (input: BetaOnboardingInput) => Promise<void>;
   saveDeepProfileAnswers: (input: DeepProfileInput) => Promise<void>;
   saveProfileRefinement: (
@@ -112,6 +113,31 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
       progress: buildProgressSnapshot(data),
       async refresh() {
         await refresh();
+      },
+      async recoverInitialPlan() {
+        if (!user) {
+          throw new Error("Devi accedere per completare la generazione del piano.");
+        }
+
+        if (!data?.onboarding) {
+          throw new Error("Completa prima l'onboarding per generare il piano.");
+        }
+
+        setStatus("saving");
+        setError(null);
+
+        try {
+          await generatePersonalizedPlan("onboarding_completed");
+          await refresh();
+        } catch (plannerError) {
+          setError(
+            plannerError instanceof Error
+              ? plannerError.message
+              : "Non siamo riusciti a completare il primo piano."
+          );
+          setStatus("error");
+          throw plannerError;
+        }
       },
       async completeOnboarding(input) {
         if (!user) {

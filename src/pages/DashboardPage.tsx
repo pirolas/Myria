@@ -10,6 +10,7 @@ import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { goalLabels } from "@/data/content";
+import { useEffect, useRef } from "react";
 import {
   getNextObjective,
   getPlanHorizonCopy,
@@ -19,7 +20,21 @@ import {
 import { useMiryaApp } from "@/hooks/useMiryaApp";
 
 export function DashboardPage() {
-  const { data, progress, status } = useMiryaApp();
+  const { data, progress, status, error, recoverInitialPlan } = useMiryaApp();
+  const hasTriedRecoveryRef = useRef(false);
+
+  useEffect(() => {
+    if (!data?.onboarding || data.activePlan || data.todayPlanDay || status !== "ready") {
+      return;
+    }
+
+    if (hasTriedRecoveryRef.current) {
+      return;
+    }
+
+    hasTriedRecoveryRef.current = true;
+    void recoverInitialPlan();
+  }, [data?.onboarding, data?.activePlan, data?.todayPlanDay, recoverInitialPlan, status]);
 
   if (status === "loading" && !data) {
     return <DashboardLoadingState />;
@@ -38,9 +53,28 @@ export function DashboardPage() {
             Il tuo percorso è quasi pronto.
           </h1>
           <p className="mt-4 text-sm leading-7 text-muted">
-            Un attimo ancora: stiamo componendo la prima settimana in base alle tue
-            risposte e al ritmo che hai scelto.
+            {status === "saving"
+              ? "Un attimo ancora: stiamo componendo la prima settimana in base alle tue risposte e al ritmo che hai scelto."
+              : "Abbiamo già le tue risposte. Ora completiamo il primo piano guidato per farti entrare davvero nel percorso."}
           </p>
+          {error ? (
+            <div className="mt-5 rounded-[18px] bg-[rgba(183,98,98,0.1)] px-4 py-3 text-sm leading-6 text-[rgba(116,63,63,0.96)]">
+              {error}
+            </div>
+          ) : null}
+          <div className="mt-5">
+            <Button
+              fullWidth
+              onClick={() => void recoverInitialPlan()}
+              disabled={status === "saving"}
+              icon={<ArrowRight size={18} />}
+              className="justify-between"
+            >
+              {status === "saving"
+                ? "Stiamo generando il piano..."
+                : "Completa la generazione del piano"}
+            </Button>
+          </div>
         </section>
       </div>
     );
