@@ -500,28 +500,40 @@ async function persistPlan(
 }
 
 function buildUserProfileSummary(onboarding: Record<string, any>, deepProfile: Record<string, any> | null) {
-  const parts = [
-    onboarding.full_name ? `${onboarding.full_name}, ` : "",
-    `${onboarding.age_band?.replace("_", "-") ?? "adulta"} anni circa`,
-    `, livello ${String(onboarding.perceived_level).replaceAll("_", " ")}`,
-    `, focus ${formatFocus(onboarding.focus_preference)}`,
-    `, disponibilita reale ${onboarding.days_per_week} volte a settimana`
-  ];
-  if (deepProfile?.priority_area) parts.push(`, con attenzione extra su ${formatFocus(deepProfile.priority_area)}`);
-  return parts.join("");
+  const name = onboarding.full_name ? `${onboarding.full_name}, ` : "";
+  const focus = formatFocus(onboarding.focus_preference);
+  const energy =
+    onboarding.energy_level === "molto_bassa" || onboarding.energy_level === "bassa"
+      ? "con energia da dosare bene"
+      : "con un margine di lavoro abbastanza gestibile";
+  const detail = deepProfile?.priority_area
+    ? ` Abbiamo anche considerato un'attenzione extra su ${formatFocus(
+        deepProfile.priority_area
+      )}.`
+    : " Per ora il piano si basa sui tuoi dati essenziali e si raffinera meglio con le prossime risposte.";
+
+  return `${name}${onboarding.age_band?.replace(
+    "_",
+    "-"
+  )} anni circa, livello ${String(onboarding.perceived_level).replaceAll(
+    "_",
+    " "
+  )}, focus principale su ${focus} e disponibilita reale di ${
+    onboarding.days_per_week
+  } allenamenti a settimana, ${energy}.${detail}`;
 }
 
 function buildPhaseGoal(onboarding: Record<string, any>, deepProfile: Record<string, any> | null, phaseLabel: string) {
-  const tone = deepProfile?.training_preference === "piu_tonificante" ? "tono" : "controllo";
-  return `${phaseLabel}: costruire ${tone}, continuita e qualita del movimento senza partire troppo forte.`;
+  const tone = deepProfile?.training_preference === "piu_tonificante" ? "piu tono" : "piu controllo";
+  return `In questa fase lavoriamo per costruire ${tone}, continuita e una sensazione di movimento piu sicura, senza chiederti troppo troppo presto.`;
 }
 
 function buildWeeklyStructure(onboarding: Record<string, any>, goal: string) {
   return [
-    `${onboarding.days_per_week} sessioni guidate da ${onboarding.preferred_minutes} minuti`,
-    `Focus principale su ${formatFocus(goal)}`,
-    "Giorni intermedi usati per recupero leggero e mobilita",
-    "Progressione basata su costanza, non su intensita improvvisa"
+    `${onboarding.days_per_week} sessioni guidate da ${onboarding.preferred_minutes} minuti, pensate per entrare bene nelle tue giornate.`,
+    `Un asse principale su ${formatFocus(goal)}, senza perdere di vista il tono generale del corpo.`,
+    "Tra una sessione e l'altra lasciamo spazio a recupero, mobilita o semplice respiro.",
+    "La progressione dipende da come rispondi davvero, non da un aumento automatico dell'intensita."
   ];
 }
 
@@ -556,34 +568,47 @@ function buildNutritionTips(deepProfile: Record<string, any> | null) {
 }
 
 function describeDifficulty(onboarding: Record<string, any>, deepProfile: Record<string, any> | null, reassessment: Record<string, any> | null) {
-  if (reassessment?.plan_fit === "troppo_difficile") return "Ridotta di un gradino per darti piu controllo e continuita.";
-  if (deepProfile?.training_preference === "piu_energizzante") return "Base attiva ma ancora sostenibile.";
-  if (onboarding.gentle_start) return "Delicata, costruita per farti entrare nel ritmo senza strappi.";
-  return "Moderata e lineare, con carico percepito sostenibile.";
+  if (reassessment?.plan_fit === "troppo_difficile") return "Abbiamo abbassato di un gradino il carico percepito per farti ritrovare continuita.";
+  if (deepProfile?.training_preference === "piu_energizzante") return "Attiva ma ancora sostenibile, cosi senti lavoro senza uscire scarica.";
+  if (onboarding.gentle_start) return "Morbida all'inizio, per farti entrare nel ritmo con fiducia e non per inerzia.";
+  return "Lineare e sostenibile, con una richiesta presente ma mai aggressiva.";
 }
 
 function describeAdherenceStrategy(onboarding: Record<string, any>) {
-  return `L'obiettivo non e fare di piu, ma proteggere ${onboarding.days_per_week} appuntamenti realistici nella fascia ${String(onboarding.preferred_time_of_day).replaceAll("_", " ")}.`;
+  return `L'obiettivo non e riempire la settimana, ma proteggere ${onboarding.days_per_week} appuntamenti realistici nella fascia ${String(
+    onboarding.preferred_time_of_day
+  ).replaceAll("_", " ")} e farli diventare praticabili davvero.`;
 }
 
 function describeProgressionStrategy(phaseLabel: string) {
-  return `${phaseLabel}: prima consolidiamo gesto e costanza, poi alziamo volume o controllo solo se il corpo risponde bene.`;
+  return `${phaseLabel}: prima consolidiamo gesto, ritmo e fiducia; poi aumentiamo volume, controllo o precisione solo se il corpo risponde bene.`;
 }
 
 function buildPlanExplanation(onboarding: Record<string, any>, deepProfile: Record<string, any> | null, phaseLabel: string) {
-  return `Partiamo da ${phaseLabel.toLowerCase()} perche, guardando energia, ritmo reale e focus, la cosa piu utile adesso non e spingere subito ma costruire base, controllo e costanza. Nelle prime settimane Mirya ti chiede sessioni chiare e sostenibili: quando il ritmo si stabilizza, il piano si aggiorna con piu tono, piu qualita del lavoro o una distribuzione diversa.`;
+  const focus = formatFocus(onboarding.focus_preference);
+  const energyLine =
+    onboarding.energy_level === "molto_bassa" || onboarding.energy_level === "bassa"
+      ? "Dato che l'energia in questo periodo va dosata bene, il piano non parte spingendo troppo."
+      : "C'e abbastanza margine per lavorare bene, ma senza trasformare il percorso in qualcosa di pesante.";
+  const deepLine = deepProfile?.priority_area
+    ? ` Abbiamo anche dato piu spazio a ${formatFocus(
+        deepProfile.priority_area
+      )}, perche e una delle aree che oggi senti piu importanti.`
+    : " Se vorrai, potrai aggiungere ancora qualche dettaglio per renderlo piu preciso su postura, segnali del corpo e gestione della settimana.";
+
+  return `Partiamo da ${phaseLabel.toLowerCase()} perche, guardando focus, ritmo reale e punto di partenza, la cosa piu utile adesso e costruire una base che tu riesca davvero a seguire. Nelle prime settimane lavoreremo soprattutto su ${focus}, controllo del gesto e continuita. ${energyLine} Quando il ritmo si stabilizza, Mirya aggiorna il percorso: puo alleggerire, consolidare oppure chiederti un po di piu, ma sempre in modo graduale.${deepLine}`;
 }
 
 function buildAdjustments(trigger: PlannerTrigger, reassessment: Record<string, any> | null) {
   const items = [
-    "Abbiamo mantenuto il piano semplice e leggibile, cosi oggi sai subito cosa fare.",
-    "Le sedute restano brevi per proteggere costanza ed energia, non solo intensita."
+    "Il piano resta semplice e leggibile, cosi capisci subito cosa fare oggi senza scegliere da sola.",
+    "Le sedute restano brevi per proteggere costanza ed energia, non per tenerti indietro."
   ];
   if (trigger === "reassessment_completed" && reassessment?.plan_fit === "troppo_difficile") {
-    items.unshift("Il ritmo e stato alleggerito di un gradino per restare sostenibile davvero.");
+    items.unshift("Il ritmo e stato alleggerito di un gradino per tornare sostenibile nella tua settimana reale.");
   }
   if (trigger === "deep_profile_completed") {
-    items.unshift("Abbiamo raffinato il piano sulle aree che senti piu delicate o piu deboli.");
+    items.unshift("Abbiamo raffinato il piano sulle aree che senti piu delicate, piu deboli o piu importanti per te.");
   }
   return items;
 }
@@ -599,7 +624,7 @@ function buildGlobalCautions(onboarding: Record<string, any>, deepProfile: Recor
 }
 
 function buildCoachMessage(onboarding: Record<string, any>) {
-  return `Oggi non serve fare tutto perfetto: ti basta seguire la sequenza e uscire dalla sessione con la sensazione di aver lavorato bene per te.`;
+  return `Oggi non devi capire tu come organizzarti: segui la sequenza, ascolta il ritmo e lascia che il lavoro si sommi nel tempo.`;
 }
 
 function buildWorkoutCoachNote(onboarding: Record<string, any>, deepProfile: Record<string, any> | null) {

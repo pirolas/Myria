@@ -1,32 +1,39 @@
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { ChoiceGrid } from "@/components/ui/ChoiceGrid";
 import {
   bodyAreaFocusOptions,
   bodyConfidenceOptions,
+  consistencyMessages,
   coordinationOptions,
   diastasisOptions,
   dropoutReasonOptions,
   hydrationPatternOptions,
+  lifestyleOptions,
   mobilityPerceptionOptions,
   nutritionPatternOptions,
+  pastExperienceOptions,
   pelvicSignalOptions,
   posturePerceptionOptions,
   sensitivityOptions,
-  trainingPreferenceOptions
+  sleepQualityOptions,
+  stressLevelOptions,
+  timePreferenceOptions,
+  trainingPreferenceOptions,
+  weeklyAvailabilityOptions
 } from "@/data/content";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
 import type {
-  BodyAreaFocus,
+  BetaOnboardingInput,
   DeepProfileInput,
   DropoutReason,
   PelvicSignal,
   SensitivityTag
 } from "@/types/domain";
 
-const defaultInput: DeepProfileInput = {
+const defaultDeepInput: DeepProfileInput = {
   weakArea: null,
   priorityArea: null,
   movementDiscomforts: "",
@@ -52,14 +59,22 @@ const defaultInput: DeepProfileInput = {
 
 export function DeepProfilePage() {
   const navigate = useNavigate();
-  const { data, saveDeepProfileAnswers, status, error } = useMiryaApp();
-  const [form, setForm] = useState<DeepProfileInput>(data?.deepProfile ?? defaultInput);
+  const { data, saveProfileRefinement, status, error } = useMiryaApp();
+
+  if (!data?.onboarding) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  const [onboardingForm, setOnboardingForm] = useState<BetaOnboardingInput>(data.onboarding);
+  const [deepForm, setDeepForm] = useState<DeepProfileInput>(
+    data.deepProfile ?? defaultDeepInput
+  );
 
   const toggleTag = <T extends string,>(items: T[], value: T) =>
     items.includes(value) ? items.filter((item) => item !== value) : [...items, value];
 
   const handleSubmit = async () => {
-    await saveDeepProfileAnswers(form);
+    await saveProfileRefinement(onboardingForm, deepForm);
     navigate("/plan/story", { replace: true });
   };
 
@@ -70,11 +85,11 @@ export function DeepProfilePage() {
           <div className="max-w-[16rem]">
             <div className="eyebrow">Profilo approfondito</div>
             <h1 className="mt-3 font-serif text-[2rem] leading-tight text-ink">
-              Rendiamo il piano ancora piu preciso, senza complicarlo.
+              Un minuto in piu per farlo assomigliare davvero a te.
             </h1>
             <p className="mt-3 text-sm leading-7 text-muted">
-              Questo passaggio e opzionale. Serve a far capire meglio a Mirya dove
-              proteggerti e dove puo chiederti qualcosa in piu.
+              Qui non rifacciamo l'onboarding. Aggiungiamo solo i dettagli che aiutano
+              Mirya a dosare meglio tono, recupero e progressione.
             </p>
           </div>
           <div className="rounded-[1.3rem] bg-white/82 p-3 text-accent-deep">
@@ -84,46 +99,149 @@ export function DeepProfilePage() {
       </section>
 
       <section className="surface px-5 py-5 space-y-4">
+        <div className="text-base font-semibold text-ink">Contesto quotidiano</div>
+        <p className="text-sm leading-6 text-muted">
+          Non cambia chi sei: ci aiuta solo a capire quanto margine reale c'e oggi.
+        </p>
+
+        <ChoiceGrid
+          options={pastExperienceOptions}
+          value={onboardingForm.pastExperience}
+          onChange={(pastExperience) =>
+            setOnboardingForm((current) => ({ ...current, pastExperience }))
+          }
+        />
+        <ChoiceGrid
+          options={lifestyleOptions}
+          value={onboardingForm.lifestyle}
+          onChange={(lifestyle) =>
+            setOnboardingForm((current) => ({ ...current, lifestyle }))
+          }
+        />
+        <ChoiceGrid
+          options={weeklyAvailabilityOptions}
+          value={onboardingForm.weeklyAvailability}
+          onChange={(weeklyAvailability) =>
+            setOnboardingForm((current) => ({ ...current, weeklyAvailability }))
+          }
+        />
+        <ChoiceGrid
+          options={timePreferenceOptions}
+          value={onboardingForm.preferredTimeOfDay}
+          onChange={(preferredTimeOfDay) =>
+            setOnboardingForm((current) => ({ ...current, preferredTimeOfDay }))
+          }
+        />
+        <ChoiceGrid
+          options={sleepQualityOptions}
+          value={onboardingForm.sleepQuality}
+          onChange={(sleepQuality) =>
+            setOnboardingForm((current) => ({ ...current, sleepQuality }))
+          }
+        />
+        <ChoiceGrid
+          options={stressLevelOptions}
+          value={onboardingForm.stressLevel}
+          onChange={(stressLevel) =>
+            setOnboardingForm((current) => ({ ...current, stressLevel }))
+          }
+        />
+
+        <label className="block rounded-[22px] border border-line bg-white/78 px-4 py-4">
+          <div className="text-sm font-semibold text-ink">
+            Quanto senti di riuscire a proteggere la costanza, oggi?
+          </div>
+          <input
+            type="range"
+            min={1}
+            max={5}
+            step={1}
+            value={onboardingForm.consistencyScore}
+            onChange={(event) =>
+              setOnboardingForm((current) => ({
+                ...current,
+                consistencyScore: Number(event.target.value) as 1 | 2 | 3 | 4 | 5
+              }))
+            }
+            className="mt-4 w-full accent-[var(--color-accent)]"
+          />
+          <div className="mt-2 flex items-center justify-between text-xs font-semibold text-muted">
+            <span>1</span>
+            <span>
+              {consistencyMessages[
+                (onboardingForm.consistencyScore - 1) % consistencyMessages.length
+              ]}
+            </span>
+            <span>5</span>
+          </div>
+        </label>
+
+        <div className="grid grid-cols-2 gap-3">
+          <NumericField
+            label="Altezza"
+            placeholder="cm"
+            value={onboardingForm.heightCm}
+            onChange={(heightCm) => setOnboardingForm((current) => ({ ...current, heightCm }))}
+          />
+          <NumericField
+            label="Peso"
+            placeholder="kg"
+            value={onboardingForm.weightKg}
+            onChange={(weightKg) => setOnboardingForm((current) => ({ ...current, weightKg }))}
+          />
+        </div>
+      </section>
+
+      <section className="surface px-5 py-5 space-y-4">
+        <div className="text-base font-semibold text-ink">Come si sente il tuo corpo</div>
+        <p className="text-sm leading-6 text-muted">
+          Bastano pochi segnali per capire dove proteggerti e dove possiamo chiederti
+          qualcosa in piu.
+        </p>
+
         <ChoiceGrid
           options={bodyAreaFocusOptions}
-          value={form.weakArea ?? "glutei_gambe"}
-          onChange={(weakArea) => setForm((current) => ({ ...current, weakArea }))}
+          value={deepForm.weakArea ?? "glutei_gambe"}
+          onChange={(weakArea) => setDeepForm((current) => ({ ...current, weakArea }))}
         />
         <ChoiceGrid
           options={bodyAreaFocusOptions}
-          value={form.priorityArea ?? "glutei_gambe"}
-          onChange={(priorityArea) => setForm((current) => ({ ...current, priorityArea }))}
+          value={deepForm.priorityArea ?? "glutei_gambe"}
+          onChange={(priorityArea) =>
+            setDeepForm((current) => ({ ...current, priorityArea }))
+          }
         />
         <ChoiceGrid
           options={posturePerceptionOptions}
-          value={form.posturePerception ?? "variabile"}
+          value={deepForm.posturePerception ?? "variabile"}
           onChange={(posturePerception) =>
-            setForm((current) => ({ ...current, posturePerception }))
+            setDeepForm((current) => ({ ...current, posturePerception }))
           }
         />
         <ChoiceGrid
           options={mobilityPerceptionOptions}
-          value={form.mobilityPerception ?? "media"}
+          value={deepForm.mobilityPerception ?? "media"}
           onChange={(mobilityPerception) =>
-            setForm((current) => ({ ...current, mobilityPerception }))
+            setDeepForm((current) => ({ ...current, mobilityPerception }))
           }
         />
         <ChoiceGrid
           options={coordinationOptions}
-          value={form.coordinationLevel ?? "discreta"}
+          value={deepForm.coordinationLevel ?? "discreta"}
           onChange={(coordinationLevel) =>
-            setForm((current) => ({ ...current, coordinationLevel }))
+            setDeepForm((current) => ({ ...current, coordinationLevel }))
           }
         />
       </section>
 
       <section className="surface px-5 py-5 space-y-4">
-        <div className="text-base font-semibold text-ink">Segnali da tenere presenti</div>
+        <div className="text-base font-semibold text-ink">Segnali utili da tenere presenti</div>
+
         <TagGroup
           items={sensitivityOptions}
-          selected={form.sensitivities}
+          selected={deepForm.sensitivities}
           onToggle={(value) =>
-            setForm((current) => ({
+            setDeepForm((current) => ({
               ...current,
               sensitivities: toggleTag(current.sensitivities, value as SensitivityTag)
             }))
@@ -131,9 +249,9 @@ export function DeepProfilePage() {
         />
         <TagGroup
           items={pelvicSignalOptions}
-          selected={form.pelvicSignals}
+          selected={deepForm.pelvicSignals}
           onToggle={(value) =>
-            setForm((current) => ({
+            setDeepForm((current) => ({
               ...current,
               pelvicSignals: toggleTag(current.pelvicSignals, value as PelvicSignal)
             }))
@@ -141,45 +259,52 @@ export function DeepProfilePage() {
         />
         <ChoiceGrid
           options={diastasisOptions}
-          value={form.diastasisStatus ?? "no"}
+          value={deepForm.diastasisStatus ?? "no"}
           onChange={(diastasisStatus) =>
-            setForm((current) => ({ ...current, diastasisStatus }))
+            setDeepForm((current) => ({ ...current, diastasisStatus }))
           }
         />
+
         <div className="grid grid-cols-3 gap-3">
           <NumericField
             label="Gravidanze"
-            value={form.pregnanciesCount}
-            onChange={(pregnanciesCount) => setForm((current) => ({ ...current, pregnanciesCount }))}
+            value={deepForm.pregnanciesCount}
+            onChange={(pregnanciesCount) =>
+              setDeepForm((current) => ({ ...current, pregnanciesCount }))
+            }
           />
           <NumericField
             label="Cesarei"
-            value={form.cesareansCount}
-            onChange={(cesareansCount) => setForm((current) => ({ ...current, cesareansCount }))}
+            value={deepForm.cesareansCount}
+            onChange={(cesareansCount) =>
+              setDeepForm((current) => ({ ...current, cesareansCount }))
+            }
           />
           <NumericField
             label="Mesi dall'ultimo parto"
-            value={form.monthsSinceLastBirth}
+            value={deepForm.monthsSinceLastBirth}
             onChange={(monthsSinceLastBirth) =>
-              setForm((current) => ({ ...current, monthsSinceLastBirth }))
+              setDeepForm((current) => ({ ...current, monthsSinceLastBirth }))
             }
           />
         </div>
       </section>
 
       <section className="surface px-5 py-5 space-y-4">
+        <div className="text-base font-semibold text-ink">Stile del percorso</div>
+
         <ChoiceGrid
           options={bodyConfidenceOptions}
-          value={form.bodyConfidence ?? "variabile"}
+          value={deepForm.bodyConfidence ?? "variabile"}
           onChange={(bodyConfidence) =>
-            setForm((current) => ({ ...current, bodyConfidence }))
+            setDeepForm((current) => ({ ...current, bodyConfidence }))
           }
         />
         <TagGroup
           items={dropoutReasonOptions}
-          selected={form.dropoutReasons}
+          selected={deepForm.dropoutReasons}
           onToggle={(value) =>
-            setForm((current) => ({
+            setDeepForm((current) => ({
               ...current,
               dropoutReasons: toggleTag(current.dropoutReasons, value as DropoutReason)
             }))
@@ -187,23 +312,23 @@ export function DeepProfilePage() {
         />
         <ChoiceGrid
           options={nutritionPatternOptions}
-          value={form.nutritionPattern ?? "abbastanza_equilibrata"}
+          value={deepForm.nutritionPattern ?? "abbastanza_equilibrata"}
           onChange={(nutritionPattern) =>
-            setForm((current) => ({ ...current, nutritionPattern }))
+            setDeepForm((current) => ({ ...current, nutritionPattern }))
           }
         />
         <ChoiceGrid
           options={hydrationPatternOptions}
-          value={form.hydrationPattern ?? "altalenante"}
+          value={deepForm.hydrationPattern ?? "altalenante"}
           onChange={(hydrationPattern) =>
-            setForm((current) => ({ ...current, hydrationPattern }))
+            setDeepForm((current) => ({ ...current, hydrationPattern }))
           }
         />
         <ChoiceGrid
           options={trainingPreferenceOptions}
-          value={form.trainingPreference ?? "piu_dolce"}
+          value={deepForm.trainingPreference ?? "piu_dolce"}
           onChange={(trainingPreference) =>
-            setForm((current) => ({ ...current, trainingPreference }))
+            setDeepForm((current) => ({ ...current, trainingPreference }))
           }
         />
         <label className="block">
@@ -211,13 +336,13 @@ export function DeepProfilePage() {
             Se c'e qualcosa che vuoi farci capire meglio
           </span>
           <textarea
-            value={form.notes}
+            value={deepForm.notes}
             onChange={(event) =>
-              setForm((current) => ({ ...current, notes: event.target.value }))
+              setDeepForm((current) => ({ ...current, notes: event.target.value }))
             }
             rows={4}
             className="mt-2 w-full rounded-[20px] border border-line bg-white px-4 py-3 text-sm leading-6 text-ink outline-none transition focus:border-accent"
-            placeholder="Per esempio: alcuni movimenti mi mettono a disagio, oppure vorrei lavorare con un tono piu energizzante."
+            placeholder="Per esempio: faccio fatica soprattutto la sera, oppure alcuni movimenti mi mettono in allerta."
           />
         </label>
       </section>
@@ -233,7 +358,7 @@ export function DeepProfilePage() {
           Lo faccio dopo
         </Button>
         <Button fullWidth onClick={handleSubmit} disabled={status === "saving"}>
-          {status === "saving" ? "Aggiorniamo il piano..." : "Rendi il piano piu preciso"}
+          {status === "saving" ? "Raffiniamo il piano..." : "Rendi il piano piu personale"}
         </Button>
       </div>
     </div>
@@ -278,11 +403,13 @@ function TagGroup({
 function NumericField({
   label,
   value,
-  onChange
+  onChange,
+  placeholder
 }: {
   label: string;
   value: number | null;
   onChange: (value: number | null) => void;
+  placeholder?: string;
 }) {
   return (
     <label className="block">
@@ -294,6 +421,7 @@ function NumericField({
         value={value ?? ""}
         onChange={(event) => onChange(event.target.value ? Number(event.target.value) : null)}
         className="mt-2 h-12 w-full rounded-[18px] border border-line bg-white px-4 text-sm text-ink outline-none transition focus:border-accent"
+        placeholder={placeholder}
       />
     </label>
   );

@@ -18,7 +18,7 @@ export function PlanStoryPage() {
           <div className="max-w-[16rem]">
             <div className="eyebrow">Perche questo piano</div>
             <h1 className="mt-3 font-serif text-[2rem] leading-tight text-ink">
-              Un inizio pensato sulla tua situazione, non su un modello generico.
+              Un inizio costruito sul tuo momento, non su un modello standard.
             </h1>
             <p className="mt-3 text-sm leading-7 text-muted">
               {data.activePlan.planExplanation}
@@ -33,7 +33,7 @@ export function PlanStoryPage() {
       <section className="surface px-5 py-5">
         <SectionHeading
           eyebrow="Lettura del profilo"
-          title="Quello che Mirya ha considerato per partire"
+          title="Quello che Mirya ha letto per costruire la tua base"
           description={data.activePlan.userProfileSummary}
         />
 
@@ -54,6 +54,30 @@ export function PlanStoryPage() {
               <div className="mt-2 text-sm leading-6 text-ink">{value}</div>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="surface px-5 py-5">
+        <div className="rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+            Il senso dell'inizio
+          </div>
+          <p className="mt-2 text-sm leading-6 text-ink">
+            Non partiamo forte per principio. Partiamo nel punto in cui hai piu
+            probabilita di sentirti guidata, costante e davvero capace di restare
+            dentro il percorso.
+          </p>
+        </div>
+
+        <div className="mt-4 rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+            Come diventa piu personale
+          </div>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            Dopo i primi allenamenti Mirya osserva come rispondi, raccoglie una
+            rivalutazione breve e, se vuoi, usa il profilo approfondito per rendere
+            piu precisi ritmo, focus e progressione.
+          </p>
         </div>
       </section>
 

@@ -40,6 +40,10 @@ interface MiryaAppContextValue {
   refresh: () => Promise<void>;
   completeOnboarding: (input: BetaOnboardingInput) => Promise<void>;
   saveDeepProfileAnswers: (input: DeepProfileInput) => Promise<void>;
+  saveProfileRefinement: (
+    onboardingInput: BetaOnboardingInput,
+    deepInput: DeepProfileInput
+  ) => Promise<void>;
   submitReassessment: (input: ReassessmentInput) => Promise<void>;
   regeneratePlan: (trigger?: PlannerTrigger) => Promise<void>;
   setTimerSoundEnabled: (enabled: boolean) => Promise<void>;
@@ -151,6 +155,31 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
             submitError instanceof Error
               ? submitError.message
               : "Non siamo riusciti a salvare queste informazioni."
+          );
+          setStatus("error");
+          throw submitError;
+        }
+      },
+      async saveProfileRefinement(onboardingInput, deepInput) {
+        if (!user) {
+          throw new Error("Devi accedere per aggiornare il profilo.");
+        }
+
+        setStatus("saving");
+        setError(null);
+
+        try {
+          await Promise.all([
+            saveOnboarding(user.id, onboardingInput),
+            saveDeepProfile(user.id, deepInput)
+          ]);
+          await generatePersonalizedPlan("deep_profile_completed");
+          await refresh();
+        } catch (submitError) {
+          setError(
+            submitError instanceof Error
+              ? submitError.message
+              : "Non siamo riusciti a rendere il piano piu preciso."
           );
           setStatus("error");
           throw submitError;

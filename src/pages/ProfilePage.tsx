@@ -151,9 +151,9 @@ export function ProfilePage() {
             className="flex items-center justify-between rounded-[22px] border border-line bg-white/78 px-4 py-4"
           >
             <div>
-              <div className="text-sm font-semibold text-ink">Completa il profilo approfondito</div>
+              <div className="text-sm font-semibold text-ink">Rendi il piano piu personale</div>
               <p className="mt-1 text-sm leading-6 text-muted">
-                Aggiungi dettagli opzionali su postura, sensibilita, fiducia e ostacoli principali.
+                Aggiungi dettagli opzionali su ritmo reale, segnali del corpo e stile di allenamento.
               </p>
             </div>
             <ChevronRight size={18} className="text-accent-deep" />

@@ -162,9 +162,9 @@ export function DashboardPage() {
               to="/profile/deep"
               className="rounded-[22px] border border-line bg-white/78 px-4 py-4"
             >
-              <div className="text-sm font-semibold text-ink">Rendilo ancora piu preciso</div>
+              <div className="text-sm font-semibold text-ink">Rendilo ancora piu tuo</div>
               <p className="mt-2 text-sm leading-6 text-muted">
-                Aggiungi alcune informazioni opzionali su postura, sensibilita e stile di allenamento.
+                In un minuto puoi aggiungere contesto, segnali del corpo e preferenze per rifinire il piano.
               </p>
             </Link>
           ) : null}

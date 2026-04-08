@@ -3,14 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { ChoiceGrid } from "@/components/ui/ChoiceGrid";
 import {
+  goalOptions,
   improvementOptions,
-  obstacleOptions,
-  reassessmentFitOptions,
   minuteOptions,
-  goalOptions
+  obstacleOptions,
+  reassessmentFitOptions
 } from "@/data/content";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
-import type { Goal, ImprovementTag, ObstacleTag, ReassessmentInput } from "@/types/domain";
+import type { Goal, ImprovementTag, ReassessmentInput } from "@/types/domain";
 
 const defaultInput: ReassessmentInput = {
   planFit: "giusto",
@@ -27,6 +27,24 @@ const defaultInput: ReassessmentInput = {
   newFocus: null,
   realisticMinutesNow: 15
 };
+
+const consistencyOptions = [
+  {
+    value: 1 as const,
+    label: "La sto perdendo",
+    description: "Il ritmo mi sta sfuggendo e ho bisogno di piu semplicità."
+  },
+  {
+    value: 3 as const,
+    label: "La tengo abbastanza",
+    description: "Il piano regge, ma va protetto bene dentro la settimana."
+  },
+  {
+    value: 5 as const,
+    label: "La proteggo bene",
+    description: "Sto riuscendo a tenerlo con una buona continuita."
+  }
+];
 
 export function ReassessmentPage() {
   const navigate = useNavigate();
@@ -52,11 +70,11 @@ export function ReassessmentPage() {
       <section className="surface-strong px-5 py-6">
         <div className="eyebrow">Rivalutazione breve</div>
         <h1 className="mt-3 font-serif text-[2rem] leading-tight text-ink">
-          Bastano pochi tocchi per capire se confermare o correggere il piano.
+          In meno di un minuto capiamo se il piano va confermato o corretto.
         </h1>
         <p className="mt-4 text-sm leading-7 text-muted">
-          Niente questionari infiniti: ci serve solo capire se il ritmo attuale e
-          ancora giusto per te.
+          Non ci serve un report lungo. Ci basta capire come ti sta sostenendo,
+          quanto riesci a proteggerlo e dove vale la pena aggiustare il tiro.
         </p>
       </section>
 
@@ -67,31 +85,11 @@ export function ReassessmentPage() {
           onChange={(planFit) => setForm((current) => ({ ...current, planFit }))}
         />
 
-        <label className="block rounded-[22px] border border-line bg-white/78 px-4 py-4">
-          <div className="text-sm font-semibold text-ink">
-            Riesci a mantenere la costanza in questo momento?
-          </div>
-          <input
-            type="range"
-            min={1}
-            max={5}
-            step={1}
-            value={form.consistencyKeeping}
-            onChange={(event) =>
-              setForm((current) => ({
-                ...current,
-                consistencyKeeping: Number(event.target.value) as 1 | 2 | 3 | 4 | 5
-              }))
-            }
-            className="mt-4 w-full accent-[var(--color-accent)]"
-          />
-        </label>
-
         <ChoiceGrid
-          options={obstacleOptions}
-          value={form.mainObstacle ?? "mancanza_tempo"}
-          onChange={(mainObstacle) =>
-            setForm((current) => ({ ...current, mainObstacle: mainObstacle as ObstacleTag }))
+          options={consistencyOptions}
+          value={form.consistencyKeeping}
+          onChange={(consistencyKeeping) =>
+            setForm((current) => ({ ...current, consistencyKeeping }))
           }
         />
 
@@ -105,24 +103,16 @@ export function ReassessmentPage() {
         />
 
         <ChoiceGrid
-          options={[
-            { value: true, label: "Manteniamo il focus attuale", description: "Mi sembra ancora coerente con quello che mi serve." },
-            { value: false, label: "Vorrei riorientarlo", description: "Meglio spostare il centro del lavoro su un'altra priorita." }
-          ]}
-          value={form.keepCurrentFocus}
-          onChange={(keepCurrentFocus) =>
-            setForm((current) => ({ ...current, keepCurrentFocus }))
+          options={obstacleOptions}
+          value={form.mainObstacle ?? "mancanza_tempo"}
+          onChange={(mainObstacle) =>
+            setForm((current) => ({ ...current, mainObstacle }))
           }
         />
+      </section>
 
-        {!form.keepCurrentFocus ? (
-          <ChoiceGrid
-            options={goalOptions}
-            value={form.newFocus ?? data?.onboarding?.focusPreference ?? "glutei_gambe"}
-            onChange={(newFocus) => setForm((current) => ({ ...current, newFocus: newFocus as Goal }))}
-          />
-        ) : null}
-
+      <section className="surface px-5 py-5 space-y-4">
+        <div className="text-base font-semibold text-ink">Se senti qualche miglioramento, segnalo qui</div>
         <div className="grid gap-3">
           {improvementOptions.map((item) => {
             const isSelected = form.improvements.includes(item.value);
@@ -145,9 +135,38 @@ export function ReassessmentPage() {
           })}
         </div>
 
+        <ChoiceGrid
+          options={[
+            {
+              value: true,
+              label: "Manteniamo il focus attuale",
+              description: "Per adesso mi sembra ancora quello giusto."
+            },
+            {
+              value: false,
+              label: "Vorrei spostarlo",
+              description: "Il mio bisogno principale e cambiato un po."
+            }
+          ]}
+          value={form.keepCurrentFocus}
+          onChange={(keepCurrentFocus) =>
+            setForm((current) => ({ ...current, keepCurrentFocus }))
+          }
+        />
+
+        {!form.keepCurrentFocus ? (
+          <ChoiceGrid
+            options={goalOptions}
+            value={form.newFocus ?? data?.onboarding?.focusPreference ?? "glutei_gambe"}
+            onChange={(newFocus) =>
+              setForm((current) => ({ ...current, newFocus: newFocus as Goal }))
+            }
+          />
+        ) : null}
+
         <label className="block">
           <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-            Se c'e un fastidio o un segnale da monitorare
+            Solo se c'e qualcosa da tenere d'occhio
           </span>
           <textarea
             value={form.cautionNotes}
@@ -156,7 +175,7 @@ export function ReassessmentPage() {
             }
             rows={4}
             className="mt-2 w-full rounded-[20px] border border-line bg-white px-4 py-3 text-sm leading-6 text-ink outline-none transition focus:border-accent"
-            placeholder="Per esempio: il lavoro sulle ginocchia e stato piu scomodo del previsto, oppure sto faticando a reggere il ritmo serale."
+            placeholder="Per esempio: il ritmo serale mi pesa di piu, oppure alcune ginocchia oggi chiedono piu attenzione."
           />
         </label>
       </section>
@@ -168,7 +187,7 @@ export function ReassessmentPage() {
       ) : null}
 
       <Button fullWidth onClick={handleSubmit} disabled={status === "saving"}>
-        {status === "saving" ? "Aggiorniamo il percorso..." : "Aggiorna il mio piano"}
+        {status === "saving" ? "Aggiorniamo il percorso..." : "Aggiorna il piano"}
       </Button>
     </div>
   );

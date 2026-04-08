@@ -6,7 +6,6 @@ import { ChoiceGrid } from "@/components/ui/ChoiceGrid";
 import {
   ageBandLabels,
   ageBandOptions,
-  consistencyMessages,
   energyLabels,
   energyOptions,
   focusOptions,
@@ -15,27 +14,14 @@ import {
   goalOptions,
   levelLabels,
   levelOptions,
-  limitationLabels,
   limitationOptions,
-  lifestyleLabels,
-  lifestyleOptions,
   minuteOptions,
-  pastExperienceLabels,
-  pastExperienceOptions,
-  sleepQualityLabels,
-  sleepQualityOptions,
-  stressLabels,
-  stressLevelOptions,
-  timePreferenceLabels,
-  timePreferenceOptions,
-  trainingDayOptions,
-  weeklyAvailabilityLabels,
-  weeklyAvailabilityOptions
+  trainingDayOptions
 } from "@/data/content";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
 import type { BetaOnboardingInput, Goal, LimitationTag } from "@/types/domain";
 
-type StepKey = "identity" | "goals" | "background" | "rhythm" | "energy" | "care";
+type StepKey = "identity" | "goals" | "rhythm" | "care";
 
 function buildInitialInput(input: BetaOnboardingInput | null | undefined): BetaOnboardingInput {
   if (input) {
@@ -84,45 +70,31 @@ export function OnboardingPage() {
       [
         {
           key: "identity",
-          eyebrow: "Base essenziale",
-          title: "Partiamo da te, senza fare un interrogatorio.",
+          eyebrow: "Ingresso essenziale",
+          title: "Partiamo leggero, ma con una direzione chiara.",
           description:
-            "Raccogliamo solo i dati che servono per costruire un primo piano sensato e sostenibile."
+            "Ci bastano pochissime informazioni per comporre un primo piano che non sembri generico."
         },
         {
           key: "goals",
-          eyebrow: "Direzione del piano",
-          title: "Quale cambiamento vuoi sentire davvero nelle prossime settimane?",
+          eyebrow: "Quello che vuoi sentire",
+          title: "Quale cambiamento vuoi percepire per primo nel tuo corpo?",
           description:
-            "Puoi indicare piu aree. Mirya usera un asse guida e terra presenti anche i focus secondari."
-        },
-        {
-          key: "background",
-          eyebrow: "Punto di partenza",
-          title: "Quanto margine di adattamento ci serve all'inizio?",
-          description:
-            "Qui capiamo livello attuale, esperienza e quanto dosare il primo mese."
+            "Puoi indicare piu aree. Mirya ne usera una come guida, senza perdere di vista il resto."
         },
         {
           key: "rhythm",
-          eyebrow: "Tempo reale",
-          title: "Costruiamo il piano dentro la tua settimana vera.",
+          eyebrow: "Ritmo reale",
+          title: "Costruiamo un piano che stia davvero dentro le tue giornate.",
           description:
-            "Meglio un ritmo che puoi proteggere davvero, non un piano troppo ambizioso."
-        },
-        {
-          key: "energy",
-          eyebrow: "Recupero e aderenza",
-          title: "Come stanno energia, sonno e continuita in questo periodo?",
-          description:
-            "Servono per scegliere il tono giusto del percorso, non per giudicarti."
+            "Qui decidiamo tono iniziale, frequenza e durata. Il resto lo rifiniamo dopo, se vorrai."
         },
         {
           key: "care",
-          eyebrow: "Attenzioni utili",
-          title: "Ultime informazioni essenziali per partire con intelligenza.",
+          eyebrow: "Ultimo filtro utile",
+          title: "Solo quello che serve per partire in modo rispettoso.",
           description:
-            "Segnalaci solo cio che puo aiutare il piano a restare rispettoso, chiaro e personale."
+            "Non ti chiediamo tutto subito. Le informazioni piu precise le raccoglieremo in un secondo momento."
         }
       ] as Array<{
         key: StepKey;
@@ -137,7 +109,7 @@ export function OnboardingPage() {
   const progress = ((stepIndex + 1) / steps.length) * 100;
 
   const summaryChips = [
-    form.fullName || "Il tuo percorso",
+    form.fullName || "Percorso personale",
     ageBandLabels[form.ageBand],
     `${form.daysPerWeek} giorni`,
     `${form.preferredMinutes} minuti`
@@ -146,10 +118,8 @@ export function OnboardingPage() {
   const currentSummary = {
     identity: form.fullName || ageBandLabels[form.ageBand],
     goals: form.secondaryGoals.map((goal) => goalLabels[goal]).join(", "),
-    background: `${levelLabels[form.perceivedLevel]} • ${pastExperienceLabels[form.pastExperience]}`,
-    rhythm: `${form.daysPerWeek} giorni • ${form.preferredMinutes} min • ${timePreferenceLabels[form.preferredTimeOfDay]}`,
-    energy: `${energyLabels[form.energyLevel]} • sonno ${sleepQualityLabels[form.sleepQuality]} • stress ${stressLabels[form.stressLevel]}`,
-    care: `${goalLabels[form.focusPreference]} • ${form.gentleStart ? "partenza graduale" : "partenza dolce"}`
+    rhythm: `${levelLabels[form.perceivedLevel]} • ${form.daysPerWeek} giorni • ${form.preferredMinutes} min`,
+    care: `${energyLabels[form.energyLevel]} • ${form.gentleStart ? "inizio graduale" : "base attiva"}`
   }[currentStep.key];
 
   const toggleGoal = (value: Goal) => {
@@ -204,13 +174,13 @@ export function OnboardingPage() {
         <section className="surface-strong soft-gradient overflow-hidden px-5 py-6">
           <div className="flex items-start justify-between gap-4">
             <div className="max-w-[15rem]">
-              <div className="eyebrow">Onboarding intelligente</div>
+              <div className="eyebrow">Onboarding leggero</div>
               <h1 className="mt-3 font-serif text-[2rem] leading-tight text-ink">
-                Impostiamo un percorso che ti capisca davvero.
+                Entriamo nel tuo ritmo senza appesantire l'inizio.
               </h1>
               <p className="mt-3 text-sm leading-7 text-muted">
-                Pochi blocchi chiari per costruire la prima versione del piano.
-                Quello che non serve subito lo raccoglieremo dopo, con calma.
+                Mirya costruisce il primo piano sui dati essenziali. Quello che puo
+                renderlo ancora piu preciso te lo chiede dopo, con calma.
               </p>
             </div>
             <div className="rounded-[1.3rem] bg-[rgba(255,255,255,0.82)] p-3 text-accent-deep shadow-sm">
@@ -258,14 +228,11 @@ export function OnboardingPage() {
 
           <div className="mt-5 rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
             <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-              Perche te lo chiediamo
+              Cosa succede dopo
             </div>
             <p className="mt-2 text-sm leading-6 text-muted">
-              {stepIndex <= 1
-                ? "Serve per impostare il piano iniziale senza chiederti troppo, ma facendolo gia aderire bene alla tua situazione."
-                : stepIndex <= 3
-                  ? "Questo ci aiuta a scegliere carico iniziale, ritmo e distribuzione settimanale in modo piu realistico."
-                  : "Queste informazioni servono soprattutto a proteggere continuita, recupero e qualita del gesto."}
+              Ricevi subito un primo piano guidato. Poi, se vuoi, aggiungi qualche
+              dettaglio mirato per farlo assomigliare ancora di piu a te.
             </p>
           </div>
 
@@ -341,44 +308,6 @@ export function OnboardingPage() {
               value={form.ageBand}
               onChange={(ageBand) => setForm((current) => ({ ...current, ageBand }))}
             />
-
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block">
-                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                  Altezza
-                </span>
-                <input
-                  type="number"
-                  value={form.heightCm ?? ""}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      heightCm: event.target.value ? Number(event.target.value) : null
-                    }))
-                  }
-                  className="mt-2 h-12 w-full rounded-[18px] border border-line bg-white px-4 text-sm text-ink outline-none transition focus:border-accent"
-                  placeholder="cm"
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                  Peso
-                </span>
-                <input
-                  type="number"
-                  value={form.weightKg ?? ""}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      weightKg: event.target.value ? Number(event.target.value) : null
-                    }))
-                  }
-                  className="mt-2 h-12 w-full rounded-[18px] border border-line bg-white px-4 text-sm text-ink outline-none transition focus:border-accent"
-                  placeholder="kg"
-                />
-              </label>
-            </div>
           </div>
         );
       case "goals":
@@ -430,7 +359,7 @@ export function OnboardingPage() {
             />
           </div>
         );
-      case "background":
+      case "rhythm":
         return (
           <div className="space-y-4">
             <ChoiceGrid
@@ -440,25 +369,6 @@ export function OnboardingPage() {
                 setForm((current) => ({ ...current, perceivedLevel }))
               }
             />
-            <ChoiceGrid
-              options={pastExperienceOptions}
-              value={form.pastExperience}
-              onChange={(pastExperience) =>
-                setForm((current) => ({ ...current, pastExperience }))
-              }
-            />
-            <ChoiceGrid
-              options={lifestyleOptions}
-              value={form.lifestyle}
-              onChange={(lifestyle) =>
-                setForm((current) => ({ ...current, lifestyle }))
-              }
-            />
-          </div>
-        );
-      case "rhythm":
-        return (
-          <div className="space-y-4">
             <ChoiceGrid
               options={trainingDayOptions}
               value={form.daysPerWeek}
@@ -473,23 +383,9 @@ export function OnboardingPage() {
               }
               columns="two"
             />
-            <ChoiceGrid
-              options={weeklyAvailabilityOptions}
-              value={form.weeklyAvailability}
-              onChange={(weeklyAvailability) =>
-                setForm((current) => ({ ...current, weeklyAvailability }))
-              }
-            />
-            <ChoiceGrid
-              options={timePreferenceOptions}
-              value={form.preferredTimeOfDay}
-              onChange={(preferredTimeOfDay) =>
-                setForm((current) => ({ ...current, preferredTimeOfDay }))
-              }
-            />
           </div>
         );
-      case "energy":
+      case "care":
         return (
           <div className="space-y-4">
             <ChoiceGrid
@@ -499,49 +395,7 @@ export function OnboardingPage() {
                 setForm((current) => ({ ...current, energyLevel }))
               }
             />
-            <ChoiceGrid
-              options={sleepQualityOptions}
-              value={form.sleepQuality}
-              onChange={(sleepQuality) =>
-                setForm((current) => ({ ...current, sleepQuality }))
-              }
-            />
-            <ChoiceGrid
-              options={stressLevelOptions}
-              value={form.stressLevel}
-              onChange={(stressLevel) =>
-                setForm((current) => ({ ...current, stressLevel }))
-              }
-            />
-            <label className="block rounded-[22px] border border-line bg-white/78 px-4 py-4">
-              <div className="text-sm font-semibold text-ink">
-                Quanto ti senti costante oggi, da 1 a 5?
-              </div>
-              <input
-                type="range"
-                min={1}
-                max={5}
-                step={1}
-                value={form.consistencyScore}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    consistencyScore: Number(event.target.value) as 1 | 2 | 3 | 4 | 5
-                  }))
-                }
-                className="mt-4 w-full accent-[var(--color-accent)]"
-              />
-              <div className="mt-2 flex items-center justify-between text-xs font-semibold text-muted">
-                <span>1</span>
-                <span>{consistencyMessages[(form.consistencyScore - 1) % consistencyMessages.length]}</span>
-                <span>5</span>
-              </div>
-            </label>
-          </div>
-        );
-      case "care":
-        return (
-          <div className="space-y-4">
+
             <ChoiceGrid
               options={gentleStartOptions}
               value={form.gentleStart}
@@ -575,20 +429,11 @@ export function OnboardingPage() {
               })}
             </div>
 
-            <label className="block">
-              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                Nota opzionale
-              </span>
-              <textarea
-                value={form.notes}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, notes: event.target.value }))
-                }
-                rows={4}
-                className="mt-2 w-full rounded-[20px] border border-line bg-white px-4 py-3 text-sm leading-6 text-ink outline-none transition focus:border-accent"
-                placeholder="Per esempio: la settimana e irregolare, oppure preferisco evitare giorni troppo intensi."
-              />
-            </label>
+            <p className="rounded-[20px] bg-[rgba(255,255,255,0.78)] px-4 py-4 text-sm leading-6 text-muted">
+              Dopo il primo piano potrai aggiungere dettagli su sonno, stress,
+              postura, eventuali sensibilita e stile di allenamento. Lo facciamo
+              solo se ti va, e solo quando ha davvero senso.
+            </p>
           </div>
         );
       default:
@@ -596,4 +441,3 @@ export function OnboardingPage() {
     }
   }
 }
-
