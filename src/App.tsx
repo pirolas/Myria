@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
@@ -90,37 +91,50 @@ function RequireWorkoutAccess() {
   return <Outlet />;
 }
 
+function ScrollToTopOnRouteChange() {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location.pathname]);
+
+  return null;
+}
+
 function AppRoutes() {
   return (
-    <Routes>
-      <Route path="/" element={<RootEntry />} />
-      <Route path="/auth" element={<AuthPage />} />
+    <>
+      <ScrollToTopOnRouteChange />
+      <Routes>
+        <Route path="/" element={<RootEntry />} />
+        <Route path="/auth" element={<AuthPage />} />
 
-      <Route element={<RequireSignedIn />}>
-        <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route element={<RequireSignedIn />}>
+          <Route path="/onboarding" element={<OnboardingPage />} />
 
-        <Route element={<RequireOnboarding />}>
-          <Route element={<AppShell />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route element={<RequireWorkoutAccess />}>
-              <Route path="/today" element={<TodayWorkoutPage />} />
-              <Route path="/session/:planDayId" element={<ActiveWorkoutPage />} />
+          <Route element={<RequireOnboarding />}>
+            <Route element={<AppShell />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route element={<RequireWorkoutAccess />}>
+                <Route path="/today" element={<TodayWorkoutPage />} />
+                <Route path="/session/:planDayId" element={<ActiveWorkoutPage />} />
+              </Route>
+              <Route path="/plan" element={<PlanPage />} />
+              <Route path="/plan/ready" element={<PlanReadyPage />} />
+              <Route path="/plan/story" element={<PlanStoryPage />} />
+              <Route path="/plan/update" element={<PlanUpdatePage />} />
+              <Route path="/progress" element={<ProgressPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/profile/deep" element={<DeepProfilePage />} />
+              <Route path="/reassessment" element={<ReassessmentPage />} />
+              <Route path="/premium" element={<PaywallPage />} />
             </Route>
-            <Route path="/plan" element={<PlanPage />} />
-            <Route path="/plan/ready" element={<PlanReadyPage />} />
-            <Route path="/plan/story" element={<PlanStoryPage />} />
-            <Route path="/plan/update" element={<PlanUpdatePage />} />
-            <Route path="/progress" element={<ProgressPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/profile/deep" element={<DeepProfilePage />} />
-            <Route path="/reassessment" element={<ReassessmentPage />} />
-            <Route path="/premium" element={<PaywallPage />} />
           </Route>
         </Route>
-      </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }
 
