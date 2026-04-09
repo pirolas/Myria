@@ -199,4 +199,77 @@ export function shouldShowPremiumGate(access: UserAccessRecord | null) {
   return access?.status === "free_locked";
 }
 
+export interface PlanReviewGate {
+  allowed: boolean;
+  title: string;
+  body: string;
+  hint?: string;
+  actionLabel: string;
+  actionTo: string;
+}
+
+export function getPlanReviewGate(model: DashboardModel | null): PlanReviewGate {
+  if (!model?.activePlan || !model.userAccess) {
+    return {
+      allowed: false,
+      title: "Il percorso si aggiorna nei momenti giusti",
+      body: "Prima ci serve un piano attivo su cui lavorare.",
+      actionLabel: "Torna alla dashboard",
+      actionTo: "/dashboard"
+    };
+  }
+
+  if (model.userAccess.status !== "premium") {
+    return {
+      allowed: false,
+      title: "La continuità del percorso fa parte di Premium",
+      body: "Il primo piano ti dà una direzione chiara. Gli aggiornamenti successivi servono a mantenerlo coerente con come procede davvero il tuo percorso.",
+      actionLabel: "Scopri Premium",
+      actionTo: "/premium"
+    };
+  }
+
+  const latestVersionAt = model.activePlanVersion?.createdAt
+    ? new Date(model.activePlanVersion.createdAt).getTime()
+    : null;
+  const sessionsSinceLastReview = latestVersionAt
+    ? model.sessions.filter(
+        (session) =>
+          session.status === "completed" &&
+          session.completedAt &&
+          new Date(session.completedAt).getTime() > latestVersionAt
+      ).length
+    : model.sessions.filter((session) => session.status === "completed").length;
+  const daysSinceLastReview =
+    latestVersionAt === null
+      ? 99
+      : Math.floor((Date.now() - latestVersionAt) / (24 * 60 * 60 * 1000));
+
+  if (daysSinceLastReview < 3 && sessionsSinceLastReview < 2) {
+    const waitingSessions = Math.max(2 - sessionsSinceLastReview, 0);
+    const waitingDays = Math.max(3 - daysSinceLastReview, 0);
+
+    return {
+      allowed: false,
+      title: "Il tuo percorso si aggiorna quando ci sono segnali utili",
+      body: "Non lo rivediamo a comando, perché perderebbe coerenza. Prima lasciamo che il piano raccolga un po' di risposte reali.",
+      hint:
+        waitingSessions > 0
+          ? `Ti conviene completare ancora ${waitingSessions} session${waitingSessions === 1 ? "e" : "i"} oppure lasciare passare qualche giorno.`
+          : `Ti conviene lasciare passare ancora ${waitingDays} giorn${waitingDays === 1 ? "o" : "i"} prima di rivederlo.`,
+      actionLabel: "Torna al piano",
+      actionTo: "/plan"
+    };
+  }
+
+  return {
+    allowed: true,
+    title: "Rivediamo il percorso con un check-in guidato",
+    body: "Prima raccogliamo pochi segnali mirati. Poi decidiamo se confermare la direzione oppure correggerla davvero.",
+    hint: "È il modo più utile per evitare cambi casuali e tenere il piano coerente con la tua settimana.",
+    actionLabel: "Fai il check-in guidato",
+    actionTo: "/reassessment"
+  };
+}
+
 

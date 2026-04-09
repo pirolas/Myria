@@ -211,9 +211,9 @@ export function ProfilePage() {
             className="flex items-center justify-between rounded-[22px] border border-line bg-white/78 px-4 py-4"
           >
             <div>
-              <div className="text-sm font-semibold text-ink">Ricalcola il piano</div>
+              <div className="text-sm font-semibold text-ink">Rivedi il percorso</div>
               <p className="mt-1 text-sm leading-6 text-muted">
-                Aggiorna il percorso oppure scopri come funziona la continuità Premium.
+                Il piano non si rigenera a caso: si rivede nei momenti giusti, con una logica guidata.
               </p>
             </div>
             <ChevronRight size={18} className="text-accent-deep" />
@@ -226,7 +226,7 @@ export function ProfilePage() {
             <div>
               <div className="text-sm font-semibold text-ink">Compila una rivalutazione</div>
               <p className="mt-1 text-sm leading-6 text-muted">
-                Se il piano è cambiato rispetto a come ti senti oggi, aggiornalo con pochi tocchi.
+                Se il tuo momento è cambiato, bastano pochi tocchi per capire se il percorso va corretto.
               </p>
             </div>
             <ChevronRight size={18} className="text-accent-deep" />

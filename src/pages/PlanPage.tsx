@@ -80,13 +80,13 @@ export function PlanPage() {
             >
               <div className="text-sm font-semibold text-ink">
                 {data.userAccess?.status === "premium"
-                  ? "Aggiorna il percorso"
+                  ? "Rivedi il percorso"
                   : "Continuità Premium"}
               </div>
               <p className="mt-2 text-sm leading-6 text-muted">
                 {data.userAccess?.status === "premium"
-                  ? "Usa feedback e progressi per rifinirlo."
-                  : "La parte premium è l’adattamento nel tempo."}
+                  ? "Usa un check-in guidato per capire se il piano va davvero corretto."
+                  : "La parte premium è l'adattamento del percorso nel tempo."}
               </p>
             </Link>
           </div>
@@ -101,7 +101,7 @@ export function PlanPage() {
           return (
             <Link
               key={day.id}
-              to={isToday ? "/today" : "/dashboard"}
+              to={isToday ? `/session/${day.id}` : "/dashboard"}
               className="surface block px-5 py-5"
             >
               <div className="flex items-start justify-between gap-4">

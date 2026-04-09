@@ -2,11 +2,11 @@ import { CheckCircle2, Crown, RefreshCw, Sparkles } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
+import { getPlanReviewGate } from "@/lib/mirya";
 
 export function PlanUpdatePage() {
   const {
     data,
-    regeneratePlan,
     activatePremium,
     status,
     error,
@@ -19,29 +19,29 @@ export function PlanUpdatePage() {
   }
 
   const isPremium = data.userAccess.status === "premium";
+  const reviewGate = getPlanReviewGate(data);
   const isReviewing = planRevision.status === "loading";
   const hasRevisionOutcome =
     planRevision.status === "updated" || planRevision.status === "unchanged";
   const hasRevisionError = planRevision.status === "error";
 
-  const startRevision = () => {
+  const resetRevisionFeedback = () => {
     clearPlanRevisionFeedback();
-    void regeneratePlan("weekly_refresh");
   };
 
   return (
     <div className="page-enter space-y-6">
       <section className="surface-strong soft-gradient px-5 py-6">
-        <div className="eyebrow">Aggiorna il mio percorso</div>
+        <div className="eyebrow">Rivedi il percorso</div>
         <h1 className="mt-3 font-serif text-[2rem] leading-tight text-ink">
           {isPremium
-            ? "Facciamo il punto e adattiamo il percorso."
-            : "L'aggiornamento del percorso fa parte della continuità Premium."}
+            ? "Il percorso si aggiorna quando ha davvero senso farlo."
+            : "La continuità del percorso fa parte di Premium."}
         </h1>
         <p className="mt-4 text-sm leading-7 text-muted">
           {isPremium
-            ? "Usiamo progressi, feedback e ritmo reale per capire se confermare, alleggerire o far evolvere la fase."
-            : "Il primo piano ti mostra la direzione. Da qui in poi il valore premium è che Mirya non resta ferma, ma si adatta con te."}
+            ? "Mirya non ricalcola a caso. Prima raccoglie segnali utili, poi decide se confermare la direzione oppure correggerla."
+            : "Il primo piano ti mostra la direzione. Da qui in poi il valore premium è che il percorso continua ad adattarsi con criterio."}
         </p>
       </section>
 
@@ -94,9 +94,7 @@ export function PlanUpdatePage() {
                         ? "Il tuo piano è stato aggiornato"
                         : "Abbiamo rivisto il tuo piano"}
                     </div>
-                    <p className="text-sm leading-6 text-muted">
-                      {planRevision.message}
-                    </p>
+                    <p className="text-sm leading-6 text-muted">{planRevision.message}</p>
                   </div>
                 </div>
               </div>
@@ -135,13 +133,8 @@ export function PlanUpdatePage() {
                     Vedi il piano attuale
                   </Button>
                 </Link>
-                <Button
-                  fullWidth
-                  onClick={startRevision}
-                  icon={<RefreshCw size={18} />}
-                  className="flex-1 justify-between"
-                >
-                  Rivedilo ancora
+                <Button fullWidth onClick={resetRevisionFeedback} className="flex-1">
+                  Chiudi
                 </Button>
               </div>
             </div>
@@ -156,24 +149,37 @@ export function PlanUpdatePage() {
                     "La revisione non è andata a buon fine. Puoi riprovare tra un attimo."}
                 </p>
               </div>
-              <Button
-                fullWidth
-                onClick={startRevision}
-                disabled={status === "saving"}
-                icon={<RefreshCw size={18} />}
-                className="justify-between"
-              >
-                Riprova a rivedere il piano
-              </Button>
+              <div className="flex gap-3">
+                <Link to="/reassessment" className="flex-1">
+                  <Button fullWidth icon={<Sparkles size={18} />} className="justify-between">
+                    Riapri il check-in
+                  </Button>
+                </Link>
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={resetRevisionFeedback}
+                  className="flex-1"
+                >
+                  Chiudi
+                </Button>
+              </div>
             </div>
           ) : (
-            <>
-              <div className="text-base font-semibold text-ink">Cosa useremo adesso</div>
-              <div className="mt-4 space-y-3">
+            <div className="space-y-4">
+              <div className="rounded-[24px] border border-line bg-white/82 px-5 py-5">
+                <div className="text-base font-semibold text-ink">{reviewGate.title}</div>
+                <p className="mt-3 text-sm leading-6 text-muted">{reviewGate.body}</p>
+                {reviewGate.hint ? (
+                  <p className="mt-3 text-sm leading-6 text-muted">{reviewGate.hint}</p>
+                ) : null}
+              </div>
+
+              <div className="space-y-3">
                 {[
-                  "Le sessioni completate e quanto sei riuscita a proteggerle davvero.",
-                  "Il feedback che hai lasciato dopo le sessioni.",
-                  "Le eventuali nuove informazioni del profilo o della rivalutazione breve."
+                  "Prima raccogliamo segnali veri, non una richiesta impulsiva.",
+                  "Se il piano resta corretto, te lo diciamo con chiarezza.",
+                  "Se serve correggerlo, lo facciamo senza perdere coerenza."
                 ].map((item) => (
                   <div
                     key={item}
@@ -184,18 +190,19 @@ export function PlanUpdatePage() {
                 ))}
               </div>
 
-              <div className="mt-5">
-                <Button
-                  fullWidth
-                  onClick={startRevision}
-                  disabled={status === "saving"}
-                  icon={<RefreshCw size={18} />}
-                  className="justify-between"
-                >
-                  Rivedi il mio piano
-                </Button>
+              <div className="flex gap-3">
+                <Link to={reviewGate.actionTo} className="flex-1">
+                  <Button fullWidth icon={<Sparkles size={18} />} className="justify-between">
+                    {reviewGate.actionLabel}
+                  </Button>
+                </Link>
+                <Link to="/plan" className="flex-1">
+                  <Button variant="secondary" fullWidth>
+                    Torna al piano
+                  </Button>
+                </Link>
               </div>
-            </>
+            </div>
           )}
         </section>
       ) : (

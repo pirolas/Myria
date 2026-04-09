@@ -161,7 +161,7 @@ export function DashboardPage() {
           </div>
 
           <div className="mt-5">
-            <Link to="/today">
+            <Link to={`/session/${data.todayPlanDay.id}`}>
               <Button fullWidth icon={<ArrowRight size={18} />} className="justify-between">
                 Inizia la sessione di oggi
               </Button>
@@ -199,7 +199,7 @@ export function DashboardPage() {
           >
             <Button fullWidth icon={<ArrowRight size={18} />} className="justify-between">
               {data.userAccess?.status === "premium"
-                ? "Aggiorna il percorso"
+                ? "Rivedi il percorso"
                 : "Scopri Premium"}
             </Button>
           </Link>

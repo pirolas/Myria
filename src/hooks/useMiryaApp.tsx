@@ -7,7 +7,7 @@
   useState,
   type ReactNode
 } from "react";
-import { buildProgressSnapshot } from "@/lib/mirya";
+import { buildProgressSnapshot, getPlanReviewGate } from "@/lib/mirya";
 import { useAuth } from "@/hooks/useAuth";
 import {
   completeWorkoutSession,
@@ -348,6 +348,16 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
           throw new Error(
             "L'aggiornamento del percorso nel tempo e disponibile in Premium."
           );
+        }
+        if (trigger === "weekly_refresh") {
+          const reviewGate = getPlanReviewGate(data);
+
+          if (!reviewGate.allowed) {
+            throw new Error(
+              reviewGate.hint ??
+                "Il tuo percorso si aggiorna nei momenti giusti, per restare coerente e davvero utile."
+            );
+          }
         }
 
         setStatus("saving");

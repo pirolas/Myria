@@ -9,7 +9,7 @@ function resolveMeta(pathname: string) {
   if (pathname.startsWith("/session/")) {
     return {
       label: "Sessione attiva",
-      backTo: "/today",
+      backTo: "/dashboard",
       badge: "timer"
     };
   }
@@ -27,7 +27,7 @@ function resolveMeta(pathname: string) {
       return { label: "Piano pronto", backTo: "/dashboard", badge: "inizio" };
     }
     if (pathname.startsWith("/plan/update")) {
-      return { label: "Aggiorna il percorso", backTo: "/plan", badge: "premium" };
+      return { label: "Rivedi il percorso", backTo: "/plan", badge: "premium" };
     }
     return pathname.startsWith("/plan/story")
       ? { label: "Perché questo piano", backTo: "/plan", badge: "lettura" }
