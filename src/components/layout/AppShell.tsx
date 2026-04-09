@@ -1,6 +1,7 @@
-﻿import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { InstallAppPrompt } from "@/components/layout/InstallAppPrompt";
 import { brand } from "@/data/content";
 import { formatLongDate } from "@/lib/date";
 
@@ -87,10 +88,9 @@ export function AppShell() {
           <Outlet />
         </main>
 
+        <InstallAppPrompt />
         <BottomNav />
       </div>
     </div>
   );
 }
-
-

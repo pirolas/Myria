@@ -1,0 +1,25 @@
+{
+  "name": "Mirya",
+  "short_name": "Mirya",
+  "description": "Percorso guidato di tonificazione femminile a casa.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#eaf6f5",
+  "theme_color": "#5eb8b2",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/mirya-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/mirya-maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

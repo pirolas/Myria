@@ -1,18 +1,14 @@
-﻿import { useMemo, useState } from "react";
-import {
-  Pause,
-  Play,
-  SkipForward,
-  Volume2,
-  VolumeX,
-  Sparkles
-} from "lucide-react";
+import { useMemo, useState } from "react";
+import { Pause, Play, SkipForward, Volume2, VolumeX } from "lucide-react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
+import { StepGuidanceCard } from "@/components/workouts/StepGuidanceCard";
+import { ExerciseFigure } from "@/components/workouts/ExerciseFigure";
+import { homeEquipmentTips } from "@/data/homeEquipment";
 import { energyAfterWorkoutOptions, feelingOptions } from "@/data/content";
+import { exerciseGuidance } from "@/data/exerciseGuidance";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
 import { useWorkoutPlayer } from "@/hooks/useWorkoutPlayer";
-import { ExerciseFigure } from "@/components/workouts/ExerciseFigure";
 import type { Feeling, TrainingPlanDay } from "@/types/domain";
 
 export function ActiveWorkoutPage() {
@@ -46,13 +42,16 @@ export function ActiveWorkoutPage() {
     return <Navigate to="/today" replace />;
   }
 
+  const introStep = planDay.workout.steps[0] ?? null;
   const currentStep = player.currentStep;
   const nextStep = planDay.workout.steps[player.currentIndex + 1] ?? null;
+  const previewStep = player.stage === "rest" ? nextStep : currentStep;
+  const previewGuidance = previewStep ? exerciseGuidance[previewStep.exerciseId] : null;
+  const homeSupport = previewStep ? homeEquipmentTips[previewStep.exerciseId] : null;
   const remainingSteps = Math.max(
     planDay.workout.steps.length - player.currentIndex - 1,
     0
   );
-  const stageMeta = getStageMeta(player.stage, currentStep?.title ?? "");
 
   const handleStart = async () => {
     setLocalError(null);
@@ -112,7 +111,7 @@ export function ActiveWorkoutPage() {
   };
 
   return (
-    <div className="page-enter space-y-6">
+    <div className="page-enter space-y-5">
       <section className="surface-strong px-5 py-6">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -141,96 +140,87 @@ export function ActiveWorkoutPage() {
           <span className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-muted">
             audio {soundEnabled ? "attivo" : "off"}
           </span>
+          <span className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-muted">
+            {planDay.workout.steps.length} esercizi
+          </span>
         </div>
       </section>
 
-      {player.stage === "ready" ? (
-        <section className="surface px-5 py-5">
-          <div className="text-base font-semibold text-ink">
-            Tutto è pronto per partire
-          </div>
-          <p className="mt-3 text-sm leading-7 text-muted">
-            Da qui in poi Mirya tiene il ritmo per te. Tu devi solo iniziare e
-            seguire uno step alla volta.
-          </p>
-
-          <div className="mt-5 space-y-3">
-            {[
-              "Comparirà un countdown iniziale breve.",
-              "Ogni esercizio andrà avanti in automatico.",
-              "Se serve, puoi mettere in pausa o saltare uno step."
-            ].map((item, index) => (
-              <div
-                key={item}
-                className="flex items-start gap-4 rounded-[22px] border border-line bg-white/78 px-4 py-4"
-              >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[rgba(215,239,236,0.82)] text-sm font-semibold text-accent-deep">
-                  {index + 1}
-                </div>
-                <p className="text-sm leading-6 text-muted">{item}</p>
-              </div>
-            ))}
-          </div>
+      {player.stage === "ready" && introStep ? (
+        <>
+          <StepGuidanceCard
+            step={introStep}
+            eyebrow="Prima di partire"
+            title={`Si parte con ${introStep.title}`}
+          />
 
           {localError ? (
-            <div className="mt-4 rounded-[18px] bg-[rgba(183,98,98,0.1)] px-4 py-3 text-sm leading-6 text-[rgba(116,63,63,0.96)]">
+            <div className="rounded-[18px] bg-[rgba(183,98,98,0.1)] px-4 py-3 text-sm leading-6 text-[rgba(116,63,63,0.96)]">
               {localError}
             </div>
           ) : null}
 
-          <div className="mt-5">
-            <Button fullWidth onClick={handleStart} disabled={isStarting}>
-              {isStarting ? "Avvio in corso..." : "Avvia la sessione"}
-            </Button>
-          </div>
-        </section>
+          <section className="surface px-5 py-5">
+            <div className="text-base font-semibold text-ink">Poi farà tutto il timer</div>
+            <p className="mt-3 text-sm leading-7 text-muted">
+              Vedrai un countdown breve, poi il movimento partirà da solo. Tu dovrai solo seguire il gesto e, se serve, mettere in pausa.
+            </p>
+            <div className="mt-5">
+              <Button fullWidth onClick={handleStart} disabled={isStarting}>
+                {isStarting ? "Avvio in corso..." : "Avvia il countdown"}
+              </Button>
+            </div>
+          </section>
+        </>
       ) : null}
 
-      {player.stage !== "ready" && player.stage !== "finished" && currentStep ? (
+      {player.stage !== "ready" && player.stage !== "finished" && previewStep ? (
         <section className="surface timer-panel px-5 py-5">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <div className="eyebrow">{stageMeta.eyebrow}</div>
+              <div className="eyebrow">
+                {player.stage === "countdown"
+                  ? "Tra pochissimo"
+                  : player.stage === "rest"
+                    ? "Tra poco"
+                    : "Adesso"}
+              </div>
               <div className="mt-2 text-xl font-semibold text-ink">
-                {stageMeta.title}
+                {player.stage === "rest" ? nextStep?.title ?? "Ultimo passaggio" : previewStep.title}
               </div>
             </div>
             <div className="rounded-full bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-              {player.currentIndex + 1}/{player.totalSteps}
+              {Math.min(player.currentIndex + 1, player.totalSteps)}/{player.totalSteps}
             </div>
           </div>
 
           <div className="mt-5 timer-face">
-            {player.stage === "countdown" ? (
-              <div className="relative z-10 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent-soft text-accent-deep">
-                  <Sparkles size={20} />
-                </div>
-                <div className="mt-5 text-[4rem] font-semibold leading-none text-ink">
-                  {player.secondsLeft}
-                </div>
-                <div className="mt-2 text-sm text-muted">Prenditi un attimo e parti.</div>
+            <div className="relative z-10 text-center">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+                {player.stage === "countdown"
+                  ? "Countdown"
+                  : player.stage === "rest"
+                    ? "Recupero"
+                    : "Tempo attivo"}
               </div>
-            ) : (
-              <div className="relative z-10 flex flex-col items-center text-center">
-                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
-                  {player.stage === "rest" ? "Pausa" : "Adesso"}
-                </div>
-                <div className="mt-3 text-[4rem] font-semibold leading-none text-ink">
-                  {player.secondsLeft}
-                </div>
-                <div className="mt-4 max-w-[14rem] text-lg font-semibold text-ink">
-                  {player.stage === "rest" ? "Recupero breve" : currentStep.title}
-                </div>
-                <p className="mt-2 max-w-[15rem] text-sm leading-6 text-muted">
-                  {player.stage === "rest"
+              <div className="mt-3 text-[4rem] font-semibold leading-none text-ink">
+                {player.secondsLeft}
+              </div>
+              <div className="mt-4 max-w-[15rem] text-lg font-semibold text-ink">
+                {player.stage === "countdown"
+                  ? `Tra poco: ${previewStep.title}`
+                  : player.stage === "rest"
                     ? nextStep
-                      ? `Tra poco continui con ${nextStep.title.toLowerCase()}.`
-                      : "Ultimo recupero prima della chiusura."
-                    : "Segui il gesto con calma. Non serve accelerare."}
-                </p>
+                      ? `Poi: ${nextStep.title}`
+                      : "Chiudiamo la sessione"
+                    : previewStep.title}
               </div>
-            )}
+              <p className="mt-2 max-w-[16rem] text-sm leading-6 text-muted">
+                {player.stage === "rest"
+                  ? "Respira, lascia scendere il ritmo e preparati al passaggio successivo."
+                  : previewGuidance?.movementCue ?? previewStep.summary}
+              </p>
+            </div>
           </div>
 
           <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-[rgba(215,239,236,0.72)]">
@@ -240,30 +230,61 @@ export function ActiveWorkoutPage() {
             />
           </div>
 
-          <div className="mt-4 rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
+          <div className="mt-4 rounded-[22px] bg-[rgba(255,255,255,0.82)] px-4 py-4">
             <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-              Guida del momento
+              Gesto del momento
             </div>
-            <div className="mt-2 text-sm font-semibold text-ink">
-              {player.stage === "rest" ? "Lascia scendere il ritmo." : currentStep.title}
+            <div className="mt-3">
+              <ExerciseFigure exerciseId={previewStep.exerciseId} />
             </div>
-            <p className="mt-2 text-sm leading-6 text-muted">
-              {player.stage === "rest" ? stageMeta.description : currentStep.summary}
-            </p>
-            <p className="mt-2 text-xs uppercase tracking-[0.14em] text-muted">
-              {player.stage === "rest"
-                ? nextStep
-                  ? `poi: ${nextStep.title}`
-                  : "chiusura sessione"
-                : currentStep.doseLabel}
-            </p>
+            <div className="mt-4 grid gap-3">
+              <div>
+                <div className="text-sm font-semibold text-ink">Come metterti</div>
+                <p className="mt-1 text-sm leading-6 text-muted">
+                  {previewGuidance?.startingPosition ??
+                    "Trova un assetto semplice e stabile prima di muoverti."}
+                </p>
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-ink">Come muoverti</div>
+                <p className="mt-1 text-sm leading-6 text-muted">
+                  {previewGuidance?.movementCue ?? previewStep.summary}
+                </p>
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-ink">Cosa sentire</div>
+                <p className="mt-1 text-sm leading-6 text-muted">
+                  {previewGuidance?.feelCue ??
+                    `Dovresti sentire soprattutto ${previewStep.bodyArea.toLowerCase()}.`}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="rounded-full bg-[rgba(246,250,249,0.92)] px-3 py-2 text-xs font-semibold text-muted">
+                {previewStep.doseLabel}
+              </span>
+              {player.stage !== "rest" ? (
+                <span className="rounded-full bg-[rgba(246,250,249,0.92)] px-3 py-2 text-xs font-semibold text-muted">
+                  recupero {previewStep.restSeconds}s
+                </span>
+              ) : null}
+            </div>
+            {previewStep.easierOption ? (
+              <p className="mt-4 text-sm leading-6 text-muted">
+                <span className="font-semibold text-ink">Se oggi vuoi alleggerire:</span>{" "}
+                {previewStep.easierOption}
+              </p>
+            ) : null}
+            {homeSupport ? (
+              <div className="mt-4 rounded-[18px] border border-[rgba(94,184,178,0.18)] bg-[rgba(241,252,251,0.92)] px-4 py-3">
+                <div className="text-sm font-semibold text-ink">{homeSupport.title}</div>
+                <p className="mt-2 text-sm leading-6 text-muted">{homeSupport.body}</p>
+                <p className="mt-2 text-sm leading-6 text-muted">
+                  Idee semplici: {homeSupport.ideas.join(", ")}.
+                </p>
+              </div>
+            ) : null}
           </div>
-
-          {player.stage !== "countdown" ? (
-            <div className="mt-4 rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
-              <ExerciseFigure exerciseId={currentStep.exerciseId} />
-            </div>
-          ) : null}
 
           <div className="mt-4 grid grid-cols-2 gap-3">
             <Button
@@ -271,7 +292,7 @@ export function ActiveWorkoutPage() {
               onClick={player.togglePause}
               className="justify-between"
             >
-              <span>{player.isPaused ? "Riprendi" : "Metti in pausa"}</span>
+              <span>{player.isPaused ? "Riprendi" : "Pausa"}</span>
               {player.isPaused ? <Play size={18} /> : <Pause size={18} />}
             </Button>
 
@@ -280,13 +301,13 @@ export function ActiveWorkoutPage() {
               onClick={player.skipCurrent}
               className="justify-between"
             >
-              <span>Salta questo step</span>
+              <span>Salta</span>
               <SkipForward size={18} />
             </Button>
           </div>
 
           <p className="mt-3 text-center text-sm leading-6 text-muted">
-            Restano {remainingSteps} step dopo questo.
+            Restano {remainingSteps} esercizi dopo questo.
           </p>
         </section>
       ) : null}
@@ -298,8 +319,7 @@ export function ActiveWorkoutPage() {
             Chiudiamo bene questa sessione
           </h2>
           <p className="mt-3 text-sm leading-7 text-muted">
-            Bastano pochi tocchi. Questo ci serve per tenere il percorso realistico
-            è sempre più adatto a te.
+            Bastano pochi tocchi. Questo ci serve per tenere il percorso realistico e sempre più adatto a te.
           </p>
 
           <div className="mt-5">
@@ -382,7 +402,7 @@ export function ActiveWorkoutPage() {
               value={discomfortNotes}
               onChange={(event) => setDiscomfortNotes(event.target.value)}
               className="mt-2 w-full rounded-[20px] border border-line bg-white px-4 py-3 text-sm leading-6 text-ink outline-none transition focus:border-accent"
-              placeholder="Per esempio: un esercizio era scomodo oggi oppure la zona lombare si è affaticata presto."
+              placeholder="Per esempio: un esercizio oggi era scomodo oppure la zona lombare si è affaticata presto."
             />
           </label>
 
@@ -418,31 +438,6 @@ export function ActiveWorkoutPage() {
   );
 }
 
-function getStageMeta(stage: string, currentTitle: string) {
-  switch (stage) {
-    case "countdown":
-      return {
-        eyebrow: "Tra poco",
-        title: "Preparati a iniziare",
-        description: "Prenditi un attimo, trova la posizione e lascia partire il ritmo."
-      };
-    case "rest":
-      return {
-        eyebrow: "Recupero",
-        title: "Respira e lascia scendere il ritmo",
-        description:
-          "Questa pausa serve a tenere il gesto pulito anche nello step successivo."
-      };
-    default:
-      return {
-        eyebrow: "Adesso",
-        title: currentTitle,
-        description:
-          "Segui un movimento semplice e regolare. La qualità conta più della velocità."
-      };
-  }
-}
-
 const emptyWorkout: TrainingPlanDay["workout"] = {
   title: "",
   focus: "",
@@ -451,4 +446,3 @@ const emptyWorkout: TrainingPlanDay["workout"] = {
   cautionNotes: [],
   steps: []
 };
-

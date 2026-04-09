@@ -4,10 +4,12 @@ import type { PlannedWorkout } from "@/types/domain";
 
 type PlayerStage = "ready" | "countdown" | "exercise" | "rest" | "finished";
 
+const COUNTDOWN_SECONDS = 5;
+
 export function useWorkoutPlayer(workout: PlannedWorkout, soundEnabled: boolean) {
   const [stage, setStage] = useState<PlayerStage>("ready");
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [secondsLeft, setSecondsLeft] = useState(5);
+  const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN_SECONDS);
   const [isPaused, setIsPaused] = useState(false);
   const [completedExerciseIds, setCompletedExerciseIds] = useState<string[]>([]);
   const [skippedExerciseIds, setSkippedExerciseIds] = useState<string[]>([]);
@@ -16,65 +18,83 @@ export function useWorkoutPlayer(workout: PlannedWorkout, soundEnabled: boolean)
   const totalSteps = workout.steps.length;
 
   useEffect(() => {
-    if (stage === "ready" || stage === "finished" || isPaused) {
+    if (stage === "ready" || stage === "finished" || isPaused || secondsLeft <= 0) {
       return;
     }
 
     const timeout = window.setTimeout(() => {
-      setSecondsLeft((value) => {
-        if (value > 1) {
-          if (soundEnabled && value <= 4) {
-            void playSoftTimerTone("tick");
-          }
-
-          return value - 1;
-        }
-
-        if (soundEnabled) {
-          void playSoftTimerTone("transition");
-        }
-
-        if (stage === "countdown") {
-          return transitionToExercise(0, setCurrentIndex, setStage, workout);
-        }
-
-        if (stage === "exercise") {
-          const finishedStep = workout.steps[currentIndex];
-
-          if (finishedStep) {
-            setCompletedExerciseIds((current) =>
-              current.includes(finishedStep.exerciseId)
-                ? current
-                : [...current, finishedStep.exerciseId]
-            );
-          }
-
-          if (currentStep?.restSeconds) {
-            setStage("rest");
-            return currentStep.restSeconds;
-          }
-
-          return advanceStep(
-            currentIndex,
-            workout,
-            setCurrentIndex,
-            setStage,
-            setIsPaused
-          );
-        }
-
-        return advanceStep(
-          currentIndex,
-          workout,
-          setCurrentIndex,
-          setStage,
-          setIsPaused
-        );
-      });
+      setSecondsLeft((value) => Math.max(value - 1, 0));
     }, 1000);
 
     return () => window.clearTimeout(timeout);
-  }, [currentIndex, currentStep, isPaused, soundEnabled, stage, workout]);
+  }, [isPaused, secondsLeft, stage]);
+
+  useEffect(() => {
+    if (!soundEnabled || isPaused || stage === "ready" || stage === "finished") {
+      return;
+    }
+
+    if (
+      (stage === "countdown" && secondsLeft > 0 && secondsLeft <= 4) ||
+      (stage !== "countdown" && secondsLeft > 0 && secondsLeft <= 3)
+    ) {
+      void playSoftTimerTone("tick");
+    }
+  }, [isPaused, secondsLeft, soundEnabled, stage]);
+
+  useEffect(() => {
+    if (stage === "ready" || stage === "finished" || isPaused || secondsLeft > 0) {
+      return;
+    }
+
+    if (soundEnabled) {
+      void playSoftTimerTone("transition");
+    }
+
+    if (stage === "countdown") {
+      if (workout.steps.length === 0) {
+        setStage("finished");
+        return;
+      }
+
+      setCurrentIndex(0);
+      setStage("exercise");
+      setSecondsLeft(workout.steps[0]?.durationSeconds ?? 0);
+      return;
+    }
+
+    if (stage === "exercise") {
+      const finishedStep = workout.steps[currentIndex];
+
+      if (finishedStep) {
+        setCompletedExerciseIds((current) =>
+          current.includes(finishedStep.exerciseId)
+            ? current
+            : [...current, finishedStep.exerciseId]
+        );
+      }
+
+      if ((currentStep?.restSeconds ?? 0) > 0) {
+        setStage("rest");
+        setSecondsLeft(currentStep?.restSeconds ?? 0);
+        return;
+      }
+    }
+
+    const nextIndex = currentIndex + 1;
+
+    if (nextIndex >= workout.steps.length) {
+      setStage("finished");
+      setIsPaused(false);
+      setSecondsLeft(0);
+      return;
+    }
+
+    setCurrentIndex(nextIndex);
+    setStage("exercise");
+    setIsPaused(false);
+    setSecondsLeft(workout.steps[nextIndex]?.durationSeconds ?? 0);
+  }, [currentIndex, currentStep, isPaused, secondsLeft, soundEnabled, stage, workout]);
 
   const progressPercent = useMemo(() => {
     if (totalSteps === 0) {
@@ -97,11 +117,12 @@ export function useWorkoutPlayer(workout: PlannedWorkout, soundEnabled: boolean)
     start() {
       if (workout.steps.length === 0) {
         setStage("finished");
+        setSecondsLeft(0);
         return;
       }
 
       setCurrentIndex(0);
-      setSecondsLeft(5);
+      setSecondsLeft(COUNTDOWN_SECONDS);
       setIsPaused(false);
       setCompletedExerciseIds([]);
       setSkippedExerciseIds([]);
@@ -119,50 +140,27 @@ export function useWorkoutPlayer(workout: PlannedWorkout, soundEnabled: boolean)
         );
       }
 
+      const nextIndex = currentIndex + 1;
+
+      if (nextIndex >= workout.steps.length) {
+        setStage("finished");
+        setIsPaused(false);
+        setSecondsLeft(0);
+        return;
+      }
+
+      setCurrentIndex(nextIndex);
+      setStage("exercise");
       setIsPaused(false);
-      setSecondsLeft(
-        advanceStep(currentIndex, workout, setCurrentIndex, setStage, setIsPaused)
-      );
+      setSecondsLeft(workout.steps[nextIndex]?.durationSeconds ?? 0);
     },
     reset() {
       setStage("ready");
       setCurrentIndex(0);
-      setSecondsLeft(5);
+      setSecondsLeft(COUNTDOWN_SECONDS);
       setIsPaused(false);
       setCompletedExerciseIds([]);
       setSkippedExerciseIds([]);
     }
   };
-}
-
-function transitionToExercise(
-  nextIndex: number,
-  setCurrentIndex: (value: number) => void,
-  setStage: (value: PlayerStage) => void,
-  workout: PlannedWorkout
-) {
-  setCurrentIndex(nextIndex);
-  setStage("exercise");
-  return workout.steps[nextIndex]?.durationSeconds ?? 0;
-}
-
-function advanceStep(
-  currentIndex: number,
-  workout: PlannedWorkout,
-  setCurrentIndex: (value: number) => void,
-  setStage: (value: PlayerStage) => void,
-  setIsPaused: (value: boolean) => void
-) {
-  const nextIndex = currentIndex + 1;
-
-  if (nextIndex >= workout.steps.length) {
-    setStage("finished");
-    setIsPaused(false);
-    return 0;
-  }
-
-  setCurrentIndex(nextIndex);
-  setStage("exercise");
-  setIsPaused(false);
-  return workout.steps[nextIndex]?.durationSeconds ?? 0;
 }

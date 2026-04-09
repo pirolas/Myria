@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="mask-bg" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#eef9f8" />
+      <stop offset="100%" stop-color="#bfe6e3" />
+    </linearGradient>
+    <linearGradient id="mask-accent" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#79d0ca" />
+      <stop offset="100%" stop-color="#338f89" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="180" fill="url(#mask-bg)" />
+  <circle cx="256" cy="176" r="88" fill="rgba(255,255,255,0.82)" />
+  <path
+    d="M172 370c24-73 57-110 84-110 27 0 60 37 84 110"
+    fill="none"
+    stroke="url(#mask-accent)"
+    stroke-linecap="round"
+    stroke-width="38"
+  />
+  <path
+    d="M208 140c14-18 30-27 48-27 18 0 35 9 48 27"
+    fill="none"
+    stroke="#274041"
+    stroke-linecap="round"
+    stroke-width="18"
+  />
+  <circle cx="224" cy="174" r="10" fill="#274041" />
+  <circle cx="288" cy="174" r="10" fill="#274041" />
+  <path
+    d="M228 218c15 11 41 11 56 0"
+    fill="none"
+    stroke="#274041"
+    stroke-linecap="round"
+    stroke-width="12"
+  />
+</svg>

@@ -1,4 +1,4 @@
-﻿import { CheckCircle2, ChevronRight, Sparkles } from "lucide-react";
+import { CheckCircle2, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
@@ -12,16 +12,17 @@ export function PlanPage() {
   }
 
   const todayKey = toDateKey(new Date());
+  const highlightedTips = data.supportTips.slice(0, 2);
 
   return (
-    <div className="page-enter space-y-6">
+    <div className="page-enter space-y-5">
       <section className="surface-strong px-5 py-6">
         <div className="eyebrow">Piano settimanale</div>
         <h1 className="mt-3 font-serif text-[2rem] leading-tight text-ink">
           Settimana {data.activePlan.currentWeek} di {data.activePlan.totalWeeks}
         </h1>
         <p className="mt-4 text-sm leading-7 text-muted">
-          {data.activePlan.motivationalNote}
+          {data.activePlan.planExplanation}
         </p>
 
         <div className="mt-5 flex flex-wrap gap-2">
@@ -31,42 +32,64 @@ export function PlanPage() {
           <span className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-muted">
             {data.activePlan.weeklyGoal}
           </span>
-          {data.activePlan.planOverview ? (
-            <span className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-muted">
-              {data.activePlan.planOverview.intensity}
-            </span>
-          ) : null}
+          <span className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-muted">
+            {data.activePlan.sessionDifficulty}
+          </span>
         </div>
       </section>
 
       <section className="surface px-5 py-5">
         <SectionHeading
-          eyebrow="Fase attuale"
+          eyebrow="Lettura rapida"
           title={data.activePlan.phaseFocus}
           description={data.activePlan.progressionReason}
         />
 
-        {data.activePlan.adjustments.length > 0 ? (
-          <div className="mt-4 rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
+        <div className="mt-4 grid gap-3">
+          <div className="rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
             <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-              Adattamenti in corso
+              Obiettivo di questa fase
+            </div>
+            <p className="mt-2 text-sm leading-6 text-ink">{data.activePlan.phaseGoal}</p>
+          </div>
+
+          <div className="rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+              Cosa ci aspettiamo in modo realistico
             </div>
             <ul className="mt-3 space-y-2 text-sm leading-6 text-muted">
-              {data.activePlan.adjustments.map((item) => (
+              {data.activePlan.realisticExpectedOutcomes.slice(0, 3).map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
           </div>
-        ) : null}
 
-        <div className="mt-4 rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-            Difficoltà attuale
+          <div className="grid grid-cols-2 gap-3">
+            <Link
+              to="/plan/story"
+              className="rounded-[22px] border border-line bg-white/78 px-4 py-4"
+            >
+              <div className="text-sm font-semibold text-ink">Perché questo piano</div>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                Rileggi la logica del percorso con calma.
+              </p>
+            </Link>
+            <Link
+              to={data.userAccess?.status === "premium" ? "/plan/update" : "/premium"}
+              className="rounded-[22px] border border-line bg-white/78 px-4 py-4"
+            >
+              <div className="text-sm font-semibold text-ink">
+                {data.userAccess?.status === "premium"
+                  ? "Aggiorna il percorso"
+                  : "Continuità Premium"}
+              </div>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                {data.userAccess?.status === "premium"
+                  ? "Usa feedback e progressi per rifinirlo."
+                  : "La parte premium è l’adattamento nel tempo."}
+              </p>
+            </Link>
           </div>
-          <p className="mt-2 text-sm leading-6 text-ink">{data.activePlan.sessionDifficulty}</p>
-          <p className="mt-3 text-sm leading-6 text-muted">
-            {data.activePlan.adherenceStrategy}
-          </p>
         </div>
       </section>
 
@@ -99,20 +122,14 @@ export function PlanPage() {
                   {day.focus}
                 </span>
                 <span className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-muted">
-                  {day.sessionKind === "recovery" ? "Recupero guidato" : "Workout"}
+                  {day.workout.steps.length} esercizi
                 </span>
-                {day.workout.steps[0] ? (
-                  <span className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-muted">
-                    {day.workout.steps[0].sets} serie · {day.workout.steps[0].repsLabel}
-                  </span>
-                ) : null}
               </div>
 
-              {day.workout.steps.length > 0 ? (
+              {day.workout.steps[0] ? (
                 <div className="mt-4 rounded-[18px] bg-[rgba(248,252,251,0.9)] px-4 py-3 text-sm leading-6 text-muted">
-                  <span className="font-semibold text-ink">Primo blocco:</span>{" "}
-                  {day.workout.steps[0].title}. {day.workout.steps[0].sets} serie,{" "}
-                  {day.workout.steps[0].repsLabel}, recupero {day.workout.steps[0].restSeconds}s.
+                  <span className="font-semibold text-ink">Si parte con:</span>{" "}
+                  {day.workout.steps[0].title}. {day.workout.steps[0].doseLabel}.
                 </div>
               ) : null}
 
@@ -131,66 +148,14 @@ export function PlanPage() {
         })}
       </section>
 
-      <section className="surface px-5 py-5">
-        <div className="flex items-center gap-3">
-          <div className="rounded-full bg-accent-soft p-3 text-accent-deep">
-            <Sparkles size={18} />
-          </div>
-          <div>
-            <div className="text-base font-semibold text-ink">Perché questo piano</div>
-            <p className="mt-1 text-sm leading-6 text-muted">
-              {data.activePlan.progressionReason}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="surface px-5 py-5">
-        <SectionHeading
-          eyebrow={data.userAccess?.status === "premium" ? "Continuità Premium" : "Aggiornamento del percorso"}
-          title={
-            data.userAccess?.status === "premium"
-              ? "Il piano può continuare a evolversi"
-              : "Il primo piano è incluso. Gli adattamenti nel tempo sono Premium."
-          }
-          description={
-            data.userAccess?.status === "premium"
-              ? "Usiamo progressi, feedback e rivalutazioni per correggere ritmo, focus e progressione."
-              : "Il valore Premium non è creare un altro piano da zero, ma farlo cambiare quando cambia la tua situazione."
-          }
-        />
-        <div className="mt-5">
-          <Link to={data.userAccess?.status === "premium" ? "/plan/update" : "/premium"}>
-            <div className="rounded-[22px] border border-line bg-white/78 px-4 py-4 text-sm font-semibold text-accent-deep">
-              {data.userAccess?.status === "premium"
-                ? "Apri Aggiorna il mio percorso"
-                : "Scopri cosa continua con Premium"}
-            </div>
-          </Link>
-        </div>
-      </section>
-
-      <section className="surface px-5 py-5">
-        <SectionHeading
-          eyebrow="Risultati realistici"
-          title="Cosa ci aspettiamo da questa fase"
-          description="Niente promesse lampo: solo risultati coerenti con costanza, energia e situazione reale."
-        />
-        <ul className="mt-4 space-y-2 text-sm leading-6 text-muted">
-          {data.activePlan.realisticExpectedOutcomes.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </section>
-
-      {data.supportTips.length > 0 ? (
+      {highlightedTips.length > 0 ? (
         <section className="surface px-5 py-5">
           <SectionHeading
-            eyebrow="Indicazioni di supporto"
-            title="Piccoli accorgimenti che aiutano il piano a lavorare meglio"
+            eyebrow="Piccoli supporti"
+            title="Due cose semplici che aiutano questa fase"
           />
           <div className="mt-4 space-y-3">
-            {data.supportTips.slice(0, 4).map((tip) => (
+            {highlightedTips.map((tip) => (
               <div
                 key={tip.id}
                 className="rounded-[22px] border border-line bg-white/78 px-4 py-4"
@@ -205,8 +170,3 @@ export function PlanPage() {
     </div>
   );
 }
-
-
-
-
-
