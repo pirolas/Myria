@@ -67,8 +67,9 @@ export function ReassessmentPage() {
   };
 
   const handleSubmit = async () => {
-    await submitReassessment(form);
-    navigate("/plan", { replace: true });
+    const request = submitReassessment(form);
+    navigate("/plan/update", { replace: true });
+    await request.catch(() => undefined);
   };
 
   return (

@@ -22,6 +22,7 @@ interface PlannerRequestBody {
 
 type PlannerRequestKind = "initial_plan" | "plan_update" | "reassessment";
 type PlannerSource = "ai" | "fallback" | "cached";
+type PlannerRevisionStatus = "updated" | "unchanged" | "failed";
 
 interface PlannerExerciseOutput {
   name: string;
@@ -106,6 +107,12 @@ interface PlannerResult {
   plan: PlannerOutput;
   source: PlannerSource;
   usage: PlannerUsage;
+}
+
+interface PlannerRevisionResult {
+  revision_status: PlannerRevisionStatus;
+  plan_updated: boolean;
+  changes_summary: string[];
 }
 
 const corsHeaders = {
@@ -388,6 +395,11 @@ serve(async (request) => {
       return jsonResponse({ error: "Onboarding essenziale mancante." }, 400);
     }
 
+    const access = accessRes.data;
+    const currentPlanPayload = currentPlanRes.data
+      ? await findLatestPlanPayload(adminClient, user.id, currentPlanRes.data.id)
+      : null;
+
     const plannerInput = {
       onboarding: onboardingRes.data,
       deepProfile: deepProfileRes.data,
@@ -398,7 +410,6 @@ serve(async (request) => {
       trigger
     };
 
-    const access = accessRes.data;
     const isPremium =
       access?.status === "premium" &&
       (!access.premium_ends_at || new Date(access.premium_ends_at).getTime() > Date.now());
@@ -432,7 +443,10 @@ serve(async (request) => {
       return jsonResponse({
         source: "cached",
         persisted_plan_id: reusablePlan.planId,
-        plan: reusablePlan.plan
+        plan: reusablePlan.plan,
+        revision_status: trigger === "onboarding_completed" ? "updated" : "unchanged",
+        plan_updated: trigger === "onboarding_completed",
+        changes_summary: []
       });
     }
 
@@ -456,6 +470,43 @@ serve(async (request) => {
     const aiResult = await tryOpenAIPlan(plannerInput, requestKind, requestHash);
     const plan = aiResult?.plan ?? buildFallbackPlan(plannerInput);
     const source = aiResult?.source ?? "fallback";
+    const revisionResult =
+      trigger === "onboarding_completed" || !currentPlanPayload
+        ? {
+            revision_status: "updated" as const,
+            plan_updated: true,
+            changes_summary: [
+              "Abbiamo costruito la tua prima struttura settimanale in base ai dati che ci hai lasciato."
+            ]
+          }
+        : comparePlanRevisions(currentPlanPayload, plan);
+
+    if (!revisionResult.plan_updated && currentPlanRes.data?.id && currentPlanPayload) {
+      await logAiRequest(adminClient, {
+        userId: user.id,
+        planId: currentPlanRes.data.id,
+        requestKind,
+        trigger,
+        source,
+        model: aiResult?.usage.model ?? resolvePreferredPlannerModel(),
+        requestHash,
+        inputTokens: aiResult?.usage.input_tokens ?? 0,
+        outputTokens: aiResult?.usage.output_tokens ?? 0,
+        totalTokens: aiResult?.usage.total_tokens ?? 0,
+        estimatedCostUsd: aiResult?.usage.estimated_cost_usd ?? 0,
+        latencyMs: aiResult?.usage.latency_ms ?? null,
+        success: true,
+        errorMessage: null
+      });
+
+      return jsonResponse({
+        source,
+        persisted_plan_id: currentPlanRes.data.id,
+        plan: currentPlanPayload,
+        ...revisionResult
+      });
+    }
+
     const persistedPlanId = await persistPlan(
       adminClient,
       user.id,
@@ -489,7 +540,8 @@ serve(async (request) => {
     return jsonResponse({
       source,
       persisted_plan_id: persistedPlanId,
-      plan
+      plan,
+      ...revisionResult
     });
   } catch (error) {
     console.error(error);
@@ -1040,6 +1092,141 @@ async function findReusablePlan(
   return {
     planId: recentLog.data.plan_id,
     plan: versionResult.data.payload as unknown as PlannerOutput
+  };
+}
+
+async function findLatestPlanPayload(
+  client: ReturnType<typeof createClient>,
+  userId: string,
+  planId: string
+) {
+  const versionResult = await client
+    .from("training_plan_versions")
+    .select("payload")
+    .eq("user_id", userId)
+    .eq("plan_id", planId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (versionResult.error || !versionResult.data?.payload) {
+    return null;
+  }
+
+  return versionResult.data.payload as unknown as PlannerOutput;
+}
+
+function comparePlanRevisions(
+  previousPlan: PlannerOutput,
+  nextPlan: PlannerOutput
+): PlannerRevisionResult {
+  const previousSnapshot = normalizePlanSnapshot(previousPlan);
+  const nextSnapshot = normalizePlanSnapshot(nextPlan);
+
+  if (JSON.stringify(previousSnapshot) === JSON.stringify(nextSnapshot)) {
+    return {
+      revision_status: "unchanged",
+      plan_updated: false,
+      changes_summary: []
+    };
+  }
+
+  const changesSummary: string[] = [];
+
+  if (
+    previousPlan.plan_overview.phase_name !== nextPlan.plan_overview.phase_name ||
+    previousPlan.phase_focus !== nextPlan.phase_focus ||
+    previousPlan.current_phase !== nextPlan.current_phase
+  ) {
+    changesSummary.push("Abbiamo ricalibrato la fase attuale e il focus principale del percorso.");
+  }
+
+  if (
+    previousPlan.plan_overview.weekly_sessions !== nextPlan.plan_overview.weekly_sessions ||
+    previousPlan.plan_overview.session_duration_minutes !==
+      nextPlan.plan_overview.session_duration_minutes
+  ) {
+    changesSummary.push("Abbiamo ritoccato il ritmo settimanale per farlo aderire meglio alla tua realtà.");
+  }
+
+  if (
+    previousPlan.plan_overview.intensity !== nextPlan.plan_overview.intensity ||
+    previousPlan.progression_strategy !== nextPlan.progression_strategy
+  ) {
+    changesSummary.push("Abbiamo rivisto il dosaggio iniziale del lavoro, così resta più sostenibile.");
+  }
+
+  if (havePlanDaysChanged(previousPlan.weekly_plan, nextPlan.weekly_plan)) {
+    changesSummary.push("Abbiamo aggiornato alcune giornate e gli esercizi chiave della settimana.");
+  }
+
+  return {
+    revision_status: "updated",
+    plan_updated: true,
+    changes_summary:
+      changesSummary.length > 0
+        ? changesSummary.slice(0, 3)
+        : ["Abbiamo ricalibrato alcuni dettagli del percorso in base alle nuove informazioni."]
+  };
+}
+
+function havePlanDaysChanged(previousDays: PlannerDayOutput[], nextDays: PlannerDayOutput[]) {
+  if (previousDays.length !== nextDays.length) {
+    return true;
+  }
+
+  return previousDays.some((day, index) => {
+    const nextDay = nextDays[index];
+
+    if (!nextDay) {
+      return true;
+    }
+
+    const previousExercises = day.exercises.map((exercise) => ({
+      exercise_id: exercise.exercise_id,
+      sets: exercise.sets,
+      reps: exercise.reps,
+      rest_seconds: exercise.rest_seconds
+    }));
+    const nextExercises = nextDay.exercises.map((exercise) => ({
+      exercise_id: exercise.exercise_id,
+      sets: exercise.sets,
+      reps: exercise.reps,
+      rest_seconds: exercise.rest_seconds
+    }));
+
+    return (
+      day.focus !== nextDay.focus ||
+      day.title !== nextDay.title ||
+      day.session_kind !== nextDay.session_kind ||
+      day.estimated_duration_minutes !== nextDay.estimated_duration_minutes ||
+      JSON.stringify(previousExercises) !== JSON.stringify(nextExercises)
+    );
+  });
+}
+
+function normalizePlanSnapshot(plan: PlannerOutput) {
+  return {
+    phase_name: humanizePlannerText(plan.plan_overview.phase_name),
+    current_phase: humanizePlannerText(plan.current_phase),
+    phase_focus: humanizePlannerText(plan.phase_focus),
+    weekly_sessions: plan.plan_overview.weekly_sessions,
+    session_duration_minutes: plan.plan_overview.session_duration_minutes,
+    intensity: humanizePlannerText(plan.plan_overview.intensity),
+    progression_strategy: humanizePlannerText(plan.progression_strategy),
+    weekly_plan: plan.weekly_plan.map((day) => ({
+      day_index: day.day_index,
+      title: humanizePlannerText(day.title),
+      focus: humanizePlannerText(day.focus),
+      session_kind: day.session_kind,
+      estimated_duration_minutes: day.estimated_duration_minutes,
+      exercises: day.exercises.map((exercise) => ({
+        exercise_id: exercise.exercise_id,
+        sets: exercise.sets,
+        reps: exercise.reps,
+        rest_seconds: exercise.rest_seconds
+      }))
+    }))
   };
 }
 

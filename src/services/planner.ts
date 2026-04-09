@@ -1,8 +1,12 @@
 import { getSupabaseEnv } from "@/lib/env";
 import { requireSupabaseClient } from "@/lib/supabase";
-import type { PlannerOutput, PlannerTrigger } from "@/types/domain";
+import type {
+  PlannerOutput,
+  PlannerRevisionResult,
+  PlannerTrigger
+} from "@/types/domain";
 
-interface PlannerInvocationResponse {
+export interface PlannerInvocationResponse extends PlannerRevisionResult {
   plan: PlannerOutput;
   persisted_plan_id: string;
   source: "ai" | "fallback" | "cached";
@@ -142,6 +146,18 @@ export async function generatePersonalizedPlan(
 
     if (!data?.plan) {
       throw new Error("Il planner non ha restituito un piano valido.");
+    }
+
+    if (!data.revision_status) {
+      data.revision_status = data.source === "cached" ? "unchanged" : "updated";
+    }
+
+    if (typeof data.plan_updated !== "boolean") {
+      data.plan_updated = data.revision_status === "updated";
+    }
+
+    if (!Array.isArray(data.changes_summary)) {
+      data.changes_summary = [];
     }
 
     return data;

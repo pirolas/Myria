@@ -25,6 +25,7 @@ import type {
   BetaOnboardingInput,
   DashboardModel,
   DeepProfileInput,
+  PlannerRevisionStatus,
   PlannerTrigger,
   ReassessmentInput,
   TrainingPlanDay,
@@ -33,10 +34,19 @@ import type {
 
 type MiryaStatus = "idle" | "loading" | "ready" | "saving" | "error";
 
+interface PlanRevisionFeedback {
+  status: "idle" | "loading" | "updated" | "unchanged" | "error";
+  trigger: PlannerTrigger | null;
+  changesSummary: string[];
+  message: string | null;
+  updatedAt: string | null;
+}
+
 interface MiryaAppContextValue {
   status: MiryaStatus;
   data: DashboardModel | null;
   error: string | null;
+  planRevision: PlanRevisionFeedback;
   progress: ReturnType<typeof buildProgressSnapshot>;
   refresh: () => Promise<void>;
   recoverInitialPlan: () => Promise<void>;
@@ -50,6 +60,7 @@ interface MiryaAppContextValue {
   regeneratePlan: (trigger?: PlannerTrigger) => Promise<void>;
   activatePremium: () => Promise<void>;
   setTimerSoundEnabled: (enabled: boolean) => Promise<void>;
+  clearPlanRevisionFeedback: () => void;
   startSession: (planDay: TrainingPlanDay) => Promise<string>;
   completeSession: (
     sessionId: string,
@@ -65,6 +76,36 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<MiryaStatus>("idle");
   const [data, setData] = useState<DashboardModel | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [planRevision, setPlanRevision] = useState<PlanRevisionFeedback>({
+    status: "idle",
+    trigger: null,
+    changesSummary: [],
+    message: null,
+    updatedAt: null
+  });
+
+  const buildPlanRevisionMessage = useCallback(
+    (revisionStatus: PlannerRevisionStatus, trigger: PlannerTrigger) => {
+      if (revisionStatus === "unchanged") {
+        if (trigger === "reassessment_completed") {
+          return "Abbiamo rivisto il percorso: per ora la direzione resta quella giusta.";
+        }
+
+        return "Abbiamo rivisto il piano: in questa fase non servivano correzioni importanti.";
+      }
+
+      if (trigger === "deep_profile_completed") {
+        return "Abbiamo aggiornato il piano usando i nuovi dettagli che ci hai lasciato.";
+      }
+
+      if (trigger === "reassessment_completed") {
+        return "Abbiamo aggiornato il piano in base a come sta andando davvero il percorso.";
+      }
+
+      return "Il tuo piano è stato aggiornato con una lettura più precisa del tuo momento.";
+    },
+    []
+  );
 
   const refresh = useCallback(async () => {
     if (!user) {
@@ -92,6 +133,32 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  const runPlanRevision = useCallback(
+    async (trigger: PlannerTrigger) => {
+      setPlanRevision({
+        status: "loading",
+        trigger,
+        changesSummary: [],
+        message: null,
+        updatedAt: null
+      });
+
+      const result = await generatePersonalizedPlan(trigger, session?.access_token ?? null);
+      await refresh();
+
+      setPlanRevision({
+        status: result.revision_status === "unchanged" ? "unchanged" : "updated",
+        trigger,
+        changesSummary: result.changes_summary,
+        message: buildPlanRevisionMessage(result.revision_status, trigger),
+        updatedAt: new Date().toISOString()
+      });
+
+      return result;
+    },
+    [buildPlanRevisionMessage, refresh, session]
+  );
+
   useEffect(() => {
     if (authStatus === "signed_in" && user) {
       void refresh();
@@ -110,6 +177,7 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
       status,
       data,
       error,
+      planRevision,
       progress: buildProgressSnapshot(data),
       async refresh() {
         await refresh();
@@ -127,10 +195,7 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
         setError(null);
 
         try {
-          await generatePersonalizedPlan(
-            "onboarding_completed",
-            session?.access_token ?? null
-          );
+          await generatePersonalizedPlan("onboarding_completed", session?.access_token ?? null);
           await refresh();
         } catch (plannerError) {
           setError(
@@ -152,10 +217,7 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
 
         try {
           await saveOnboarding(user.id, input);
-          await generatePersonalizedPlan(
-            "onboarding_completed",
-            session?.access_token ?? null
-          );
+          await generatePersonalizedPlan("onboarding_completed", session?.access_token ?? null);
           await refresh();
         } catch (submitError) {
           setError(
@@ -178,12 +240,10 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
         try {
           await saveDeepProfile(user.id, input);
           if (data?.userAccess?.canUsePremiumFeatures) {
-            await generatePersonalizedPlan(
-              "deep_profile_completed",
-              session?.access_token ?? null
-            );
+            await runPlanRevision("deep_profile_completed");
+          } else {
+            await refresh();
           }
-          await refresh();
         } catch (submitError) {
           setError(
             submitError instanceof Error
@@ -201,6 +261,13 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
 
         setStatus("saving");
         setError(null);
+        setPlanRevision({
+          status: "loading",
+          trigger: "deep_profile_completed",
+          changesSummary: [],
+          message: null,
+          updatedAt: null
+        });
 
         try {
           await Promise.all([
@@ -208,13 +275,21 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
             saveDeepProfile(user.id, deepInput)
           ]);
           if (data?.userAccess?.canUsePremiumFeatures) {
-            await generatePersonalizedPlan(
-              "deep_profile_completed",
-              session?.access_token ?? null
-            );
+            await runPlanRevision("deep_profile_completed");
+          } else {
+            await refresh();
           }
-          await refresh();
         } catch (submitError) {
+          setPlanRevision({
+            status: "error",
+            trigger: "deep_profile_completed",
+            changesSummary: [],
+            message:
+              submitError instanceof Error
+                ? submitError.message
+                : "Non siamo riusciti a rivedere il percorso.",
+            updatedAt: null
+          });
           setError(
             submitError instanceof Error
               ? submitError.message
@@ -234,15 +309,28 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
 
         setStatus("saving");
         setError(null);
+        setPlanRevision({
+          status: "loading",
+          trigger: "reassessment_completed",
+          changesSummary: [],
+          message: null,
+          updatedAt: null
+        });
 
         try {
           await saveReassessment(user.id, input);
-          await generatePersonalizedPlan(
-            "reassessment_completed",
-            session?.access_token ?? null
-          );
-          await refresh();
+          await runPlanRevision("reassessment_completed");
         } catch (submitError) {
+          setPlanRevision({
+            status: "error",
+            trigger: "reassessment_completed",
+            changesSummary: [],
+            message:
+              submitError instanceof Error
+                ? submitError.message
+                : "Non siamo riusciti a rivedere il percorso.",
+            updatedAt: null
+          });
           setError(
             submitError instanceof Error
               ? submitError.message
@@ -266,9 +354,18 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
         setError(null);
 
         try {
-          await generatePersonalizedPlan(trigger, session?.access_token ?? null);
-          await refresh();
+          await runPlanRevision(trigger);
         } catch (plannerError) {
+          setPlanRevision({
+            status: "error",
+            trigger,
+            changesSummary: [],
+            message:
+              plannerError instanceof Error
+                ? plannerError.message
+                : "Non siamo riusciti a rivedere il piano.",
+            updatedAt: null
+          });
           setError(
             plannerError instanceof Error
               ? plannerError.message
@@ -330,6 +427,15 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
           throw toggleError;
         }
       },
+      clearPlanRevisionFeedback() {
+        setPlanRevision({
+          status: "idle",
+          trigger: null,
+          changesSummary: [],
+          message: null,
+          updatedAt: null
+        });
+      },
       async startSession(planDay) {
         if (!user) {
           throw new Error("Devi accedere per iniziare la sessione.");
@@ -365,7 +471,7 @@ export function MiryaAppProvider({ children }: { children: ReactNode }) {
         }
       }
     }),
-    [data, error, refresh, session, status, user]
+    [buildPlanRevisionMessage, data, error, planRevision, refresh, runPlanRevision, session, status, user]
   );
 
   return (

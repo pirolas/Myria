@@ -166,6 +166,7 @@ export type PlannerTrigger =
   | "reassessment_completed";
 
 export type UserAccessStatus = "free_trial" | "premium" | "free_locked";
+export type PlannerRevisionStatus = "updated" | "unchanged" | "failed";
 
 export interface PreferenceOption<TValue extends string | number | boolean> {
   value: TValue;
@@ -508,6 +509,12 @@ export interface PlannerOutput {
   caution_flags: string[];
   adjustments: string[];
   reassessment: PlannerReassessment;
+}
+
+export interface PlannerRevisionResult {
+  revision_status: PlannerRevisionStatus;
+  plan_updated: boolean;
+  changes_summary: string[];
 }
 
 export interface ProfileRecord {

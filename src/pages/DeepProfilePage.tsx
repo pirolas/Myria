@@ -78,8 +78,9 @@ export function DeepProfilePage() {
     items.includes(value) ? items.filter((item) => item !== value) : [...items, value];
 
   const handleSubmit = async () => {
-    await saveProfileRefinement(onboardingForm, deepForm);
-    navigate("/plan/story", { replace: true });
+    const request = saveProfileRefinement(onboardingForm, deepForm);
+    navigate("/plan/update", { replace: true });
+    await request.catch(() => undefined);
   };
 
   return (
