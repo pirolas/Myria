@@ -181,7 +181,7 @@ export function getLatestFeelingLabel(sessions: WorkoutSessionRecord[]) {
 
 export function getTrialStatusCopy(access: UserAccessRecord | null) {
   if (!access) {
-    return "Il tuo accesso si sta preparando.";
+    return "Stiamo preparando il tuo accesso iniziale.";
   }
 
   if (access.status === "premium") {
@@ -189,10 +189,10 @@ export function getTrialStatusCopy(access: UserAccessRecord | null) {
   }
 
   if (access.status === "free_locked") {
-    return "Il mini-ciclo gratuito si è concluso: per continuare con un percorso che si aggiorna serve Premium.";
+    return "Il primo ciclo guidato si è concluso. Per continuare con un percorso che si aggiorna davvero, serve Premium.";
   }
 
-  return `Hai ancora ${access.trialRemainingSessions} sessioni oppure ${access.trialRemainingDays} giorni per provare il primo ciclo gratuito.`;
+  return `Hai ancora ${access.trialRemainingSessions} sessioni oppure ${access.trialRemainingDays} giorni per usare il primo ciclo guidato.`;
 }
 
 export function shouldShowPremiumGate(access: UserAccessRecord | null) {

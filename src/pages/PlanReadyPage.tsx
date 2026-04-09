@@ -16,15 +16,12 @@ export function PlanReadyPage() {
     <div className="page-enter space-y-6">
       <section className="surface-strong soft-gradient px-5 py-6">
         <div className="flex items-start justify-between gap-4">
-          <div className="max-w-[16rem]">
-            <div className="eyebrow">Il tuo piano è pronto</div>
+          <div className="max-w-[17rem]">
+            <div className="eyebrow">{planReadyCopy.eyebrow}</div>
             <h1 className="mt-3 font-serif text-[2rem] leading-tight text-ink">
-              Hai già una direzione chiara da seguire.
+              {planReadyCopy.title}
             </h1>
-            <p className="mt-3 text-sm leading-7 text-muted">
-              Mirya ha composto il tuo primo percorso personale. Adesso puoi leggerlo,
-              capire perché parte così e iniziare il mini-ciclo gratuito.
-            </p>
+            <p className="mt-4 text-sm leading-7 text-muted">{planReadyCopy.intro}</p>
           </div>
           <div className="rounded-[1.3rem] bg-white/82 p-3 text-accent-deep">
             <Sparkles size={18} />
@@ -33,7 +30,7 @@ export function PlanReadyPage() {
 
         <div className="mt-5 rounded-[22px] bg-white/82 px-4 py-4">
           <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-            Accesso gratuito iniziale
+            {planReadyCopy.accessLabel}
           </div>
           <p className="mt-2 text-sm leading-6 text-ink">
             {getTrialStatusCopy(data.userAccess)}
@@ -42,26 +39,24 @@ export function PlanReadyPage() {
       </section>
 
       <section className="surface px-5 py-5">
-        <div className="text-base font-semibold text-ink">Cosa puoi fare da subito</div>
-        <div className="mt-4 space-y-3">
-          {[
-            "Vedere il tuo primo piano personalizzato e la logica con cui è stato costruito.",
-            "Usare il timer guidato e completare il primo mini-ciclo.",
-            "Salvare sessioni, progressi base e feedback finali."
-          ].map((item) => (
-            <div
-              key={item}
-              className="rounded-[22px] border border-line bg-white/78 px-4 py-4 text-sm leading-6 text-muted"
-            >
-              {item}
+        <div className="text-base font-semibold text-ink">{planReadyCopy.stepsTitle}</div>
+        <div className="mt-4 divide-y divide-line overflow-hidden rounded-[24px] border border-line bg-white/78">
+          {planReadyCopy.steps.map((item, index) => (
+            <div key={item} className="flex items-start gap-4 px-4 py-4">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[rgba(215,239,236,0.82)] text-sm font-semibold text-accent-deep">
+                {index + 1}
+              </div>
+              <p className="pt-1 text-sm leading-6 text-muted">{item}</p>
             </div>
           ))}
         </div>
       </section>
 
       <section className="surface px-5 py-5">
-        <div className="text-base font-semibold text-ink">{planReadyCopy.sincerityTitle}</div>
-        <p className="mt-3 text-sm leading-7 text-muted">{planReadyCopy.sincerityBody}</p>
+        <div className="rounded-[24px] border border-[rgba(94,184,178,0.22)] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(242,250,248,0.92))] px-4 py-4">
+          <div className="text-base font-semibold text-ink">{planReadyCopy.sincerityTitle}</div>
+          <p className="mt-3 text-sm leading-7 text-muted">{planReadyCopy.sincerityBody}</p>
+        </div>
       </section>
 
       <section className="surface px-5 py-5">
@@ -72,12 +67,12 @@ export function PlanReadyPage() {
       <div className="flex gap-3">
         <Link to="/plan/story" className="flex-1">
           <Button variant="secondary" fullWidth>
-            Perché questo piano
+            Capisci il piano
           </Button>
         </Link>
         <Link to="/dashboard" className="flex-1">
           <Button fullWidth icon={<ArrowRight size={18} />} className="justify-between">
-            Vai al tuo oggi
+            Apri il tuo oggi
           </Button>
         </Link>
       </div>

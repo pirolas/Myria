@@ -25,13 +25,13 @@ const computedBodyGoalLabels: Record<ComputedBodyGoal, string> = {
   muscle_gain: "aumento della massa muscolare",
   toning: "tonificazione",
   recomposition: "ricomposizione corporea",
-  tone_rebuild_for_lean_body: "ricostruzione del tono in un corpo gia asciutto"
+  tone_rebuild_for_lean_body: "ricostruzione del tono in un corpo già asciutto"
 };
 
 const inlineTokenLabels: Record<string, string> = {
   glutei_gambe: "glutei e gambe",
-  pancia_core: "addome profondo e stabilita",
-  addome_core: "addome profondo e stabilita",
+  pancia_core: "addome profondo e stabilità",
+  addome_core: "addome profondo e stabilità",
   postura: "postura",
   tonicita_generale: "tonificazione generale",
   total_body: "tonificazione generale",
@@ -39,10 +39,10 @@ const inlineTokenLabels: Record<string, string> = {
   ripartenza_dolce: "ripartenza dolce",
   dimagrire: "dimagrire",
   massa_muscolare: "aumentare la massa muscolare",
-  tonicita_rassodare: "aumentare tonicita e rassodare",
+  tonicita_rassodare: "aumentare tonicità e rassodare",
   aumentare_peso_sano: "aumentare di peso in modo sano",
   ricomposizione_corporea: "ricomposizione corporea",
-  tone_rebuild_for_lean_body: "ricostruzione del tono in un corpo gia asciutto",
+  tone_rebuild_for_lean_body: "ricostruzione del tono in un corpo già asciutto",
   fat_loss: "riduzione graduale del peso",
   muscle_gain: "aumento della massa muscolare",
   toning: "tonificazione",
@@ -58,10 +58,10 @@ const inlineTokenLabels: Record<string, string> = {
   medio_alto: "medio-alto",
   abbastanza_buona: "abbastanza buona",
   alcuni_spazi: "alcuni spazi",
-  piu_tonificante: "piu tonificante",
-  piu_posturale: "piu posturale",
-  piu_dolce: "piu dolce",
-  piu_energizzante: "piu energizzante"
+  piu_tonificante: "più tonificante",
+  piu_posturale: "più posturale",
+  piu_dolce: "più dolce",
+  piu_energizzante: "più energizzante"
 };
 
 function escapeRegExp(value: string) {
@@ -179,6 +179,7 @@ export function humanizePlannerText(value: string | null | undefined) {
   });
 
   return next
+    .replace(/_/g, " ")
     .replace(/\s+/g, " ")
     .replace(/\b([a-zA-ZÀ-ÿ]+)\s*\/\s*([a-zA-ZÀ-ÿ]+)/g, "$1 e $2")
     .trim();
