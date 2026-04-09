@@ -51,8 +51,13 @@ export function ExerciseDetailPage() {
         </div>
 
         <div className="mt-5 rounded-[24px] border border-line bg-[rgba(255,255,255,0.72)] px-4 py-4">
-          <div className="text-sm font-semibold text-ink">Perché è utile</div>
-          <p className="mt-2 text-sm leading-6 text-muted">{exercise.benefit}</p>
+          <div className="text-sm font-semibold text-ink">A cosa serve</div>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            {guidance?.purpose ?? exercise.benefit}
+          </p>
+          {guidance?.practicalWhy ? (
+            <p className="mt-2 text-sm leading-6 text-ink">{guidance.practicalWhy}</p>
+          ) : null}
         </div>
 
         <div className="mt-5">
@@ -70,16 +75,19 @@ export function ExerciseDetailPage() {
       {guidance ? (
         <section className="grid gap-3">
           <div className="surface px-5 py-5">
-            <div className="text-sm font-semibold text-ink">Posizione di partenza</div>
+            <div className="text-sm font-semibold text-ink">Come partire</div>
             <p className="mt-2 text-sm leading-6 text-muted">
               {guidance.startingPosition}
             </p>
           </div>
 
           <div className="surface px-5 py-5">
-            <div className="text-sm font-semibold text-ink">Come muoverti</div>
+            <div className="text-sm font-semibold text-ink">Come si fa</div>
             <p className="mt-2 text-sm leading-6 text-muted">
               {guidance.movementCue}
+            </p>
+            <p className="mt-3 text-sm leading-6 text-muted">
+              <span className="font-semibold text-ink">Ritorno:</span> {guidance.returnCue}
             </p>
           </div>
 
@@ -96,10 +104,10 @@ export function ExerciseDetailPage() {
       <section className="surface px-5 py-5">
         <SectionHeading
           title="Passo dopo passo"
-          description="Segui l'ordine con calma: prima assetto, poi gesto, poi ritorno controllato."
+          description="Prima trovi la posizione, poi esegui il gesto e infine torni con controllo."
         />
         <ol className="mt-4 space-y-3">
-          {exercise.steps.map((step, index) => (
+          {(guidance?.steps ?? exercise.steps).map((step, index) => (
             <li key={step} className="flex gap-3">
               <div className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-accent-deep">
                 {index + 1}
@@ -113,10 +121,10 @@ export function ExerciseDetailPage() {
       <section className="surface px-5 py-5">
         <div className="flex items-center gap-3">
           <CircleAlert size={18} className="text-accent-deep" />
-          <h2 className="text-base font-semibold text-ink">Cose da evitare</h2>
+          <h2 className="text-base font-semibold text-ink">Attenzione</h2>
         </div>
         <ul className="mt-4 space-y-2 text-sm leading-6 text-muted">
-          {exercise.commonMistakes.map((mistake) => (
+          {(guidance?.attention ?? exercise.commonMistakes).map((mistake) => (
             <li key={mistake}>{mistake}</li>
           ))}
         </ul>
@@ -124,14 +132,14 @@ export function ExerciseDetailPage() {
 
       <section className="grid gap-3">
         <div className="surface px-5 py-5">
-          <div className="text-sm font-semibold text-ink">Se vuoi farlo più facilmente</div>
+          <div className="text-sm font-semibold text-ink">Versione più facile</div>
           <p className="mt-2 text-sm leading-6 text-muted">
-            {exercise.easierVariant}
+            {guidance?.easierOption ?? exercise.easierVariant}
           </p>
         </div>
 
         <div className="surface px-5 py-5">
-          <div className="text-sm font-semibold text-ink">Se vuoi intensificarlo un po</div>
+          <div className="text-sm font-semibold text-ink">Se vuoi intensificarlo un po'</div>
           <p className="mt-2 text-sm leading-6 text-muted">
             {exercise.intenseVariant}
           </p>

@@ -1,549 +1,628 @@
-type Point = { x: number; y: number };
+import type { ReactNode } from "react";
+import { exerciseGuidance } from "@/data/exerciseGuidance";
 
-interface Pose {
-  head: Point;
-  neck: Point;
-  shoulderLeft: Point;
-  shoulderRight: Point;
-  elbowLeft: Point;
-  elbowRight: Point;
-  handLeft: Point;
-  handRight: Point;
-  hipLeft: Point;
-  hipRight: Point;
-  kneeLeft: Point;
-  kneeRight: Point;
-  footLeft: Point;
-  footRight: Point;
+type PoseId =
+  | "standing"
+  | "squat"
+  | "wall"
+  | "wallSit"
+  | "standingSideLift"
+  | "lunge"
+  | "calfRaise"
+  | "supine"
+  | "bridge"
+  | "heelSlide"
+  | "deadBug"
+  | "bridgeMarch"
+  | "sideLying"
+  | "sideLift"
+  | "quadruped"
+  | "birdDog"
+  | "breathing"
+  | "pelvicTilt"
+  | "wallArms"
+  | "wallChestOpen";
+
+interface VisualConfig {
+  startPose: PoseId;
+  endPose: PoseId;
+  focus: string;
 }
 
-interface FigureConfig {
-  start: Pose;
-  end: Pose;
-  guidePath: string;
-  scene: "floor" | "wall";
-  movementLabel: string;
+const visualConfigs: Record<string, VisualConfig> = {
+  "ponte-glutei": {
+    startPose: "supine",
+    endPose: "bridge",
+    focus: "Glutei e bacino"
+  },
+  "squat-alla-sedia": {
+    startPose: "standing",
+    endPose: "squat",
+    focus: "Gambe e glutei"
+  },
+  "wall-sit": {
+    startPose: "wall",
+    endPose: "wallSit",
+    focus: "Cosce e glutei"
+  },
+  "slanci-laterali-in-piedi": {
+    startPose: "standing",
+    endPose: "standingSideLift",
+    focus: "Lato del gluteo"
+  },
+  "affondo-assistito-indietro": {
+    startPose: "standing",
+    endPose: "lunge",
+    focus: "Gamba davanti e glutei"
+  },
+  "bird-dog": {
+    startPose: "quadruped",
+    endPose: "birdDog",
+    focus: "Core, schiena e glutei"
+  },
+  "heel-slides": {
+    startPose: "supine",
+    endPose: "heelSlide",
+    focus: "Addome profondo"
+  },
+  "dead-bug-semplificato": {
+    startPose: "supine",
+    endPose: "deadBug",
+    focus: "Core e stabilità"
+  },
+  "ponte-con-marcia": {
+    startPose: "bridge",
+    endPose: "bridgeMarch",
+    focus: "Bacino stabile"
+  },
+  "sollevamenti-polpacci": {
+    startPose: "standing",
+    endPose: "calfRaise",
+    focus: "Polpacci e caviglie"
+  },
+  "side-leg-lifts": {
+    startPose: "sideLying",
+    endPose: "sideLift",
+    focus: "Lato del gluteo"
+  },
+  "respirazione-addominale-profonda": {
+    startPose: "supine",
+    endPose: "breathing",
+    focus: "Respiro e centro del corpo"
+  },
+  "mobilita-bacino-colonna": {
+    startPose: "supine",
+    endPose: "pelvicTilt",
+    focus: "Bacino e zona lombare"
+  },
+  "scapole-al-muro": {
+    startPose: "wall",
+    endPose: "wallArms",
+    focus: "Schiena alta e postura"
+  },
+  "allungamento-petto-parete": {
+    startPose: "wall",
+    endPose: "wallChestOpen",
+    focus: "Petto e spalle"
+  }
+};
+
+interface ExerciseFigureProps {
+  exerciseId: string;
 }
 
-function pt(x: number, y: number): Point {
-  return { x, y };
-}
+export function ExerciseFigure({ exerciseId }: ExerciseFigureProps) {
+  const config = visualConfigs[exerciseId];
+  const guidance = exerciseGuidance[exerciseId];
 
-function midpoint(a: Point, b: Point): Point {
-  return pt((a.x + b.x) / 2, (a.y + b.y) / 2);
-}
-
-function drawPose(pose: Pose, variant: "start" | "end") {
-  const shoulderCenter = midpoint(pose.shoulderLeft, pose.shoulderRight);
-  const hipCenter = midpoint(pose.hipLeft, pose.hipRight);
-  const waist = midpoint(shoulderCenter, hipCenter);
-  const stroke =
-    variant === "end" ? "rgba(42, 122, 118, 0.96)" : "rgba(155, 202, 198, 0.78)";
-  const hairStroke =
-    variant === "end" ? "rgba(90, 170, 164, 0.82)" : "rgba(193, 229, 225, 0.7)";
-  const headFill =
-    variant === "end" ? "rgba(255, 250, 246, 0.98)" : "rgba(255, 255, 255, 0.66)";
+  if (!config) {
+    return null;
+  }
 
   return (
-    <g className={variant === "end" ? "figure-active" : "figure-rest"}>
-      <path
-        d={`M ${pose.head.x + 9} ${pose.head.y - 6} q 10 6 7 17`}
-        fill="none"
-        stroke={hairStroke}
-        strokeLinecap="round"
-        strokeWidth={4}
-      />
-      <circle
-        cx={pose.head.x}
-        cy={pose.head.y}
-        r={11}
-        fill={headFill}
-        stroke={stroke}
-        strokeWidth={4}
-      />
-      <line
-        x1={pose.shoulderLeft.x}
-        y1={pose.shoulderLeft.y}
-        x2={pose.shoulderRight.x}
-        y2={pose.shoulderRight.y}
-        stroke={stroke}
-        strokeLinecap="round"
-        strokeWidth={5.5}
-      />
-      <path
-        d={`M ${shoulderCenter.x} ${shoulderCenter.y} Q ${waist.x - 2} ${waist.y} ${hipCenter.x} ${hipCenter.y}`}
-        fill="none"
-        stroke={stroke}
-        strokeLinecap="round"
-        strokeWidth={5.5}
-      />
-      <line
-        x1={pose.hipLeft.x}
-        y1={pose.hipLeft.y}
-        x2={pose.hipRight.x}
-        y2={pose.hipRight.y}
-        stroke={stroke}
-        strokeLinecap="round"
-        strokeWidth={5.5}
-      />
-      {[
-        [pose.shoulderLeft, pose.elbowLeft],
-        [pose.elbowLeft, pose.handLeft],
-        [pose.shoulderRight, pose.elbowRight],
-        [pose.elbowRight, pose.handRight],
-        [pose.hipLeft, pose.kneeLeft],
-        [pose.kneeLeft, pose.footLeft],
-        [pose.hipRight, pose.kneeRight],
-        [pose.kneeRight, pose.footRight]
-      ].map(([from, to], index) => (
-        <line
-          key={index}
-          x1={from.x}
-          y1={from.y}
-          x2={to.x}
-          y2={to.y}
-          stroke={stroke}
-          strokeLinecap="round"
-          strokeWidth={5.5}
+    <div className="rounded-[24px] border border-line bg-[rgba(255,255,255,0.84)] px-4 py-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+            Visual rapido
+          </div>
+          <div className="mt-1 text-sm font-semibold text-ink">{config.focus}</div>
+        </div>
+        <div className="rounded-full bg-accent-soft px-3 py-2 text-xs font-semibold text-accent-deep">
+          Partenza e movimento
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <FigurePanel
+          phase="Partenza"
+          caption={guidance?.visual.startLabel ?? "Posizione iniziale"}
+          pose={config.startPose}
         />
-      ))}
+        <FigurePanel
+          phase="Movimento"
+          caption={guidance?.visual.moveLabel ?? "Gesto principale"}
+          pose={config.endPose}
+        />
+      </div>
+    </div>
+  );
+}
+
+function FigurePanel({
+  phase,
+  caption,
+  pose
+}: {
+  phase: string;
+  caption: string;
+  pose: PoseId;
+}) {
+  return (
+    <div className="rounded-[20px] bg-[rgba(244,249,248,0.95)] px-3 py-3">
+      <div className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted">
+        {phase}
+      </div>
+      <div className="mt-3 overflow-hidden rounded-[18px] bg-white">
+        <svg viewBox="0 0 140 156" className="h-auto w-full">
+          <rect x="0" y="0" width="140" height="156" fill="rgba(240,249,248,1)" />
+          {renderPose(pose)}
+        </svg>
+      </div>
+      <p className="mt-3 text-xs leading-5 text-muted">{caption}</p>
+    </div>
+  );
+}
+
+function renderPose(pose: PoseId) {
+  switch (pose) {
+    case "standing":
+      return <StandingPose />;
+    case "squat":
+      return <SquatPose />;
+    case "wall":
+      return <WallPose />;
+    case "wallSit":
+      return <WallSitPose />;
+    case "standingSideLift":
+      return <StandingSideLiftPose />;
+    case "lunge":
+      return <LungePose />;
+    case "calfRaise":
+      return <CalfRaisePose />;
+    case "supine":
+      return <SupinePose />;
+    case "bridge":
+      return <BridgePose />;
+    case "heelSlide":
+      return <HeelSlidePose />;
+    case "deadBug":
+      return <DeadBugPose />;
+    case "bridgeMarch":
+      return <BridgeMarchPose />;
+    case "sideLying":
+      return <SideLyingPose />;
+    case "sideLift":
+      return <SideLiftPose />;
+    case "quadruped":
+      return <QuadrupedPose />;
+    case "birdDog":
+      return <BirdDogPose />;
+    case "breathing":
+      return <BreathingPose />;
+    case "pelvicTilt":
+      return <PelvicTiltPose />;
+    case "wallArms":
+      return <WallArmsPose />;
+    case "wallChestOpen":
+      return <WallChestOpenPose />;
+    default:
+      return null;
+  }
+}
+
+function FigureStroke({ children }: { children: ReactNode }) {
+  return (
+    <g
+      fill="none"
+      stroke="rgba(39, 63, 69, 0.92)"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={4.5}
+    >
+      {children}
     </g>
   );
 }
 
-const standingNeutral: Pose = {
-  head: pt(110, 38),
-  neck: pt(110, 54),
-  shoulderLeft: pt(94, 68),
-  shoulderRight: pt(126, 68),
-  elbowLeft: pt(95, 98),
-  elbowRight: pt(125, 98),
-  handLeft: pt(96, 126),
-  handRight: pt(124, 126),
-  hipLeft: pt(100, 108),
-  hipRight: pt(120, 108),
-  kneeLeft: pt(102, 144),
-  kneeRight: pt(118, 144),
-  footLeft: pt(100, 176),
-  footRight: pt(120, 176)
-};
+function Head({ x, y }: { x: number; y: number }) {
+  return <circle cx={x} cy={y} r="10" fill="rgba(255,255,255,0.92)" stroke="rgba(39, 63, 69, 0.92)" strokeWidth="4" />;
+}
 
-const wallNeutral: Pose = {
-  ...standingNeutral,
-  head: pt(96, 38),
-  neck: pt(96, 54),
-  shoulderLeft: pt(82, 68),
-  shoulderRight: pt(110, 68),
-  elbowLeft: pt(83, 98),
-  elbowRight: pt(109, 98),
-  handLeft: pt(84, 126),
-  handRight: pt(108, 126),
-  hipLeft: pt(88, 108),
-  hipRight: pt(104, 108),
-  kneeLeft: pt(90, 144),
-  kneeRight: pt(102, 144),
-  footLeft: pt(88, 176),
-  footRight: pt(106, 176)
-};
+function FloorLine() {
+  return <line x1="16" y1="134" x2="124" y2="134" stroke="rgba(197,219,216,0.95)" strokeWidth="4" strokeLinecap="round" />;
+}
 
-const bridgeStart: Pose = {
-  head: pt(44, 138),
-  neck: pt(60, 136),
-  shoulderLeft: pt(66, 126),
-  shoulderRight: pt(66, 144),
-  elbowLeft: pt(52, 152),
-  elbowRight: pt(52, 122),
-  handLeft: pt(38, 162),
-  handRight: pt(38, 112),
-  hipLeft: pt(116, 126),
-  hipRight: pt(116, 144),
-  kneeLeft: pt(148, 132),
-  kneeRight: pt(148, 150),
-  footLeft: pt(178, 150),
-  footRight: pt(178, 174)
-};
+function WallLine() {
+  return <line x1="34" y1="24" x2="34" y2="134" stroke="rgba(197,219,216,0.95)" strokeWidth="5" strokeLinecap="round" />;
+}
 
-const bridgeEnd: Pose = {
-  ...bridgeStart,
-  hipLeft: pt(114, 96),
-  hipRight: pt(114, 114),
-  kneeLeft: pt(148, 122),
-  kneeRight: pt(148, 140)
-};
-
-const heelSlideEnd: Pose = {
-  ...bridgeStart,
-  kneeLeft: pt(154, 128),
-  footLeft: pt(188, 126)
-};
-
-const deadBugStart: Pose = {
-  head: pt(40, 116),
-  neck: pt(56, 116),
-  shoulderLeft: pt(62, 104),
-  shoulderRight: pt(62, 128),
-  elbowLeft: pt(76, 100),
-  elbowRight: pt(76, 132),
-  handLeft: pt(92, 96),
-  handRight: pt(92, 136),
-  hipLeft: pt(114, 108),
-  hipRight: pt(114, 128),
-  kneeLeft: pt(140, 92),
-  kneeRight: pt(140, 116),
-  footLeft: pt(168, 92),
-  footRight: pt(168, 116)
-};
-
-const deadBugEnd: Pose = {
-  ...deadBugStart,
-  elbowLeft: pt(92, 96),
-  handLeft: pt(120, 92),
-  kneeLeft: pt(144, 110),
-  footLeft: pt(176, 134)
-};
-
-const bridgeMarchEnd: Pose = {
-  ...bridgeEnd,
-  kneeLeft: pt(142, 86),
-  footLeft: pt(164, 84)
-};
-
-const sideLegStart: Pose = {
-  head: pt(44, 122),
-  neck: pt(58, 122),
-  shoulderLeft: pt(64, 112),
-  shoulderRight: pt(64, 128),
-  elbowLeft: pt(50, 136),
-  elbowRight: pt(76, 104),
-  handLeft: pt(40, 150),
-  handRight: pt(88, 98),
-  hipLeft: pt(110, 116),
-  hipRight: pt(110, 128),
-  kneeLeft: pt(146, 120),
-  kneeRight: pt(146, 136),
-  footLeft: pt(182, 122),
-  footRight: pt(182, 146)
-};
-
-const sideLegEnd: Pose = {
-  ...sideLegStart,
-  kneeLeft: pt(146, 94),
-  footLeft: pt(182, 82)
-};
-
-const quadrupedStart: Pose = {
-  head: pt(74, 86),
-  neck: pt(88, 92),
-  shoulderLeft: pt(90, 98),
-  shoulderRight: pt(106, 98),
-  elbowLeft: pt(78, 116),
-  elbowRight: pt(110, 116),
-  handLeft: pt(64, 134),
-  handRight: pt(124, 134),
-  hipLeft: pt(124, 108),
-  hipRight: pt(138, 108),
-  kneeLeft: pt(144, 134),
-  kneeRight: pt(160, 150),
-  footLeft: pt(148, 160),
-  footRight: pt(166, 176)
-};
-
-const quadrupedEnd: Pose = {
-  ...quadrupedStart,
-  elbowRight: pt(128, 106),
-  handRight: pt(150, 100),
-  kneeLeft: pt(156, 108),
-  footLeft: pt(182, 96)
-};
-
-const breathingStart: Pose = {
-  ...bridgeStart,
-  elbowLeft: pt(74, 132),
-  elbowRight: pt(74, 136),
-  handLeft: pt(90, 122),
-  handRight: pt(92, 144)
-};
-
-const breathingEnd: Pose = {
-  ...breathingStart,
-  elbowLeft: pt(78, 126),
-  elbowRight: pt(78, 142),
-  handLeft: pt(98, 118),
-  handRight: pt(100, 148)
-};
-
-const pelvicTiltEnd: Pose = {
-  ...bridgeStart,
-  hipLeft: pt(110, 132),
-  hipRight: pt(110, 148),
-  kneeLeft: pt(144, 128),
-  kneeRight: pt(144, 150)
-};
-
-const squatEnd: Pose = {
-  ...standingNeutral,
-  head: pt(110, 48),
-  neck: pt(110, 64),
-  shoulderLeft: pt(94, 78),
-  shoulderRight: pt(126, 78),
-  elbowLeft: pt(90, 106),
-  elbowRight: pt(130, 106),
-  handLeft: pt(86, 130),
-  handRight: pt(134, 130),
-  hipLeft: pt(98, 114),
-  hipRight: pt(122, 114),
-  kneeLeft: pt(94, 146),
-  kneeRight: pt(126, 146),
-  footLeft: pt(96, 176),
-  footRight: pt(124, 176)
-};
-
-const sideLiftEnd: Pose = {
-  ...standingNeutral,
-  kneeRight: pt(140, 130),
-  footRight: pt(162, 118)
-};
-
-const lungeEnd: Pose = {
-  ...standingNeutral,
-  head: pt(108, 42),
-  neck: pt(108, 58),
-  shoulderLeft: pt(92, 72),
-  shoulderRight: pt(124, 72),
-  elbowLeft: pt(82, 96),
-  elbowRight: pt(128, 98),
-  handLeft: pt(74, 120),
-  handRight: pt(130, 126),
-  hipLeft: pt(98, 110),
-  hipRight: pt(118, 110),
-  kneeLeft: pt(100, 146),
-  kneeRight: pt(142, 146),
-  footLeft: pt(104, 176),
-  footRight: pt(160, 176)
-};
-
-const calfRaiseEnd: Pose = {
-  ...standingNeutral,
-  head: pt(110, 32),
-  neck: pt(110, 48),
-  shoulderLeft: pt(94, 62),
-  shoulderRight: pt(126, 62),
-  elbowLeft: pt(95, 92),
-  elbowRight: pt(125, 92),
-  handLeft: pt(96, 120),
-  handRight: pt(124, 120),
-  hipLeft: pt(100, 102),
-  hipRight: pt(120, 102),
-  kneeLeft: pt(102, 138),
-  kneeRight: pt(118, 138),
-  footLeft: pt(104, 172),
-  footRight: pt(124, 172)
-};
-
-const wallSitEnd: Pose = {
-  ...wallNeutral,
-  head: pt(96, 50),
-  neck: pt(96, 64),
-  shoulderLeft: pt(82, 76),
-  shoulderRight: pt(110, 76),
-  elbowLeft: pt(78, 106),
-  elbowRight: pt(108, 106),
-  handLeft: pt(74, 132),
-  handRight: pt(108, 132),
-  hipLeft: pt(88, 114),
-  hipRight: pt(104, 114),
-  kneeLeft: pt(116, 146),
-  kneeRight: pt(132, 146),
-  footLeft: pt(116, 176),
-  footRight: pt(132, 176)
-};
-
-const scapoleWallEnd: Pose = {
-  ...wallNeutral,
-  elbowLeft: pt(78, 70),
-  elbowRight: pt(114, 70),
-  handLeft: pt(76, 42),
-  handRight: pt(116, 42)
-};
-
-const chestOpenerEnd: Pose = {
-  ...wallNeutral,
-  shoulderRight: pt(110, 70),
-  elbowRight: pt(110, 94),
-  handRight: pt(110, 118),
-  shoulderLeft: pt(88, 72),
-  elbowLeft: pt(72, 98),
-  handLeft: pt(60, 122),
-  hipLeft: pt(92, 110),
-  hipRight: pt(106, 114),
-  kneeLeft: pt(96, 146),
-  kneeRight: pt(110, 148),
-  footLeft: pt(96, 176),
-  footRight: pt(114, 176)
-};
-
-const figureConfigs: Record<string, FigureConfig> = {
-  "ponte-glutei": {
-    start: bridgeStart,
-    end: bridgeEnd,
-    guidePath: "M 118 150 C 118 128 118 110 118 92",
-    scene: "floor",
-    movementLabel: "solleva il bacino"
-  },
-  "squat-alla-sedia": {
-    start: standingNeutral,
-    end: squatEnd,
-    guidePath: "M 132 74 C 146 94 146 128 130 150",
-    scene: "floor",
-    movementLabel: "scendi e risali con controllo"
-  },
-  "wall-sit": {
-    start: wallNeutral,
-    end: wallSitEnd,
-    guidePath: "M 122 72 C 132 96 132 126 124 150",
-    scene: "wall",
-    movementLabel: "scivola lungo il muro"
-  },
-  "slanci-laterali-in-piedi": {
-    start: standingNeutral,
-    end: sideLiftEnd,
-    guidePath: "M 128 144 C 140 132 150 122 164 116",
-    scene: "floor",
-    movementLabel: "apri la gamba di lato"
-  },
-  "affondo-assistito-indietro": {
-    start: standingNeutral,
-    end: lungeEnd,
-    guidePath: "M 118 140 C 132 146 146 156 160 174",
-    scene: "floor",
-    movementLabel: "porta una gamba indietro"
-  },
-  "bird-dog": {
-    start: quadrupedStart,
-    end: quadrupedEnd,
-    guidePath: "M 128 118 C 146 108 162 100 182 96",
-    scene: "floor",
-    movementLabel: "allunga braccio e gamba opposti"
-  },
-  "heel-slides": {
-    start: bridgeStart,
-    end: heelSlideEnd,
-    guidePath: "M 150 132 C 164 128 176 126 188 126",
-    scene: "floor",
-    movementLabel: "scivola con il tallone"
-  },
-  "dead-bug-semplificato": {
-    start: deadBugStart,
-    end: deadBugEnd,
-    guidePath: "M 166 96 C 170 106 174 120 178 134",
-    scene: "floor",
-    movementLabel: "abbassa lentamente tallone e braccio"
-  },
-  "ponte-con-marcia": {
-    start: bridgeEnd,
-    end: bridgeMarchEnd,
-    guidePath: "M 150 118 C 152 104 156 92 164 84",
-    scene: "floor",
-    movementLabel: "alza un piede alla volta"
-  },
-  "sollevamenti-polpacci": {
-    start: standingNeutral,
-    end: calfRaiseEnd,
-    guidePath: "M 110 162 C 110 150 110 138 110 126",
-    scene: "floor",
-    movementLabel: "sali sulle punte"
-  },
-  "side-leg-lifts": {
-    start: sideLegStart,
-    end: sideLegEnd,
-    guidePath: "M 150 118 C 162 104 172 92 182 82",
-    scene: "floor",
-    movementLabel: "solleva la gamba sopra"
-  },
-  "respirazione-addominale-profonda": {
-    start: breathingStart,
-    end: breathingEnd,
-    guidePath: "M 88 132 C 100 118 112 118 122 132",
-    scene: "floor",
-    movementLabel: "segui il respiro"
-  },
-  "mobilita-bacino-colonna": {
-    start: bridgeStart,
-    end: pelvicTiltEnd,
-    guidePath: "M 112 140 C 106 130 106 122 112 112",
-    scene: "floor",
-    movementLabel: "muovi il bacino con dolcezza"
-  },
-  "scapole-al-muro": {
-    start: wallNeutral,
-    end: scapoleWallEnd,
-    guidePath: "M 78 118 C 76 94 76 66 76 42",
-    scene: "wall",
-    movementLabel: "fai scorrere le braccia al muro"
-  },
-  "allungamento-petto-parete": {
-    start: wallNeutral,
-    end: chestOpenerEnd,
-    guidePath: "M 92 110 C 80 102 70 92 62 76",
-    scene: "wall",
-    movementLabel: "ruota il busto con delicatezza"
-  }
-};
-
-export function ExerciseFigure({ exerciseId }: { exerciseId: string }) {
-  const config = figureConfigs[exerciseId] ?? figureConfigs["ponte-glutei"];
-
+function Arrow({ d }: { d: string }) {
   return (
-    <div className="surface-soft overflow-hidden px-4 py-4">
-      <div>
-        <div className="eyebrow">Guida visiva</div>
-        <p className="mt-1 text-sm font-semibold text-ink">
-          {config.movementLabel}
-        </p>
-      </div>
+    <path
+      d={d}
+      fill="none"
+      stroke="rgba(64, 154, 149, 0.88)"
+      strokeWidth="3.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeDasharray="5 5"
+    />
+  );
+}
 
-      <svg
-        viewBox="0 0 220 220"
-        aria-label="Stickman femminile che mostra la posizione e il movimento"
-        className="mt-4 h-[240px] w-full"
-      >
-        <rect x="0" y="0" width="220" height="220" rx="26" fill="rgba(255,255,255,0.46)" />
-        {config.scene === "wall" ? (
-          <line
-            x1="54"
-            y1="32"
-            x2="54"
-            y2="186"
-            stroke="rgba(169, 215, 212, 0.75)"
-            strokeWidth="6"
-            strokeLinecap="round"
-          />
-        ) : null}
-        <line
-          x1="22"
-          y1="186"
-          x2="198"
-          y2="186"
-          stroke="rgba(169, 215, 212, 0.7)"
-          strokeWidth="5"
-          strokeLinecap="round"
-        />
-        <path
-          d={config.guidePath}
-          fill="none"
-          stroke="rgba(94,184,178,0.82)"
-          strokeLinecap="round"
-          strokeWidth="4"
-          className="figure-guide"
-        />
-        {drawPose(config.start, "start")}
-        {drawPose(config.end, "end")}
-      </svg>
+function StandingPose() {
+  return (
+    <>
+      <FloorLine />
+      <Head x={72} y={34} />
+      <FigureStroke>
+        <line x1="72" y1="44" x2="72" y2="86" />
+        <line x1="52" y1="58" x2="92" y2="58" />
+        <line x1="58" y1="58" x2="54" y2="90" />
+        <line x1="86" y1="58" x2="90" y2="90" />
+        <line x1="72" y1="86" x2="60" y2="124" />
+        <line x1="72" y1="86" x2="84" y2="124" />
+      </FigureStroke>
+    </>
+  );
+}
 
-      <p className="mt-3 text-sm leading-6 text-muted">
-        La sagoma passa dalla posizione di partenza alla posizione attiva per
-        aiutarti a capire il gesto a colpo d'occhio.
-      </p>
-    </div>
+function SquatPose() {
+  return (
+    <>
+      <FloorLine />
+      <rect x="98" y="74" width="14" height="42" rx="4" fill="rgba(224,237,235,0.95)" />
+      <rect x="90" y="112" width="30" height="8" rx="4" fill="rgba(224,237,235,0.95)" />
+      <Head x={70} y={38} />
+      <FigureStroke>
+        <line x1="70" y1="48" x2="74" y2="82" />
+        <line x1="52" y1="60" x2="92" y2="60" />
+        <line x1="56" y1="60" x2="50" y2="90" />
+        <line x1="88" y1="60" x2="94" y2="90" />
+        <line x1="74" y1="82" x2="60" y2="108" />
+        <line x1="74" y1="82" x2="90" y2="108" />
+        <line x1="60" y1="108" x2="56" y2="126" />
+        <line x1="90" y1="108" x2="94" y2="126" />
+      </FigureStroke>
+      <Arrow d="M 110 70 C 120 84 120 102 108 116 l -6 -6 m 6 6 l 7 -4" />
+    </>
+  );
+}
+
+function WallPose() {
+  return (
+    <>
+      <FloorLine />
+      <WallLine />
+      <Head x={54} y={34} />
+      <FigureStroke>
+        <line x1="54" y1="44" x2="54" y2="84" />
+        <line x1="38" y1="58" x2="70" y2="58" />
+        <line x1="42" y1="58" x2="40" y2="90" />
+        <line x1="68" y1="58" x2="70" y2="90" />
+        <line x1="54" y1="84" x2="52" y2="124" />
+        <line x1="54" y1="84" x2="74" y2="124" />
+      </FigureStroke>
+    </>
+  );
+}
+
+function WallSitPose() {
+  return (
+    <>
+      <FloorLine />
+      <WallLine />
+      <Head x={54} y={46} />
+      <FigureStroke>
+        <line x1="54" y1="56" x2="54" y2="86" />
+        <line x1="40" y1="68" x2="68" y2="68" />
+        <line x1="44" y1="68" x2="42" y2="98" />
+        <line x1="66" y1="68" x2="68" y2="98" />
+        <line x1="54" y1="86" x2="82" y2="86" />
+        <line x1="82" y1="86" x2="82" y2="124" />
+        <line x1="54" y1="86" x2="54" y2="124" />
+      </FigureStroke>
+      <Arrow d="M 92 56 C 102 74 102 90 94 110 l -6 -4 m 6 4 l 6 -2" />
+    </>
+  );
+}
+
+function StandingSideLiftPose() {
+  return (
+    <>
+      <FloorLine />
+      <Head x={62} y={34} />
+      <FigureStroke>
+        <line x1="62" y1="44" x2="62" y2="86" />
+        <line x1="44" y1="58" x2="80" y2="58" />
+        <line x1="48" y1="58" x2="44" y2="90" />
+        <line x1="76" y1="58" x2="80" y2="90" />
+        <line x1="62" y1="86" x2="56" y2="124" />
+        <line x1="62" y1="86" x2="92" y2="96" />
+      </FigureStroke>
+      <Arrow d="M 82 90 C 94 84 102 76 108 68 l -8 1 m 8 -1 l -3 7" />
+    </>
+  );
+}
+
+function LungePose() {
+  return (
+    <>
+      <FloorLine />
+      <Head x={68} y={34} />
+      <FigureStroke>
+        <line x1="68" y1="44" x2="70" y2="84" />
+        <line x1="50" y1="58" x2="88" y2="58" />
+        <line x1="54" y1="58" x2="48" y2="92" />
+        <line x1="84" y1="58" x2="90" y2="92" />
+        <line x1="70" y1="84" x2="62" y2="124" />
+        <line x1="70" y1="84" x2="102" y2="112" />
+        <line x1="102" y1="112" x2="112" y2="124" />
+      </FigureStroke>
+      <Arrow d="M 102 62 C 112 74 116 86 116 98 l -6 -4 m 6 4 l 4 -7" />
+    </>
+  );
+}
+
+function CalfRaisePose() {
+  return (
+    <>
+      <FloorLine />
+      <Head x={72} y={30} />
+      <FigureStroke>
+        <line x1="72" y1="40" x2="72" y2="82" />
+        <line x1="52" y1="54" x2="92" y2="54" />
+        <line x1="58" y1="54" x2="54" y2="86" />
+        <line x1="86" y1="54" x2="90" y2="86" />
+        <line x1="72" y1="82" x2="60" y2="122" />
+        <line x1="72" y1="82" x2="84" y2="122" />
+      </FigureStroke>
+      <Arrow d="M 98 114 C 104 102 104 92 98 80 l -2 7 m 2 -7 l 5 5" />
+    </>
+  );
+}
+
+function SupinePose() {
+  return (
+    <>
+      <FloorLine />
+      <Head x={28} y={110} />
+      <FigureStroke>
+        <line x1="38" y1="110" x2="82" y2="110" />
+        <line x1="46" y1="110" x2="40" y2="126" />
+        <line x1="58" y1="110" x2="54" y2="128" />
+        <line x1="82" y1="110" x2="102" y2="98" />
+        <line x1="102" y1="98" x2="116" y2="122" />
+        <line x1="82" y1="110" x2="96" y2="110" />
+        <line x1="96" y1="110" x2="114" y2="124" />
+      </FigureStroke>
+    </>
+  );
+}
+
+function BridgePose() {
+  return (
+    <>
+      <FloorLine />
+      <Head x={28} y={112} />
+      <FigureStroke>
+        <line x1="38" y1="112" x2="74" y2="90" />
+        <line x1="44" y1="108" x2="38" y2="126" />
+        <line x1="54" y1="100" x2="50" y2="118" />
+        <line x1="74" y1="90" x2="96" y2="92" />
+        <line x1="96" y1="92" x2="114" y2="124" />
+        <line x1="74" y1="90" x2="90" y2="92" />
+        <line x1="90" y1="92" x2="108" y2="122" />
+      </FigureStroke>
+      <Arrow d="M 72 118 C 76 106 78 98 78 84 l -4 6 m 4 -6 l 4 6" />
+    </>
+  );
+}
+
+function HeelSlidePose() {
+  return (
+    <>
+      <FloorLine />
+      <Head x={28} y={112} />
+      <FigureStroke>
+        <line x1="38" y1="112" x2="82" y2="110" />
+        <line x1="46" y1="112" x2="40" y2="126" />
+        <line x1="58" y1="112" x2="54" y2="128" />
+        <line x1="82" y1="110" x2="104" y2="108" />
+        <line x1="104" y1="108" x2="122" y2="122" />
+        <line x1="82" y1="110" x2="118" y2="110" />
+      </FigureStroke>
+      <Arrow d="M 94 128 C 104 132 112 132 122 126 l -7 -2 m 7 2 l -5 5" />
+    </>
+  );
+}
+
+function DeadBugPose() {
+  return (
+    <>
+      <FloorLine />
+      <Head x={28} y={112} />
+      <FigureStroke>
+        <line x1="38" y1="112" x2="82" y2="108" />
+        <line x1="46" y1="110" x2="66" y2="86" />
+        <line x1="58" y1="110" x2="54" y2="128" />
+        <line x1="82" y1="108" x2="98" y2="84" />
+        <line x1="82" y1="108" x2="112" y2="122" />
+      </FigureStroke>
+      <Arrow d="M 102 74 C 112 78 118 86 122 98 l -7 -3 m 7 3 l -1 -7" />
+    </>
+  );
+}
+
+function BridgeMarchPose() {
+  return (
+    <>
+      <FloorLine />
+      <Head x={28} y={112} />
+      <FigureStroke>
+        <line x1="38" y1="112" x2="74" y2="90" />
+        <line x1="44" y1="108" x2="38" y2="126" />
+        <line x1="54" y1="100" x2="50" y2="118" />
+        <line x1="74" y1="90" x2="96" y2="92" />
+        <line x1="96" y1="92" x2="114" y2="124" />
+        <line x1="74" y1="90" x2="94" y2="74" />
+      </FigureStroke>
+      <Arrow d="M 92 102 C 96 90 98 82 100 68 l -4 6 m 4 -6 l 4 5" />
+    </>
+  );
+}
+
+function SideLyingPose() {
+  return (
+    <>
+      <FloorLine />
+      <Head x={30} y={108} />
+      <FigureStroke>
+        <line x1="40" y1="108" x2="86" y2="108" />
+        <line x1="48" y1="108" x2="42" y2="124" />
+        <line x1="60" y1="108" x2="54" y2="122" />
+        <line x1="86" y1="108" x2="114" y2="108" />
+        <line x1="86" y1="114" x2="114" y2="114" />
+      </FigureStroke>
+    </>
+  );
+}
+
+function SideLiftPose() {
+  return (
+    <>
+      <FloorLine />
+      <Head x={30} y={108} />
+      <FigureStroke>
+        <line x1="40" y1="108" x2="86" y2="108" />
+        <line x1="48" y1="108" x2="42" y2="124" />
+        <line x1="60" y1="108" x2="54" y2="122" />
+        <line x1="86" y1="108" x2="114" y2="108" />
+        <line x1="86" y1="114" x2="110" y2="86" />
+      </FigureStroke>
+      <Arrow d="M 98 102 C 108 96 114 88 118 78 l -7 3 m 7 -3 l -1 7" />
+    </>
+  );
+}
+
+function QuadrupedPose() {
+  return (
+    <>
+      <FloorLine />
+      <Head x={52} y={76} />
+      <FigureStroke>
+        <line x1="62" y1="78" x2="88" y2="90" />
+        <line x1="88" y1="90" x2="102" y2="90" />
+        <line x1="66" y1="86" x2="56" y2="118" />
+        <line x1="98" y1="90" x2="108" y2="118" />
+        <line x1="88" y1="90" x2="102" y2="116" />
+        <line x1="102" y1="116" x2="116" y2="132" />
+      </FigureStroke>
+    </>
+  );
+}
+
+function BirdDogPose() {
+  return (
+    <>
+      <FloorLine />
+      <Head x={52} y={76} />
+      <FigureStroke>
+        <line x1="62" y1="78" x2="88" y2="90" />
+        <line x1="88" y1="90" x2="102" y2="90" />
+        <line x1="66" y1="86" x2="48" y2="66" />
+        <line x1="98" y1="90" x2="108" y2="118" />
+        <line x1="88" y1="90" x2="114" y2="72" />
+      </FigureStroke>
+      <Arrow d="M 108 66 C 116 64 122 64 126 66 l -5 -5 m 5 5 l -7 2" />
+    </>
+  );
+}
+
+function BreathingPose() {
+  return (
+    <>
+      <FloorLine />
+      <Head x={28} y={112} />
+      <FigureStroke>
+        <line x1="38" y1="112" x2="84" y2="110" />
+        <line x1="50" y1="110" x2="64" y2="100" />
+        <line x1="56" y1="112" x2="68" y2="118" />
+        <line x1="84" y1="110" x2="104" y2="98" />
+        <line x1="104" y1="98" x2="118" y2="122" />
+        <line x1="84" y1="110" x2="98" y2="110" />
+        <line x1="98" y1="110" x2="114" y2="124" />
+      </FigureStroke>
+      <Arrow d="M 68 80 C 74 72 82 70 90 74" />
+      <Arrow d="M 68 122 C 74 130 82 132 90 128" />
+    </>
+  );
+}
+
+function PelvicTiltPose() {
+  return (
+    <>
+      <FloorLine />
+      <Head x={28} y={112} />
+      <FigureStroke>
+        <line x1="38" y1="112" x2="82" y2="114" />
+        <line x1="46" y1="112" x2="40" y2="126" />
+        <line x1="58" y1="112" x2="54" y2="128" />
+        <line x1="82" y1="114" x2="100" y2="102" />
+        <line x1="100" y1="102" x2="116" y2="124" />
+        <line x1="82" y1="114" x2="96" y2="114" />
+        <line x1="96" y1="114" x2="112" y2="124" />
+      </FigureStroke>
+      <Arrow d="M 74 96 C 84 88 90 88 98 96 l -5 -5 m 5 5 l -6 3" />
+    </>
+  );
+}
+
+function WallArmsPose() {
+  return (
+    <>
+      <FloorLine />
+      <WallLine />
+      <Head x={54} y={34} />
+      <FigureStroke>
+        <line x1="54" y1="44" x2="54" y2="84" />
+        <line x1="40" y1="58" x2="68" y2="58" />
+        <line x1="40" y1="58" x2="38" y2="32" />
+        <line x1="68" y1="58" x2="70" y2="32" />
+        <line x1="54" y1="84" x2="52" y2="124" />
+        <line x1="54" y1="84" x2="74" y2="124" />
+      </FigureStroke>
+      <Arrow d="M 80 60 C 92 52 96 42 96 30 l -5 6 m 5 -6 l 3 7" />
+    </>
+  );
+}
+
+function WallChestOpenPose() {
+  return (
+    <>
+      <FloorLine />
+      <WallLine />
+      <Head x={54} y={34} />
+      <FigureStroke>
+        <line x1="54" y1="44" x2="60" y2="84" />
+        <line x1="40" y1="58" x2="72" y2="58" />
+        <line x1="40" y1="58" x2="34" y2="94" />
+        <line x1="72" y1="58" x2="96" y2="48" />
+        <line x1="60" y1="84" x2="58" y2="124" />
+        <line x1="60" y1="84" x2="80" y2="124" />
+      </FigureStroke>
+      <Arrow d="M 88 42 C 98 40 108 46 114 56 l -7 -2 m 7 2 l -3 -7" />
+    </>
   );
 }

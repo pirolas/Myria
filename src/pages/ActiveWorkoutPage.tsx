@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { Pause, Play, SkipForward, Volume2, VolumeX } from "lucide-react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { Button } from "@/components/ui/Button";
 import { StepGuidanceCard } from "@/components/workouts/StepGuidanceCard";
+import { Button } from "@/components/ui/Button";
 import { ExerciseFigure } from "@/components/workouts/ExerciseFigure";
-import { homeEquipmentTips } from "@/data/homeEquipment";
 import { energyAfterWorkoutOptions, feelingOptions } from "@/data/content";
 import { exerciseGuidance } from "@/data/exerciseGuidance";
+import { homeEquipmentTips } from "@/data/homeEquipment";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
 import { useWorkoutPlayer } from "@/hooks/useWorkoutPlayer";
 import type { Feeling, TrainingPlanDay } from "@/types/domain";
@@ -89,9 +89,11 @@ export function ActiveWorkoutPage() {
         stopReason,
         skippedExerciseIds: player.skippedExerciseIds
       });
+
       const shouldOpenPremium =
         data?.userAccess?.status === "free_trial" &&
         data.userAccess.freeSessionsUsed + 1 >= data.userAccess.freeSessionsLimit;
+
       navigate(shouldOpenPremium ? "/premium" : "/progress", { replace: true });
     } catch (completeError) {
       setLocalError(
@@ -157,6 +159,11 @@ export function ActiveWorkoutPage() {
               Iniziamo con <span className="font-semibold text-ink">{introStep.title}</span>.
               Poi il timer ti accompagna da solo tra esercizi e pause, senza altri passaggi.
             </p>
+            {exerciseGuidance[introStep.exerciseId]?.practicalWhy ? (
+              <p className="mt-3 text-sm leading-7 text-ink">
+                {exerciseGuidance[introStep.exerciseId]?.practicalWhy}
+              </p>
+            ) : null}
 
             <div className="mt-5 flex flex-wrap gap-2">
               <span className="rounded-full bg-accent-soft px-3 py-2 text-xs font-semibold text-accent-deep">
@@ -181,7 +188,9 @@ export function ActiveWorkoutPage() {
                       <div className="text-sm font-semibold text-ink">
                         {index + 1}. {step.title}
                       </div>
-                      <p className="mt-1 text-sm leading-6 text-muted">{step.summary}</p>
+                      <p className="mt-1 text-sm leading-6 text-muted">
+                        {exerciseGuidance[step.exerciseId]?.purpose ?? step.summary}
+                      </p>
                     </div>
                     <div className="rounded-full bg-[rgba(246,250,249,0.92)] px-3 py-2 text-xs font-semibold text-muted">
                       {step.doseLabel}
@@ -261,7 +270,7 @@ export function ActiveWorkoutPage() {
               <p className="mt-2 max-w-[16rem] text-sm leading-6 text-muted">
                 {player.stage === "rest"
                   ? "Respira, lascia scendere il ritmo e preparati al passaggio successivo."
-                  : previewGuidance?.movementCue ?? previewStep.summary}
+                  : previewGuidance?.purpose ?? previewStep.summary}
               </p>
             </div>
           </div>
@@ -289,11 +298,21 @@ export function ActiveWorkoutPage() {
                 </p>
               </div>
               <div>
-                <div className="text-sm font-semibold text-ink">Come muoverti</div>
+                <div className="text-sm font-semibold text-ink">Come si fa</div>
                 <p className="mt-1 text-sm leading-6 text-muted">
                   {previewGuidance?.movementCue ?? previewStep.summary}
                 </p>
               </div>
+              {previewGuidance?.practicalWhy ? (
+                <div>
+                  <div className="text-sm font-semibold text-ink">
+                    Perché lo facciamo adesso
+                  </div>
+                  <p className="mt-1 text-sm leading-6 text-muted">
+                    {previewGuidance.practicalWhy}
+                  </p>
+                </div>
+              ) : null}
               <div>
                 <div className="text-sm font-semibold text-ink">Cosa sentire</div>
                 <p className="mt-1 text-sm leading-6 text-muted">
@@ -312,10 +331,10 @@ export function ActiveWorkoutPage() {
                 </span>
               ) : null}
             </div>
-            {previewStep.easierOption ? (
+            {previewGuidance?.easierOption ?? previewStep.easierOption ? (
               <p className="mt-4 text-sm leading-6 text-muted">
-                <span className="font-semibold text-ink">Se oggi vuoi alleggerire:</span>{" "}
-                {previewStep.easierOption}
+                <span className="font-semibold text-ink">Versione più facile:</span>{" "}
+                {previewGuidance?.easierOption ?? previewStep.easierOption}
               </p>
             ) : null}
             {homeSupport ? (

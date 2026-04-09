@@ -18,7 +18,11 @@ export const homeEquipmentTips: Record<string, HomeEquipmentTip> = {
   "ponte-glutei": {
     title: "Se in futuro vorrai sentire più lavoro",
     body: "Questo esercizio resta efficace anche senza attrezzi. Quando il gesto è pulito, puoi intensificarlo con oggetti di casa.",
-    ideas: ["uno zaino morbido appoggiato sul bacino", "una borsa compatta", "una coperta piegata per proteggere l'appoggio"]
+    ideas: [
+      "uno zaino morbido appoggiato sul bacino",
+      "una borsa compatta",
+      "una coperta piegata per proteggere l'appoggio"
+    ]
   },
   "wall-sit": {
     title: "Qui non serve peso: serve il giusto appoggio",
@@ -28,11 +32,18 @@ export const homeEquipmentTips: Record<string, HomeEquipmentTip> = {
   "sollevamenti-polpacci": {
     title: "Puoi usare appoggi semplici di casa",
     body: "Per sentirti più stabile o aggiungere un po' di intensità, bastano strumenti molto comuni.",
-    ideas: ["una parete o lo schienale di una sedia", "uno zaino leggero", "una cassa d'acqua piccola tenuta vicino al corpo"]
+    ideas: [
+      "una parete o lo schienale di una sedia",
+      "uno zaino leggero",
+      "una cassa d'acqua piccola tenuta vicino al corpo"
+    ]
   },
   "scapole-al-muro": {
     title: "Per l'assetto possono bastare oggetti semplici",
     body: "Se vuoi percepire meglio l'allineamento, puoi usare piccoli riferimenti domestici senza complicarti la vita.",
-    ideas: ["un manico di scopa per sentire il busto lungo", "un asciugamano arrotolato tra muro e braccia"]
+    ideas: [
+      "un manico di scopa per sentire il busto lungo",
+      "un asciugamano arrotolato tra muro e braccia"
+    ]
   }
 };
