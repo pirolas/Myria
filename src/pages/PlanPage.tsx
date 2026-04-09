@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
 import { toDateKey } from "@/lib/date";
+import { getExerciseById } from "@/lib/selectors";
 
 export function PlanPage() {
   const { data } = useMiryaApp();
@@ -129,7 +130,9 @@ export function PlanPage() {
               {day.workout.steps[0] ? (
                 <div className="mt-4 rounded-[18px] bg-[rgba(248,252,251,0.9)] px-4 py-3 text-sm leading-6 text-muted">
                   <span className="font-semibold text-ink">Si parte con:</span>{" "}
-                  {day.workout.steps[0].title}. {day.workout.steps[0].doseLabel}.
+                  {getExerciseById(day.workout.steps[0].exerciseId)?.name ??
+                    day.workout.steps[0].title}
+                  . {day.workout.steps[0].doseLabel}.
                 </div>
               ) : null}
 

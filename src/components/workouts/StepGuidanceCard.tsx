@@ -1,7 +1,7 @@
 import { Dot } from "lucide-react";
 import { ExerciseFigure } from "@/components/workouts/ExerciseFigure";
-import { homeEquipmentTips } from "@/data/homeEquipment";
 import { exerciseGuidance } from "@/data/exerciseGuidance";
+import { homeEquipmentTips } from "@/data/homeEquipment";
 import { getExerciseById } from "@/lib/selectors";
 import type { WorkoutStepPlan } from "@/types/domain";
 
@@ -43,7 +43,7 @@ export function StepGuidanceCard({
         </div>
         <div className="rounded-[1.1rem] bg-accent-soft px-3 py-2 text-right text-accent-deep">
           <div className="text-[0.68rem] font-semibold uppercase tracking-[0.16em]">
-            dose prevista
+            Dose prevista
           </div>
           <div className="mt-1 text-sm font-semibold">{step.doseLabel}</div>
         </div>
@@ -51,10 +51,10 @@ export function StepGuidanceCard({
 
       <div className="mt-4 flex flex-wrap gap-2">
         <span className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-muted">
-          focus: {step.bodyArea}
+          Focus: {step.bodyArea}
         </span>
         <span className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-muted">
-          recupero {step.restSeconds}s
+          Recupero {step.restSeconds}s
         </span>
       </div>
 
@@ -107,6 +107,7 @@ export function StepGuidanceCard({
             <span className="font-semibold text-ink">Ritorno controllato:</span>{" "}
             {guidance?.returnCue ?? "Torna alla posizione iniziale con calma."}
           </p>
+
           {guidance?.attention?.length ? (
             <div className="mt-3 rounded-[18px] bg-[rgba(244,249,248,0.92)] px-3 py-3">
               <div className="text-sm font-semibold text-ink">Attenzione</div>
@@ -119,17 +120,20 @@ export function StepGuidanceCard({
               </ul>
             </div>
           ) : null}
+
           {(guidance?.easierOption ?? step.easierOption) ? (
             <p className="mt-3 text-sm leading-6 text-muted">
               <span className="font-semibold text-ink">Versione più facile:</span>{" "}
               {guidance?.easierOption ?? step.easierOption}
             </p>
           ) : null}
+
           {step.caution ? (
             <p className="mt-2 text-sm leading-6 text-muted">
               <span className="font-semibold text-ink">Nota utile:</span> {step.caution}
             </p>
           ) : null}
+
           {guidance?.microTip ? (
             <p className="mt-2 text-sm leading-6 text-accent-deep">{guidance.microTip}</p>
           ) : null}

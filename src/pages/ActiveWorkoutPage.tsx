@@ -8,6 +8,7 @@ import { energyAfterWorkoutOptions, feelingOptions } from "@/data/content";
 import { exerciseGuidance } from "@/data/exerciseGuidance";
 import { homeEquipmentTips } from "@/data/homeEquipment";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
+import { getExerciseById } from "@/lib/selectors";
 import { useWorkoutPlayer } from "@/hooks/useWorkoutPlayer";
 import type { Feeling, TrainingPlanDay } from "@/types/domain";
 
@@ -43,9 +44,11 @@ export function ActiveWorkoutPage() {
   }
 
   const introStep = planDay.workout.steps[0] ?? null;
+  const introExercise = introStep ? getExerciseById(introStep.exerciseId) : null;
   const currentStep = player.currentStep;
   const nextStep = planDay.workout.steps[player.currentIndex + 1] ?? null;
   const previewStep = player.stage === "rest" ? nextStep : currentStep;
+  const previewExercise = previewStep ? getExerciseById(previewStep.exerciseId) : null;
   const previewGuidance = previewStep ? exerciseGuidance[previewStep.exerciseId] : null;
   const homeSupport = previewStep ? homeEquipmentTips[previewStep.exerciseId] : null;
   const remainingSteps = Math.max(
@@ -156,8 +159,11 @@ export function ActiveWorkoutPage() {
               {planDay.workout.title}
             </h2>
             <p className="mt-3 text-sm leading-7 text-muted">
-              Iniziamo con <span className="font-semibold text-ink">{introStep.title}</span>.
-              Poi il timer ti accompagna da solo tra esercizi e pause, senza altri passaggi.
+              Iniziamo con{" "}
+              <span className="font-semibold text-ink">
+                {introExercise?.name ?? introStep.title}
+              </span>
+              . Poi il timer ti accompagna da solo tra esercizi e pause, senza altri passaggi.
             </p>
             {exerciseGuidance[introStep.exerciseId]?.practicalWhy ? (
               <p className="mt-3 text-sm leading-7 text-ink">
@@ -186,7 +192,7 @@ export function ActiveWorkoutPage() {
                   <div key={step.id} className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-sm font-semibold text-ink">
-                        {index + 1}. {step.title}
+                        {index + 1}. {getExerciseById(step.exerciseId)?.name ?? step.title}
                       </div>
                       <p className="mt-1 text-sm leading-6 text-muted">
                         {exerciseGuidance[step.exerciseId]?.purpose ?? step.summary}
@@ -215,7 +221,7 @@ export function ActiveWorkoutPage() {
           <StepGuidanceCard
             step={introStep}
             eyebrow="Primo esercizio"
-            title={introStep.title}
+            title={introExercise?.name ?? introStep.title}
           />
 
           {localError ? (
@@ -238,7 +244,11 @@ export function ActiveWorkoutPage() {
                     : "Adesso"}
               </div>
               <div className="mt-2 text-xl font-semibold text-ink">
-                {player.stage === "rest" ? nextStep?.title ?? "Ultimo passaggio" : previewStep.title}
+                {player.stage === "rest"
+                  ? nextStep
+                    ? getExerciseById(nextStep.exerciseId)?.name ?? nextStep.title
+                    : "Ultimo passaggio"
+                  : previewExercise?.name ?? previewStep.title}
               </div>
             </div>
             <div className="rounded-full bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
@@ -260,12 +270,12 @@ export function ActiveWorkoutPage() {
               </div>
               <div className="mt-4 max-w-[15rem] text-lg font-semibold text-ink">
                 {player.stage === "countdown"
-                  ? `Tra poco: ${previewStep.title}`
+                  ? `Tra poco: ${previewExercise?.name ?? previewStep.title}`
                   : player.stage === "rest"
                     ? nextStep
-                      ? `Poi: ${nextStep.title}`
+                      ? `Poi: ${getExerciseById(nextStep.exerciseId)?.name ?? nextStep.title}`
                       : "Chiudiamo la sessione"
-                    : previewStep.title}
+                    : previewExercise?.name ?? previewStep.title}
               </div>
               <p className="mt-2 max-w-[16rem] text-sm leading-6 text-muted">
                 {player.stage === "rest"
@@ -449,7 +459,7 @@ export function ActiveWorkoutPage() {
                       : "border-line bg-white text-muted"
                   ].join(" ")}
                 >
-                  {step.title}
+                  {getExerciseById(step.exerciseId)?.name ?? step.title}
                 </button>
               ))}
             </div>
