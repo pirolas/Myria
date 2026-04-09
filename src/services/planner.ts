@@ -5,8 +5,10 @@ import type { PlannerOutput, PlannerTrigger } from "@/types/domain";
 interface PlannerInvocationResponse {
   plan: PlannerOutput;
   persisted_plan_id: string;
-  source: "ai" | "fallback";
+  source: "ai" | "fallback" | "cached";
 }
+
+const inFlightPlannerRequests = new Map<string, Promise<PlannerInvocationResponse>>();
 
 async function resolveAccessToken(providedToken?: string | null) {
   if (providedToken) {
@@ -40,7 +42,7 @@ async function resolveAccessToken(providedToken?: string | null) {
   }
 
   throw new Error(
-    "La tua sessione è presente, ma il token non è stato riallineato in tempo. Ricarica la pagina e riprova."
+    "La tua sessione è presente, ma il token non si è riallineato in tempo. Ricarica la pagina e riprova."
   );
 }
 
@@ -63,74 +65,93 @@ export async function generatePersonalizedPlan(
   trigger: PlannerTrigger,
   accessToken?: string | null
 ) {
-  const { url, anonKey } = getSupabaseEnv();
-  const client = requireSupabaseClient();
+  const requestKey = `planner:${trigger}`;
+  const existingRequest = inFlightPlannerRequests.get(requestKey);
 
-  const callPlanner = async (token: string) => {
-    const response = await fetch(`${url}/functions/v1/plan-personalization`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: anonKey,
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ trigger })
-    }).catch(() => null);
-
-    if (!response) {
-      throw new Error(
-        "La funzione che genera il piano non è raggiungibile in questo momento. Riprova tra un attimo."
-      );
-    }
-
-    const payload = await parseJsonResponse(response);
-    return { response, payload };
-  };
-
-  let tokenToUse = await resolveAccessToken(accessToken);
-  let { response, payload } = await callPlanner(tokenToUse);
-  let message = readPayloadError(payload);
-
-  if (response.status === 401) {
-    const refreshResult = await client.auth.refreshSession().catch(() => null);
-    const refreshedToken = refreshResult?.data.session?.access_token;
-
-    if (refreshedToken && refreshedToken !== tokenToUse) {
-      tokenToUse = refreshedToken;
-      const retried = await callPlanner(tokenToUse);
-      response = retried.response;
-      payload = retried.payload;
-      message = readPayloadError(payload);
-    }
+  if (existingRequest) {
+    return existingRequest;
   }
 
-  if (!response.ok) {
+  const requestPromise = (async () => {
+    const { url, anonKey } = getSupabaseEnv();
+    const client = requireSupabaseClient();
+
+    const callPlanner = async (token: string) => {
+      const response = await fetch(`${url}/functions/v1/plan-personalization`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: anonKey,
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ trigger })
+      }).catch(() => null);
+
+      if (!response) {
+        throw new Error(
+          "La funzione che genera il piano non è raggiungibile in questo momento. Riprova tra un attimo."
+        );
+      }
+
+      const payload = await parseJsonResponse(response);
+      return { response, payload };
+    };
+
+    let tokenToUse = await resolveAccessToken(accessToken);
+    let { response, payload } = await callPlanner(tokenToUse);
+    let message = readPayloadError(payload);
+
     if (response.status === 401) {
-      throw new Error(
-        message || "La sessione non risulta valida per generare il piano. Esci e rientra in Mirya, poi riprova."
-      );
+      const refreshResult = await client.auth.refreshSession().catch(() => null);
+      const refreshedToken = refreshResult?.data.session?.access_token;
+
+      if (refreshedToken && refreshedToken !== tokenToUse) {
+        tokenToUse = refreshedToken;
+        const retried = await callPlanner(tokenToUse);
+        response = retried.response;
+        payload = retried.payload;
+        message = readPayloadError(payload);
+      }
     }
 
-    if (response.status === 403) {
-      throw new Error(
-        message || "Questo aggiornamento del percorso non è disponibile con il tuo accesso attuale."
-      );
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error(
+          message ||
+            "La sessione non risulta valida per generare il piano. Esci e rientra in Mirya, poi riprova."
+        );
+      }
+
+      if (response.status === 403) {
+        throw new Error(
+          message ||
+            "Questo aggiornamento del percorso non è disponibile con il tuo accesso attuale."
+        );
+      }
+
+      if (response.status >= 500) {
+        throw new Error(
+          message || "La funzione che genera il piano ha avuto un problema interno."
+        );
+      }
+
+      throw new Error(message || "La generazione del piano non è riuscita.");
     }
 
-    if (response.status >= 500) {
-      throw new Error(
-        message || "La funzione che genera il piano ha avuto un problema interno."
-      );
+    const data = payload as PlannerInvocationResponse;
+
+    if (!data?.plan) {
+      throw new Error("Il planner non ha restituito un piano valido.");
     }
 
-    throw new Error(message || "La generazione del piano non è riuscita.");
+    return data;
+  })();
+
+  inFlightPlannerRequests.set(requestKey, requestPromise);
+
+  try {
+    return await requestPromise;
+  } finally {
+    inFlightPlannerRequests.delete(requestKey);
   }
-
-  const data = payload as PlannerInvocationResponse;
-
-  if (!data?.plan) {
-    throw new Error("Il planner non ha restituito un piano valido.");
-  }
-
-  return data;
 }

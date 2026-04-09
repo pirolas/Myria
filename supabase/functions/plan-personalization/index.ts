@@ -20,6 +20,9 @@ interface PlannerRequestBody {
   trigger?: PlannerTrigger;
 }
 
+type PlannerRequestKind = "initial_plan" | "plan_update" | "reassessment";
+type PlannerSource = "ai" | "fallback" | "cached";
+
 interface PlannerExerciseOutput {
   name: string;
   exercise_id: string;
@@ -88,12 +91,36 @@ interface PlannerOutput {
   };
 }
 
+interface PlannerUsage {
+  request_kind: PlannerRequestKind;
+  model: string;
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  estimated_cost_usd: number;
+  latency_ms: number | null;
+  request_hash: string;
+}
+
+interface PlannerResult {
+  plan: PlannerOutput;
+  source: PlannerSource;
+  usage: PlannerUsage;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
 };
 
 const OPENAI_TIMEOUT_MS = 15000;
+const OPENAI_MAX_COMPLETION_TOKENS = 1400;
+const RECENT_CACHE_WINDOW_MS = 90 * 1000;
+
+const modelPricingUsdPerMillionTokens: Record<string, { input: number; output: number }> = {
+  "gpt-5-mini": { input: 0.25, output: 2 },
+  "gpt-5": { input: 1.25, output: 10 }
+};
 
 const exerciseCatalog = {
   "ponte-glutei": {
@@ -214,13 +241,13 @@ const planSchema = {
         additionalProperties: false,
         required: ["main_goal", "computed_body_goal", "secondary_goals", "training_level", "weekly_availability", "focus_areas", "notes"],
         properties: {
-          main_goal: { type: "string" },
+          main_goal: { type: "string", maxLength: 80 },
           computed_body_goal: { type: "string", enum: ["fat_loss", "muscle_gain", "toning", "recomposition", "tone_rebuild_for_lean_body"] },
-          secondary_goals: { type: "array", items: { type: "string" } },
-          training_level: { type: "string" },
-          weekly_availability: { type: "string" },
-          focus_areas: { type: "array", items: { type: "string" } },
-          notes: { type: "array", items: { type: "string" } }
+          secondary_goals: { type: "array", maxItems: 4, items: { type: "string", maxLength: 60 } },
+          training_level: { type: "string", maxLength: 60 },
+          weekly_availability: { type: "string", maxLength: 100 },
+          focus_areas: { type: "array", maxItems: 3, items: { type: "string", maxLength: 60 } },
+          notes: { type: "array", maxItems: 3, items: { type: "string", maxLength: 100 } }
         }
       },
       plan_overview: {
@@ -232,52 +259,52 @@ const planSchema = {
           phase_duration_weeks: { type: "integer", minimum: 2, maximum: 6 },
           weekly_sessions: { type: "integer", minimum: 2, maximum: 5 },
           session_duration_minutes: { type: "integer", minimum: 10, maximum: 30 },
-          intensity: { type: "string" },
-          strategy_explanation: { type: "string" },
-          realistic_expectations: { type: "array", items: { type: "string" } }
+          intensity: { type: "string", maxLength: 60 },
+          strategy_explanation: { type: "string", maxLength: 180 },
+          realistic_expectations: { type: "array", maxItems: 3, items: { type: "string", maxLength: 120 } }
         }
       },
       weekly_plan: { type: "array", minItems: 7, maxItems: 7, items: { type: "object", additionalProperties: false, required: ["day_index", "label", "title", "focus", "session_kind", "estimated_duration_minutes", "coach_note", "caution_notes", "exercises"], properties: {
         day_index: { type: "integer", minimum: 0, maximum: 6 },
-        label: { type: "string" },
-        title: { type: "string" },
-        focus: { type: "string" },
+        label: { type: "string", maxLength: 40 },
+        title: { type: "string", maxLength: 70 },
+        focus: { type: "string", maxLength: 70 },
         session_kind: { type: "string", enum: ["workout", "recovery"] },
         estimated_duration_minutes: { type: "integer", minimum: 5, maximum: 30 },
-        coach_note: { type: "string" },
-        caution_notes: { type: "array", items: { type: "string" } },
-        exercises: { type: "array", items: { type: "object", additionalProperties: false, required: ["name", "exercise_id", "sets", "reps", "duration_seconds_estimate", "rest_seconds", "notes", "easier_option", "body_area", "caution"], properties: {
-          name: { type: "string" },
+        coach_note: { type: "string", maxLength: 140 },
+        caution_notes: { type: "array", maxItems: 3, items: { type: "string", maxLength: 120 } },
+        exercises: { type: "array", maxItems: 5, items: { type: "object", additionalProperties: false, required: ["name", "exercise_id", "sets", "reps", "duration_seconds_estimate", "rest_seconds", "notes", "easier_option", "body_area", "caution"], properties: {
+          name: { type: "string", maxLength: 80 },
           exercise_id: { type: "string", enum: exerciseIds },
           sets: { type: "integer", minimum: 1, maximum: 5 },
-          reps: { type: "string" },
+          reps: { type: "string", maxLength: 40 },
           duration_seconds_estimate: { type: "integer", minimum: 20, maximum: 90 },
           rest_seconds: { type: "integer", minimum: 10, maximum: 60 },
-          notes: { type: "string" },
-          easier_option: { type: "string" },
-          body_area: { type: "string" },
-          caution: { type: ["string", "null"] }
+          notes: { type: "string", maxLength: 110 },
+          easier_option: { type: "string", maxLength: 110 },
+          body_area: { type: "string", maxLength: 60 },
+          caution: { type: ["string", "null"], maxLength: 110 }
         } } }
       } } },
-      phase_goal: { type: "string" },
-      phase_focus: { type: "string" },
-      weekly_structure: { type: "array", items: { type: "string" } },
-      current_phase: { type: "string" },
-      progression_strategy: { type: "string" },
-      progression_reason: { type: "string" },
-      plan_explanation: { type: "string" },
-      realistic_expected_outcomes: { type: "array", items: { type: "string" } },
+      phase_goal: { type: "string", maxLength: 180 },
+      phase_focus: { type: "string", maxLength: 80 },
+      weekly_structure: { type: "array", maxItems: 3, items: { type: "string", maxLength: 120 } },
+      current_phase: { type: "string", maxLength: 60 },
+      progression_strategy: { type: "string", maxLength: 180 },
+      progression_reason: { type: "string", maxLength: 180 },
+      plan_explanation: { type: "string", maxLength: 320 },
+      realistic_expected_outcomes: { type: "array", maxItems: 3, items: { type: "string", maxLength: 120 } },
       support_tips: { type: "object", additionalProperties: false, required: ["nutrition", "recovery", "consistency"], properties: {
-        nutrition: { type: "array", items: { type: "string" } },
-        recovery: { type: "array", items: { type: "string" } },
-        consistency: { type: "array", items: { type: "string" } }
+        nutrition: { type: "array", maxItems: 2, items: { type: "string", maxLength: 120 } },
+        recovery: { type: "array", maxItems: 2, items: { type: "string", maxLength: 120 } },
+        consistency: { type: "array", maxItems: 2, items: { type: "string", maxLength: 120 } }
       } },
-      motivational_message: { type: "string" },
-      caution_flags: { type: "array", items: { type: "string" } },
-      adjustments: { type: "array", items: { type: "string" } },
+      motivational_message: { type: "string", maxLength: 140 },
+      caution_flags: { type: "array", maxItems: 3, items: { type: "string", maxLength: 120 } },
+      adjustments: { type: "array", maxItems: 2, items: { type: "string", maxLength: 140 } },
       reassessment: { type: "object", additionalProperties: false, required: ["days_until_checkin", "checkin_focus"], properties: {
         days_until_checkin: { type: "integer", minimum: 7, maximum: 21 },
-        checkin_focus: { type: "array", items: { type: "string" } }
+        checkin_focus: { type: "array", maxItems: 3, items: { type: "string", maxLength: 100 } }
       } }
     }
   }
@@ -361,29 +388,6 @@ serve(async (request) => {
       return jsonResponse({ error: "Onboarding essenziale mancante." }, 400);
     }
 
-    const access = accessRes.data;
-    const isPremium =
-      access?.status === "premium" &&
-      (!access.premium_ends_at || new Date(access.premium_ends_at).getTime() > Date.now());
-    const canGenerateInitialPlan = !access?.first_plan_generated_at || !currentPlanRes.data;
-
-    if (trigger === "onboarding_completed" && !canGenerateInitialPlan && !isPremium) {
-      return jsonResponse(
-        {
-          error:
-            "Il primo piano e gia stato generato. Gli aggiornamenti successivi fanno parte di Premium."
-        },
-        403
-      );
-    }
-
-    if (trigger !== "onboarding_completed" && !isPremium) {
-      return jsonResponse(
-        { error: "L'aggiornamento del percorso nel tempo e disponibile in Premium." },
-        403
-      );
-    }
-
     const plannerInput = {
       onboarding: onboardingRes.data,
       deepProfile: deepProfileRes.data,
@@ -394,9 +398,64 @@ serve(async (request) => {
       trigger
     };
 
-    const aiPlan = await tryOpenAIPlan(plannerInput);
-    const plan = aiPlan ?? buildFallbackPlan(plannerInput);
-    const source = aiPlan ? "ai" : "fallback";
+    const access = accessRes.data;
+    const isPremium =
+      access?.status === "premium" &&
+      (!access.premium_ends_at || new Date(access.premium_ends_at).getTime() > Date.now());
+    const canGenerateInitialPlan = !access?.first_plan_generated_at || !currentPlanRes.data;
+    const requestKind = resolvePlannerRequestKind(trigger);
+    const requestHash = await sha256Hex(JSON.stringify(buildPlannerContext(plannerInput, requestKind)));
+    const reusablePlan = await findReusablePlan(
+      adminClient,
+      user.id,
+      currentPlanRes.data?.id ?? null,
+      requestHash
+    );
+
+    if (reusablePlan) {
+      await logAiRequest(adminClient, {
+        userId: user.id,
+        planId: reusablePlan.planId,
+        requestKind,
+        trigger,
+        source: "cached",
+        model: resolvePreferredPlannerModel(),
+        requestHash,
+        inputTokens: 0,
+        outputTokens: 0,
+        totalTokens: 0,
+        estimatedCostUsd: 0,
+        latencyMs: 0,
+        success: true
+      });
+
+      return jsonResponse({
+        source: "cached",
+        persisted_plan_id: reusablePlan.planId,
+        plan: reusablePlan.plan
+      });
+    }
+
+    if (trigger === "onboarding_completed" && !canGenerateInitialPlan && !isPremium) {
+      return jsonResponse(
+        {
+          error:
+            "Il primo piano è già stato generato. Gli aggiornamenti successivi fanno parte di Premium."
+        },
+        403
+      );
+    }
+
+    if (trigger !== "onboarding_completed" && !isPremium) {
+      return jsonResponse(
+        { error: "L'aggiornamento del percorso nel tempo è disponibile in Premium." },
+        403
+      );
+    }
+
+    const aiResult = await tryOpenAIPlan(plannerInput, requestKind, requestHash);
+    const plan = aiResult?.plan ?? buildFallbackPlan(plannerInput);
+    const source = aiResult?.source ?? "fallback";
     const persistedPlanId = await persistPlan(
       adminClient,
       user.id,
@@ -406,6 +465,26 @@ serve(async (request) => {
       currentPlanRes.data?.id ?? null,
       source
     );
+
+    await logAiRequest(adminClient, {
+      userId: user.id,
+      planId: persistedPlanId,
+      requestKind,
+      trigger,
+      source,
+      model: aiResult?.usage.model ?? resolvePreferredPlannerModel(),
+      requestHash,
+      inputTokens: aiResult?.usage.input_tokens ?? 0,
+      outputTokens: aiResult?.usage.output_tokens ?? 0,
+      totalTokens: aiResult?.usage.total_tokens ?? 0,
+      estimatedCostUsd: aiResult?.usage.estimated_cost_usd ?? 0,
+      latencyMs: aiResult?.usage.latency_ms ?? null,
+      success: true,
+      errorMessage:
+        source === "fallback"
+          ? "OpenAI non disponibile o output non valido: usato piano fallback."
+          : null
+    });
 
     return jsonResponse({
       source,
@@ -423,59 +502,120 @@ serve(async (request) => {
   }
 });
 
-async function tryOpenAIPlan(input: Record<string, unknown>): Promise<PlannerOutput | null> {
+async function tryOpenAIPlan(
+  input: Record<string, unknown>,
+  requestKind: PlannerRequestKind,
+  requestHash: string
+): Promise<PlannerResult | null> {
   const apiKey = Deno.env.get("OpenAI-API");
   if (!apiKey) return null;
 
-  const model = Deno.env.get("OPENAI_MODEL") ?? "gpt-5-mini";
-  const context = buildPlannerContext(input);
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
+  const configuredModel = Deno.env.get("OPENAI_MODEL")?.trim();
+  const defaultModel = "gpt-5-mini";
+  const modelSequence =
+    configuredModel && configuredModel !== defaultModel
+      ? [configuredModel, defaultModel]
+      : [configuredModel || defaultModel];
+  const context = buildPlannerContext(input, requestKind);
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`
-    },
-    signal: controller.signal,
-    body: JSON.stringify({
-      model,
-      max_completion_tokens: 2200,
-      response_format: {
-        type: "json_schema",
-        json_schema: planSchema
+  for (const model of modelSequence) {
+    const startedAt = Date.now();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`
       },
-      messages: [
-        {
-          role: "system",
-          content:
-            "Sei il motore di pianificazione di Mirya. Generi piani di allenamento femminili per casa, semplici, prudenti, progressivi e concreti. Non sei un medico, non fai diagnosi, non prometti trasformazioni rapide e non scrivi testo vago. Devi restituire solo JSON valido che rispetta lo schema richiesto. Ogni testo mostrabile in app deve essere in italiano naturale, senza underscore, senza chiavi tecniche, senza etichette interne e senza tono da bodybuilding. Il piano deve essere particolarmente accurato nei casi di donna molto magra con poco tono, sensazione di flaccidita, bisogno di ricomposizione o ricostruzione del tono. Usa soltanto exercise_id ammessi."
+      signal: controller.signal,
+      body: JSON.stringify({
+        model,
+        max_completion_tokens: OPENAI_MAX_COMPLETION_TOKENS,
+        response_format: {
+          type: "json_schema",
+          json_schema: planSchema
         },
-        {
-          role: "user",
-          content: JSON.stringify(context)
-        }
-      ]
-    })
-  }).catch((error) => {
-    console.error("OpenAI planner fetch failed", error instanceof Error ? error.message : error);
-    return null;
-  });
+        messages: [
+          {
+            role: "system",
+            content:
+              "Sei il motore di pianificazione di Mirya. Generi piani di allenamento per donne adulte che si allenano a casa. Devi essere prudente, concreto e chiaro. Non sei un medico, non fai diagnosi e non prometti trasformazioni rapide. Restituisci solo JSON valido che rispetti lo schema richiesto. Mantieni ogni stringa breve, utile e naturale. Non usare mai underscore, chiavi tecniche o etichette interne nel testo finale. Lascia al frontend i testi editoriali statici: tu restituisci solo contenuti davvero personalizzati e strettamente necessari per il piano. Usa soltanto exercise_id ammessi."
+          },
+          {
+            role: "user",
+            content: JSON.stringify(context)
+          }
+        ]
+      })
+    }).catch((error) => {
+      console.error(
+        "OpenAI planner fetch failed",
+        JSON.stringify({
+          request_kind: requestKind,
+          model,
+          request_hash: requestHash,
+          error: error instanceof Error ? error.message : String(error)
+        })
+      );
+      return null;
+    });
 
-  clearTimeout(timeout);
+    clearTimeout(timeout);
 
-  if (!response?.ok) {
-    console.error("OpenAI planner error", await response?.text?.().catch(() => ""));
-    return null;
+    if (!response?.ok) {
+      const errorText = await response?.text?.().catch(() => "");
+      console.error(
+        "OpenAI planner error",
+        JSON.stringify({
+          request_kind: requestKind,
+          model,
+          request_hash: requestHash,
+          status: response?.status ?? null,
+          error: errorText
+        })
+      );
+      continue;
+    }
+
+    const payload = await response.json().catch(() => null);
+    const content = payload?.choices?.[0]?.message?.content;
+    if (typeof content !== "string") {
+      continue;
+    }
+
+    const parsed = JSON.parse(content);
+    const plan = sanitizePlannerOutput(parsed, input);
+
+    if (!plan) {
+      continue;
+    }
+
+    const usage = buildUsageMetrics(payload, model, requestKind, requestHash, Date.now() - startedAt);
+
+    console.info(
+      "mirya_ai_request",
+      JSON.stringify({
+        request_kind: usage.request_kind,
+        model: usage.model,
+        input_tokens: usage.input_tokens,
+        output_tokens: usage.output_tokens,
+        total_tokens: usage.total_tokens,
+        estimated_cost_usd: usage.estimated_cost_usd,
+        latency_ms: usage.latency_ms,
+        request_hash: usage.request_hash
+      })
+    );
+
+    return {
+      plan,
+      source: "ai",
+      usage
+    };
   }
 
-  const payload = await response.json().catch(() => null);
-  const content = payload?.choices?.[0]?.message?.content;
-  if (typeof content !== "string") return null;
-
-  const parsed = JSON.parse(content);
-  return sanitizePlannerOutput(parsed, input);
+  return null;
 }
 
 function buildFallbackPlan(input: Record<string, any>): PlannerOutput {
@@ -790,6 +930,160 @@ async function finalizePersist(
   return planId;
 }
 
+function resolvePlannerRequestKind(trigger: PlannerTrigger): PlannerRequestKind {
+  if (trigger === "onboarding_completed") {
+    return "initial_plan";
+  }
+
+  if (trigger === "reassessment_completed") {
+    return "reassessment";
+  }
+
+  return "plan_update";
+}
+
+function resolvePreferredPlannerModel() {
+  return Deno.env.get("OPENAI_MODEL")?.trim() || "gpt-5-mini";
+}
+
+async function sha256Hex(value: string) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest))
+    .map((item) => item.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function estimateCostUsd(model: string, inputTokens: number, outputTokens: number) {
+  const pricing = modelPricingUsdPerMillionTokens[model];
+
+  if (!pricing) {
+    return 0;
+  }
+
+  return Number(
+    (
+      (inputTokens / 1_000_000) * pricing.input +
+      (outputTokens / 1_000_000) * pricing.output
+    ).toFixed(6)
+  );
+}
+
+function buildUsageMetrics(
+  payload: Record<string, any>,
+  model: string,
+  requestKind: PlannerRequestKind,
+  requestHash: string,
+  latencyMs: number
+): PlannerUsage {
+  const inputTokens = Number(payload?.usage?.prompt_tokens ?? 0);
+  const outputTokens = Number(payload?.usage?.completion_tokens ?? 0);
+  const totalTokens = Number(payload?.usage?.total_tokens ?? inputTokens + outputTokens);
+
+  return {
+    request_kind: requestKind,
+    model: typeof payload?.model === "string" ? payload.model : model,
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+    total_tokens: totalTokens,
+    estimated_cost_usd: estimateCostUsd(
+      typeof payload?.model === "string" ? payload.model : model,
+      inputTokens,
+      outputTokens
+    ),
+    latency_ms: latencyMs,
+    request_hash: requestHash
+  };
+}
+
+async function findReusablePlan(
+  client: ReturnType<typeof createClient>,
+  userId: string,
+  currentPlanId: string | null,
+  requestHash: string
+) {
+  if (!currentPlanId) {
+    return null;
+  }
+
+  const recentLog = await client
+    .from("ai_request_logs")
+    .select("plan_id, created_at, success")
+    .eq("user_id", userId)
+    .eq("request_hash", requestHash)
+    .eq("success", true)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (recentLog.error || !recentLog.data?.plan_id) {
+    return null;
+  }
+
+  const createdAt = new Date(recentLog.data.created_at).getTime();
+  if (!createdAt || Date.now() - createdAt > RECENT_CACHE_WINDOW_MS) {
+    return null;
+  }
+
+  const versionResult = await client
+    .from("training_plan_versions")
+    .select("payload")
+    .eq("user_id", userId)
+    .eq("plan_id", recentLog.data.plan_id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (versionResult.error || !versionResult.data?.payload) {
+    return null;
+  }
+
+  return {
+    planId: recentLog.data.plan_id,
+    plan: versionResult.data.payload as unknown as PlannerOutput
+  };
+}
+
+async function logAiRequest(
+  client: ReturnType<typeof createClient>,
+  input: {
+    userId: string;
+    planId: string | null;
+    requestKind: PlannerRequestKind;
+    trigger: PlannerTrigger;
+    source: PlannerSource;
+    model: string;
+    requestHash: string;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    estimatedCostUsd: number;
+    latencyMs: number | null;
+    success: boolean;
+    errorMessage?: string | null;
+  }
+) {
+  const insertResult = await client.from("ai_request_logs").insert({
+    user_id: input.userId,
+    plan_id: input.planId,
+    request_kind: input.requestKind,
+    trigger: input.trigger,
+    source: input.source,
+    model: input.model,
+    request_hash: input.requestHash,
+    input_tokens: input.inputTokens,
+    output_tokens: input.outputTokens,
+    total_tokens: input.totalTokens,
+    estimated_cost_usd: input.estimatedCostUsd.toFixed(6),
+    latency_ms: input.latencyMs,
+    success: input.success,
+    error_message: input.errorMessage ?? null
+  });
+
+  if (insertResult.error) {
+    console.error("planner log insert failed", insertResult.error.message);
+  }
+}
+
 function sanitizePlannerOutput(value: unknown, input: Record<string, any>): PlannerOutput | null {
   if (!value || typeof value !== "object") return null;
 
@@ -955,7 +1249,7 @@ function sanitizeExercises(rawExercises: unknown, focusKey: string, onboarding: 
 
   return parsed
     .filter((item) => item && typeof item === "object")
-    .slice(0, 6)
+    .slice(0, 5)
     .map((item) => {
       const raw = item as Record<string, any>;
       const exerciseId =
@@ -995,15 +1289,53 @@ function sanitizeExercises(rawExercises: unknown, focusKey: string, onboarding: 
     });
 }
 
-function buildPlannerContext(input: Record<string, unknown>) {
+function buildPlannerContext(
+  input: Record<string, unknown>,
+  requestKind: PlannerRequestKind
+) {
   const onboarding = input.onboarding as Record<string, unknown>;
   const deepProfile = (input.deepProfile as Record<string, unknown> | null) ?? null;
   const reassessment = (input.reassessment as Record<string, unknown> | null) ?? null;
   const sessions = (input.sessions as Array<Record<string, unknown>>) ?? [];
   const currentPlan = (input.currentPlan as Record<string, unknown> | null) ?? null;
+  const cleanLimitations = readStringArray(onboarding.limitations).filter((item) => item !== "nessuna");
+  const deepSignals = compactObject({
+    weak_area: deepProfile?.weak_area ?? null,
+    priority_area: deepProfile?.priority_area ?? null,
+    posture_perception: deepProfile?.posture_perception ?? null,
+    mobility_perception: deepProfile?.mobility_perception ?? null,
+    coordination_level: deepProfile?.coordination_level ?? null,
+    sensitivities: readStringArray(deepProfile?.sensitivities).slice(0, 4),
+    pelvic_signals: readStringArray(deepProfile?.pelvic_signals).slice(0, 2),
+    feared_exercises: deepProfile?.feared_exercises ?? null,
+    disliked_exercises: deepProfile?.disliked_exercises ?? null,
+    relevant_interventions: deepProfile?.relevant_interventions ?? null,
+    training_preference: deepProfile?.training_preference ?? null
+  });
+  const progressSignals = compactObject({
+    completed_sessions: sessions.length,
+    recent_feelings: sessions
+      .map((session) => session.feeling)
+      .filter((item): item is string => typeof item === "string")
+      .slice(0, 4),
+    recent_uncomfortable_exercises: reassessment
+      ? readStringArray(reassessment.uncomfortable_exercises).slice(0, 4)
+      : [],
+    latest_plan_fit: reassessment?.plan_fit ?? null,
+    latest_obstacle: reassessment?.main_obstacle ?? null
+  });
+  const currentPlanSnapshot = currentPlan
+    ? compactObject({
+        current_phase: currentPlan.current_phase ?? null,
+        phase_focus: currentPlan.phase_focus ?? null,
+        weekly_goal: currentPlan.weekly_goal ?? null,
+        session_difficulty: currentPlan.session_difficulty ?? null
+      })
+    : null;
 
   return {
     locale: "it-IT",
+    request_kind: requestKind,
     goal: "Genera un piano settimanale di tonificazione femminile a casa, prudente, personalizzato, concreto e sostenibile.",
     planner_rules: [
       "Non usare linguaggio aggressivo o da bodybuilding.",
@@ -1012,7 +1344,8 @@ function buildPlannerContext(input: Record<string, unknown>) {
       "Considera bene il caso di persona magra ma con poco tono o flaccidita diffusa.",
       "Se il quadro suggerisce piu ricomposizione o ricostruzione del tono che dimagrimento, rifletti questo nella strategia.",
       "Non usare mai underscore, chiavi tecniche o etichette interne nel testo finale.",
-      "Usa solo exercise_id ammessi."
+      "Usa solo exercise_id ammessi.",
+      "Mantieni i testi brevi: ogni stringa deve essere utile, concreta e senza ridondanze."
     ],
     allowed_exercises: exerciseIds.map((id) => ({
       exercise_id: id,
@@ -1021,19 +1354,47 @@ function buildPlannerContext(input: Record<string, unknown>) {
       default_reps: exerciseCatalog[id as keyof typeof exerciseCatalog].defaultReps
     })),
     user_context: {
-      onboarding,
-      computed_body_goal_hint: resolveComputedBodyGoal(onboarding),
-      deep_profile: deepProfile,
-      latest_reassessment: reassessment,
-      recent_sessions: sessions.slice(0, 8),
-      current_plan_snapshot: currentPlan
+      base_profile: {
+        age_band: onboarding.age_band,
+        height_cm: onboarding.height_cm,
+        weight_kg: onboarding.weight_kg,
+        primary_body_goal: onboarding.primary_body_goal,
+        computed_body_goal_hint: resolveComputedBodyGoal(onboarding),
+        main_focus: onboarding.focus_preference,
+        secondary_objectives: readStringArray(onboarding.secondary_objectives).slice(0, 4),
+        focus_areas: readStringArray(onboarding.focus_areas).slice(0, 3)
+      },
+      training_context: {
+        perceived_level: onboarding.perceived_level,
+        days_per_week: onboarding.days_per_week,
+        preferred_minutes: onboarding.preferred_minutes,
+        preferred_days: readStringArray(onboarding.preferred_days).slice(0, 4),
+        preferred_time_of_day: onboarding.preferred_time_of_day,
+        weekly_availability: onboarding.weekly_availability,
+        consistency_score: onboarding.consistency_score,
+        gentle_start: onboarding.gentle_start,
+        prefer_simple_exercises: onboarding.prefer_simple_exercises,
+        session_style: onboarding.session_style,
+        session_tone: onboarding.session_tone,
+        avoid_jumps: onboarding.avoid_jumps
+      },
+      physical_context: {
+        lifestyle: onboarding.lifestyle,
+        energy_level: onboarding.energy_level,
+        sleep_quality: onboarding.sleep_quality,
+        stress_level: onboarding.stress_level,
+        limitations: cleanLimitations
+      },
+      deep_signals: deepSignals,
+      progress_signals: progressSignals,
+      current_plan_snapshot: currentPlanSnapshot
     }
   };
 }
 
 function buildFallbackExercises(goal: string, preferredMinutes: number, gentleStart: boolean) {
   const ids = focusTemplates[goal] ?? focusTemplates.tonicita_generale;
-  const amount = preferredMinutes <= 10 ? 4 : preferredMinutes <= 15 ? 5 : 6;
+  const amount = preferredMinutes <= 10 ? 4 : 5;
   const sets = gentleStart ? 2 : preferredMinutes >= 20 ? 3 : 2;
   const restSeconds = gentleStart ? 25 : 20;
 
@@ -1158,7 +1519,7 @@ function humanizePlannerText(value: string) {
     next = next.replace(new RegExp(`\\b${escapeRegExp(token)}\\b`, "gi"), label);
   });
 
-  return next.replace(/\s+/g, " ").trim();
+  return next.replace(/_/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function formatTextValue(value: string) {
@@ -1330,6 +1691,26 @@ function inferDurationFromDose(reps: string) {
 
 function readStringArray(value: unknown) {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+function compactObject<T extends Record<string, unknown>>(value: T) {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entry]) => {
+      if (entry === null || entry === undefined) {
+        return false;
+      }
+
+      if (Array.isArray(entry)) {
+        return entry.length > 0;
+      }
+
+      if (typeof entry === "string") {
+        return entry.trim().length > 0;
+      }
+
+      return true;
+    })
+  );
 }
 
 function nextReassessmentIso(days: number) {

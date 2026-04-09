@@ -314,6 +314,65 @@ export interface Database {
           updated_at?: string;
         }
       >;
+      ai_request_logs: TableDef<
+        {
+          id: string;
+          user_id: string;
+          plan_id: string | null;
+          request_kind: string;
+          trigger: string;
+          provider: string;
+          source: string;
+          model: string;
+          request_hash: string;
+          input_tokens: number;
+          output_tokens: number;
+          total_tokens: number;
+          estimated_cost_usd: string;
+          latency_ms: number | null;
+          success: boolean;
+          error_message: string | null;
+          created_at: string;
+        },
+        {
+          id?: string;
+          user_id: string;
+          plan_id?: string | null;
+          request_kind: string;
+          trigger: string;
+          provider?: string;
+          source: string;
+          model: string;
+          request_hash: string;
+          input_tokens?: number;
+          output_tokens?: number;
+          total_tokens?: number;
+          estimated_cost_usd?: string;
+          latency_ms?: number | null;
+          success?: boolean;
+          error_message?: string | null;
+          created_at?: string;
+        },
+        {
+          id?: string;
+          user_id?: string;
+          plan_id?: string | null;
+          request_kind?: string;
+          trigger?: string;
+          provider?: string;
+          source?: string;
+          model?: string;
+          request_hash?: string;
+          input_tokens?: number;
+          output_tokens?: number;
+          total_tokens?: number;
+          estimated_cost_usd?: string;
+          latency_ms?: number | null;
+          success?: boolean;
+          error_message?: string | null;
+          created_at?: string;
+        }
+      >;
       user_reassessments: TableDef<
         {
           id: string;
