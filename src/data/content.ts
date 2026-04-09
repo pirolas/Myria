@@ -66,7 +66,7 @@ export const minuteOptions: PreferenceOption<MinuteOption>[] = [
 
 export const goalOptions: PreferenceOption<Goal>[] = [
   { value: "glutei_gambe", label: "Glutei e gambe", description: "Per sentirli più presenti, sostenuti e tonici." },
-  { value: "pancia_core", label: "Pancia e core", description: "Per ritrovare sostegno e controllo nel centro del corpo." },
+  { value: "pancia_core", label: "Addome profondo e stabilità", description: "Per ritrovare sostegno e controllo nel centro del corpo." },
   { value: "postura", label: "Postura", description: "Per alleggerire le chiusure e stare più aperta nei movimenti." },
   { value: "tonicita_generale", label: "Tonicità generale", description: "Per un lavoro armonioso su tutto il corpo." },
   { value: "ripartenza_dolce", label: "Ripartenza dolce", description: "Per ricominciare con un ritmo delicato ma credibile." }
@@ -118,10 +118,10 @@ export const secondaryObjectiveOptions: MultiPreferenceOption<SecondaryObjective
 export const focusAreaOptions: MultiPreferenceOption<FocusArea>[] = [
   { value: "glutei", label: "Glutei", description: "Per dare più sostegno e forma alla parte posteriore." },
   { value: "gambe", label: "Gambe", description: "Per gambe più toniche e presenti." },
-  { value: "addome_core", label: "Addome e core", description: "Per stabilità e controllo nel centro del corpo." },
+  { value: "addome_core", label: "Addome profondo e stabilità", description: "Per stabilità, sostegno e controllo nel centro del corpo." },
   { value: "postura", label: "Postura", description: "Per alleggerire chiusure e rigidità." },
   { value: "braccia", label: "Braccia", description: "Per completare il lavoro di tonicità in modo armonioso." },
-  { value: "total_body", label: "Total body", description: "Per un percorso equilibrato su tutto il corpo." }
+  { value: "total_body", label: "Tonificazione generale", description: "Per un percorso equilibrato su tutto il corpo." }
 ];
 
 export const preferredDayOptions: PreferenceOption<PreferredDay>[] = [
@@ -278,7 +278,7 @@ export const avoidJumpOptions: PreferenceOption<boolean>[] = [
 
 export const bodyAreaFocusOptions: PreferenceOption<BodyAreaFocus>[] = [
   { value: "glutei_gambe", label: "Glutei e gambe", description: "Sento più bisogno di sostegno e tono nella parte bassa." },
-  { value: "core", label: "Core e centro", description: "Mi serve più controllo e sostegno nel centro del corpo." },
+  { value: "core", label: "Addome profondo e stabilità", description: "Mi serve più controllo e sostegno nel centro del corpo." },
   { value: "postura", label: "Postura", description: "Sento soprattutto chiusura, rigidità o poco assetto." },
   { value: "schiena", label: "Schiena", description: "Avverto debolezza o poca stabilità dietro." },
   { value: "stabilita_generale", label: "Stabilità generale", description: "Mi sento poco sicura nel movimento in modo diffuso." }
@@ -373,22 +373,22 @@ export const improvementOptions: MultiPreferenceOption<ImprovementTag>[] = [
   { value: "tono_generale", label: "Tono generale", description: "Sento il corpo un po' più presente nel complesso." },
   { value: "glutei_gambe", label: "Glutei e gambe", description: "Percepisco un miglioramento nella parte bassa." },
   { value: "postura", label: "Postura", description: "Mi sento più aperta o meno chiusa." },
-  { value: "core", label: "Core", description: "Sento più controllo nel centro del corpo." },
+  { value: "core", label: "Addome profondo e stabilità", description: "Sento più controllo nel centro del corpo." },
   { value: "energia", label: "Energia", description: "Sto un po' meglio anche nella giornata." }
 ];
 
 export const categoryMeta: Record<CategoryId, { title: string; description: string; accent: string }> = {
   glutei_gambe: { title: "Glutei e gambe", description: "Per dare tono, sostegno e stabilità alla parte inferiore.", accent: "bg-[rgba(94,184,178,0.12)]" },
-  core_pancia_profonda: { title: "Core e pancia profonda", description: "Per sentire il centro più presente senza forzare.", accent: "bg-[rgba(117,194,187,0.12)]" },
+  core_pancia_profonda: { title: "Addome profondo e stabilità", description: "Per sentire il centro più presente senza forzare.", accent: "bg-[rgba(117,194,187,0.12)]" },
   postura: { title: "Postura", description: "Per alleggerire rigidità e ritrovare un assetto più aperto.", accent: "bg-[rgba(126,177,188,0.11)]" },
-  total_body_leggero: { title: "Total body leggero", description: "Per un lavoro completo, lineare e facile da seguire.", accent: "bg-[rgba(140,203,197,0.11)]" },
+  total_body_leggero: { title: "Tonificazione generale leggera", description: "Per un lavoro completo, lineare e facile da seguire.", accent: "bg-[rgba(140,203,197,0.11)]" },
   mobilita_recupero: { title: "Mobilità e recupero", description: "Piccoli movimenti per sciogliere e recuperare bene.", accent: "bg-[rgba(229,247,245,0.92)]" },
   ripartenza_dolce: { title: "Ripartenza dolce", description: "Per tornare a muoversi con semplicità e fiducia.", accent: "bg-[rgba(239,252,250,0.95)]" }
 };
 
 export const goalLabels: Record<Goal, string> = {
   glutei_gambe: "Glutei e gambe",
-  pancia_core: "Pancia e core",
+  pancia_core: "Addome profondo e stabilità",
   postura: "Postura",
   tonicita_generale: "Tonicità generale",
   ripartenza_dolce: "Ripartenza dolce"
@@ -418,10 +418,10 @@ export const secondaryObjectiveLabels: Record<SecondaryObjective, string> = {
 export const focusAreaLabels: Record<FocusArea, string> = {
   glutei: "Glutei",
   gambe: "Gambe",
-  addome_core: "Addome e core",
+  addome_core: "Addome profondo e stabilità",
   postura: "Postura",
   braccia: "Braccia",
-  total_body: "Total body"
+  total_body: "Tonificazione generale"
 };
 
 export const levelLabels: Record<Level, string> = {

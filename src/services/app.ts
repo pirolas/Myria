@@ -1,6 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 import { requireSupabaseClient } from "@/lib/supabase";
 import { toDateKey } from "@/lib/date";
+import { humanizePlannerText } from "@/lib/formatters";
 import {
   deriveFocusAreasFromObjectives,
   normalizeOnboardingInput
@@ -849,28 +850,30 @@ function mapPlan(row: PlanRow | null): ActiveTrainingPlan | null {
     primaryBodyGoal: row.primary_body_goal ?? "tonicita_rassodare",
     computedBodyGoal:
       (row.computed_body_goal as ActiveTrainingPlan["computedBodyGoal"]) ?? "toning",
-    currentPhase: row.current_phase,
-    phaseLabel: row.phase_label,
-    phaseFocus: row.phase_focus,
-    phaseGoal: row.phase_goal ?? "",
-    userProfileSummary: row.user_profile_summary ?? "",
+    currentPhase: humanizePlannerText(row.current_phase),
+    phaseLabel: humanizePlannerText(row.phase_label),
+    phaseFocus: humanizePlannerText(row.phase_focus),
+    phaseGoal: humanizePlannerText(row.phase_goal ?? ""),
+    userProfileSummary: humanizePlannerText(row.user_profile_summary ?? ""),
     currentWeek: row.current_week,
     totalWeeks: row.total_weeks,
-    weeklyGoal: row.weekly_goal,
+    weeklyGoal: humanizePlannerText(row.weekly_goal),
     weeklyGoalMinutes: row.weekly_goal_minutes,
     weeklyGoalSessions: row.weekly_goal_sessions,
-    weeklyStructure: readStringArray(row.weekly_structure),
-    sessionDifficulty: row.session_difficulty ?? "",
-    progressionStrategy: row.progression_strategy ?? "",
-    progressionReason: row.progression_reason,
-    motivationalNote: row.motivational_note,
-    realisticExpectedOutcomes: readStringArray(row.realistic_expected_outcomes),
-    cautionNotes: readStringArray(row.caution_notes),
-    recoveryNotes: readStringArray(row.recovery_notes),
-    adherenceStrategy: row.adherence_strategy ?? "",
-    nutritionTips: readStringArray(row.nutrition_tips),
-    planExplanation: row.plan_explanation ?? "",
-    adjustments: readStringArray(row.adjustments),
+    weeklyStructure: readStringArray(row.weekly_structure).map(humanizePlannerText),
+    sessionDifficulty: humanizePlannerText(row.session_difficulty ?? ""),
+    progressionStrategy: humanizePlannerText(row.progression_strategy ?? ""),
+    progressionReason: humanizePlannerText(row.progression_reason),
+    motivationalNote: humanizePlannerText(row.motivational_note),
+    realisticExpectedOutcomes: readStringArray(row.realistic_expected_outcomes).map(
+      humanizePlannerText
+    ),
+    cautionNotes: readStringArray(row.caution_notes).map(humanizePlannerText),
+    recoveryNotes: readStringArray(row.recovery_notes).map(humanizePlannerText),
+    adherenceStrategy: humanizePlannerText(row.adherence_strategy ?? ""),
+    nutritionTips: readStringArray(row.nutrition_tips).map(humanizePlannerText),
+    planExplanation: humanizePlannerText(row.plan_explanation ?? ""),
+    adjustments: readStringArray(row.adjustments).map(humanizePlannerText),
     reassessmentDueInDays: row.reassessment_due_in_days,
     nextReassessmentDate: row.next_reassessment_at,
     planOverview: isRecord(row.plan_overview_payload)
@@ -894,17 +897,19 @@ function mapPlanVersion(
     planId: row.plan_id,
     versionNumber: row.version_number,
     trigger: row.trigger as TrainingPlanVersionRecord["trigger"],
-    userProfileSummary: row.user_profile_summary,
-    phaseGoal: row.phase_goal,
-    weeklyStructure: readStringArray(row.weekly_structure),
-    sessionDifficulty: row.session_difficulty,
-    progressionStrategy: row.progression_strategy,
-    realisticExpectedOutcomes: readStringArray(row.realistic_expected_outcomes),
-    motivationalMessage: row.motivational_message,
-    recoveryNotes: readStringArray(row.recovery_notes),
-    adherenceStrategy: row.adherence_strategy,
-    nutritionTips: readStringArray(row.nutrition_tips),
-    planExplanation: row.plan_explanation,
+    userProfileSummary: humanizePlannerText(row.user_profile_summary),
+    phaseGoal: humanizePlannerText(row.phase_goal),
+    weeklyStructure: readStringArray(row.weekly_structure).map(humanizePlannerText),
+    sessionDifficulty: humanizePlannerText(row.session_difficulty),
+    progressionStrategy: humanizePlannerText(row.progression_strategy),
+    realisticExpectedOutcomes: readStringArray(row.realistic_expected_outcomes).map(
+      humanizePlannerText
+    ),
+    motivationalMessage: humanizePlannerText(row.motivational_message),
+    recoveryNotes: readStringArray(row.recovery_notes).map(humanizePlannerText),
+    adherenceStrategy: humanizePlannerText(row.adherence_strategy),
+    nutritionTips: readStringArray(row.nutrition_tips).map(humanizePlannerText),
+    planExplanation: humanizePlannerText(row.plan_explanation),
     createdAt: row.created_at
   };
 }
@@ -915,12 +920,12 @@ function mapPlanDay(row: PlanDayRow): TrainingPlanDay {
     planId: row.plan_id,
     dayIndex: row.day_index,
     scheduledFor: row.scheduled_for,
-    title: row.title,
-    focus: row.focus,
+    title: humanizePlannerText(row.title),
+    focus: humanizePlannerText(row.focus),
     sessionKind: row.session_kind as TrainingPlanDay["sessionKind"],
     estimatedMinutes: row.estimated_minutes,
     status: toPlanDayStatus(row.status),
-    coachNote: row.coach_note,
+    coachNote: humanizePlannerText(row.coach_note),
     workout: mapWorkoutPayload(row.workout_payload, row)
   };
 }
@@ -943,37 +948,46 @@ function mapWorkoutPayload(payload: Json, row: PlanDayRow): PlannedWorkout {
       kind: "exercise",
       exerciseId:
         typeof item.exerciseId === "string" ? item.exerciseId : "esercizio-generico",
-      title: typeof item.title === "string" ? item.title : "Esercizio",
-      summary: typeof item.summary === "string" ? item.summary : "",
+      title: humanizePlannerText(typeof item.title === "string" ? item.title : "Esercizio"),
+      summary: humanizePlannerText(typeof item.summary === "string" ? item.summary : ""),
       sets: typeof item.sets === "number" ? item.sets : 2,
-      repsLabel: typeof item.repsLabel === "string" ? item.repsLabel : "8-10 ripetizioni",
+      repsLabel: humanizePlannerText(
+        typeof item.repsLabel === "string" ? item.repsLabel : "8-10 ripetizioni"
+      ),
       durationSeconds:
         typeof item.durationSeconds === "number" ? item.durationSeconds : 40,
       restSeconds: typeof item.restSeconds === "number" ? item.restSeconds : 20,
-      bodyArea: typeof item.bodyArea === "string" ? item.bodyArea : "",
-      doseLabel: typeof item.doseLabel === "string" ? item.doseLabel : "",
+      bodyArea: humanizePlannerText(typeof item.bodyArea === "string" ? item.bodyArea : ""),
+      doseLabel: humanizePlannerText(typeof item.doseLabel === "string" ? item.doseLabel : ""),
       executionNote:
-        typeof item.executionNote === "string" ? item.executionNote : undefined,
+        typeof item.executionNote === "string"
+          ? humanizePlannerText(item.executionNote)
+          : undefined,
       easierOption:
-        typeof item.easierOption === "string" ? item.easierOption : undefined,
-      caution: typeof item.caution === "string" ? item.caution : undefined
+        typeof item.easierOption === "string"
+          ? humanizePlannerText(item.easierOption)
+          : undefined,
+      caution:
+        typeof item.caution === "string" ? humanizePlannerText(item.caution) : undefined
     });
 
     return accumulator;
   }, []);
 
   return {
-    title: typeof base.title === "string" ? base.title : row.title,
-    focus: typeof base.focus === "string" ? base.focus : row.focus,
+    title: humanizePlannerText(typeof base.title === "string" ? base.title : row.title),
+    focus: humanizePlannerText(typeof base.focus === "string" ? base.focus : row.focus),
     estimatedMinutes:
       typeof base.estimatedMinutes === "number"
         ? base.estimatedMinutes
         : row.estimated_minutes,
-    coachNote: typeof base.coachNote === "string" ? base.coachNote : row.coach_note,
+    coachNote: humanizePlannerText(
+      typeof base.coachNote === "string" ? base.coachNote : row.coach_note
+    ),
     cautionNotes:
       Array.isArray(base.cautionNotes) && base.cautionNotes.every((value) => typeof value === "string")
-        ? (base.cautionNotes as string[])
-        : readStringArray(row.caution_notes),
+        ? (base.cautionNotes as string[]).map(humanizePlannerText)
+        : readStringArray(row.caution_notes).map(humanizePlannerText),
     steps
   };
 }
@@ -1030,9 +1044,13 @@ function mapMilestone(
 function computeBodyGoal(input: BetaOnboardingInput): UserOnboardingRecord["computedBodyGoal"] {
   const heightM = input.heightCm && input.heightCm > 0 ? input.heightCm / 100 : null;
   const bmi = heightM && input.weightKg ? input.weightKg / (heightM * heightM) : null;
+  const feelsFlaccid =
+    input.secondaryObjectives.includes("meno_flaccidita") ||
+    input.secondaryObjectives.includes("glutei_piu_sodi") ||
+    input.secondaryObjectives.includes("gambe_piu_toniche");
   const wantsToneRebuild =
     input.primaryBodyGoal === "tonicita_rassodare" &&
-    input.secondaryObjectives.includes("meno_flaccidita") &&
+    feelsFlaccid &&
     bmi !== null &&
     bmi < 22;
 
@@ -1049,6 +1067,10 @@ function computeBodyGoal(input: BetaOnboardingInput): UserOnboardingRecord["comp
   }
 
   if (input.primaryBodyGoal === "dimagrire") {
+    if (bmi !== null && bmi < 22 && feelsFlaccid) {
+      return "tone_rebuild_for_lean_body";
+    }
+
     return bmi !== null && bmi < 23 ? "recomposition" : "fat_loss";
   }
 
@@ -1060,9 +1082,9 @@ function mapPlanAdjustment(
 ): PlanAdjustment {
   return {
     id: row.id,
-    adjustmentType: row.adjustment_type,
-    title: row.title,
-    description: row.description,
+    adjustmentType: humanizePlannerText(row.adjustment_type),
+    title: humanizePlannerText(row.title),
+    description: humanizePlannerText(row.description),
     createdAt: row.created_at
   };
 }
@@ -1073,8 +1095,8 @@ function mapSupportTip(
   return {
     id: row.id,
     category: row.category as SupportTip["category"],
-    title: row.title,
-    body: row.body
+    title: humanizePlannerText(row.title),
+    body: humanizePlannerText(row.body)
   };
 }
 

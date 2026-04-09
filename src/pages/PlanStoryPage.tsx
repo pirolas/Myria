@@ -1,8 +1,14 @@
-﻿import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { planStoryCopy } from "@/copy/plan";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
+import {
+  formatComputedBodyGoalLabelValue,
+  formatNaturalList,
+  humanizePlannerText
+} from "@/lib/formatters";
 
 export function PlanStoryPage() {
   const { data } = useMiryaApp();
@@ -10,6 +16,8 @@ export function PlanStoryPage() {
   if (!data?.activePlan) {
     return <Navigate to="/dashboard" replace />;
   }
+
+  const profileSummary = data.activePlan.profileSummary;
 
   return (
     <div className="page-enter space-y-6">
@@ -39,9 +47,15 @@ export function PlanStoryPage() {
 
         <div className="mt-5 grid gap-3">
           {[
-            ["Fase attuale", data.activePlan.planOverview?.phase_name ?? data.activePlan.phaseLabel],
+            [
+              "Fase attuale",
+              data.activePlan.planOverview?.phase_name ?? data.activePlan.phaseLabel
+            ],
             ["Obiettivo della fase", data.activePlan.phaseGoal],
-            ["Intensita iniziale", data.activePlan.planOverview?.intensity ?? data.activePlan.sessionDifficulty],
+            [
+              "Intensità iniziale",
+              data.activePlan.planOverview?.intensity ?? data.activePlan.sessionDifficulty
+            ],
             ["Strategia di aderenza", data.activePlan.adherenceStrategy]
           ].map(([label, value]) => (
             <div
@@ -51,12 +65,14 @@ export function PlanStoryPage() {
               <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                 {label}
               </div>
-              <div className="mt-2 text-sm leading-6 text-ink">{value}</div>
+              <div className="mt-2 text-sm leading-6 text-ink">
+                {humanizePlannerText(String(value))}
+              </div>
             </div>
           ))}
         </div>
 
-        {data.activePlan.profileSummary ? (
+        {profileSummary ? (
           <div className="mt-4 rounded-[22px] bg-[rgba(255,255,255,0.78)] px-4 py-4">
             <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
               Profilo sintetico
@@ -64,15 +80,19 @@ export function PlanStoryPage() {
             <div className="mt-3 grid gap-3 text-sm leading-6 text-muted">
               <div>
                 <span className="font-semibold text-ink">Obiettivo letto:</span>{" "}
-                {data.activePlan.profileSummary.main_goal}
+                {profileSummary.main_goal}
+              </div>
+              <div>
+                <span className="font-semibold text-ink">Lettura corporea:</span>{" "}
+                {formatComputedBodyGoalLabelValue(profileSummary.computed_body_goal)}
               </div>
               <div>
                 <span className="font-semibold text-ink">Focus principali:</span>{" "}
-                {data.activePlan.profileSummary.focus_areas.join(", ")}
+                {formatNaturalList(profileSummary.focus_areas)}
               </div>
               <div>
                 <span className="font-semibold text-ink">Ritmo considerato:</span>{" "}
-                {data.activePlan.profileSummary.weekly_availability}
+                {humanizePlannerText(profileSummary.weekly_availability)}
               </div>
             </div>
           </div>
@@ -98,7 +118,7 @@ export function PlanStoryPage() {
           <p className="mt-2 text-sm leading-6 text-muted">
             Dopo i primi allenamenti Mirya osserva come rispondi, raccoglie una
             rivalutazione breve e, se vuoi, usa il profilo approfondito per rendere
-            più precisi ritmo, focus e progressione.
+            ancora più precisi ritmo, focus e progressione.
           </p>
         </div>
       </section>
@@ -106,7 +126,7 @@ export function PlanStoryPage() {
       <section className="surface px-5 py-5">
         <SectionHeading
           eyebrow="Prime settimane"
-          title="Come si muovera il percorso da qui"
+          title="Come si muoverà il percorso da qui"
           description={
             data.activePlan.planOverview?.strategy_explanation ??
             data.activePlan.progressionStrategy
@@ -141,6 +161,16 @@ export function PlanStoryPage() {
         </ul>
       </section>
 
+      <section className="surface px-5 py-5">
+        <div className="text-base font-semibold text-ink">{planStoryCopy.sincerityTitle}</div>
+        <p className="mt-3 text-sm leading-7 text-muted">{planStoryCopy.sincerityBody}</p>
+      </section>
+
+      <section className="surface px-5 py-5">
+        <div className="text-base font-semibold text-ink">{planStoryCopy.closingTitle}</div>
+        <p className="mt-3 text-sm leading-7 text-muted">{planStoryCopy.closingBody}</p>
+      </section>
+
       <div className="flex gap-3">
         <Link to="/profile/deep" className="flex-1">
           <Button variant="secondary" fullWidth>
@@ -156,6 +186,3 @@ export function PlanStoryPage() {
     </div>
   );
 }
-
-
-

@@ -16,6 +16,7 @@ import {
   levelLabels,
   levelOptions,
   limitationOptions,
+  lifestyleOptions,
   minuteOptions,
   pastExperienceOptions,
   pastTrainingTypeOptions,
@@ -31,7 +32,8 @@ import {
   sleepQualityOptions,
   stressLevelOptions,
   timePreferenceOptions,
-  trainingDayOptions
+  trainingDayOptions,
+  weeklyAvailabilityOptions
 } from "@/data/content";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
 import {
@@ -149,7 +151,7 @@ export function OnboardingPage() {
           eyebrow: "Contesto quotidiano",
           title: "Energia, storia e stile di vita cambiano moltissimo il modo di partire.",
           description:
-            "Ci aiutano a capire quanto possiamo chiederti subito e cosa invece va costruito con calma."
+            "Ci aiutano a capire quanto possiamo chiederti subito e cosa invece va costruito con calma, senza sovrastimare il tuo margine reale."
         },
         {
           key: "preferences",
@@ -587,12 +589,34 @@ export function OnboardingPage() {
                 }
               />
             </QuestionBlock>
+            <QuestionBlock
+              title="Quanto ti muovi nella giornata"
+              description="Questo cambia molto il modo in cui dosiamo tono, recupero e progressione."
+            >
+              <ChoiceGrid
+                options={lifestyleOptions}
+                value={form.lifestyle}
+                onChange={(lifestyle) => setForm((current) => ({ ...current, lifestyle }))}
+              />
+            </QuestionBlock>
             <MultiSelectInline
               title="Allenamenti già provati"
               items={pastTrainingTypeOptions}
               selected={form.pastTrainingTypes}
               onToggle={(value) => togglePastTrainingType(value as PastTrainingType)}
             />
+            <QuestionBlock
+              title="Quanto spazio reale hai nella settimana"
+              description="Ci serve per costruire un piano che stia nella tua vita, non in una settimana ideale."
+            >
+              <ChoiceGrid
+                options={weeklyAvailabilityOptions}
+                value={form.weeklyAvailability}
+                onChange={(weeklyAvailability) =>
+                  setForm((current) => ({ ...current, weeklyAvailability }))
+                }
+              />
+            </QuestionBlock>
             <QuestionBlock title="Energia media" description="Quanto margine senti durante la giornata.">
               <ChoiceGrid
                 options={energyOptions}
@@ -724,6 +748,20 @@ export function OnboardingPage() {
                 setForm((current) => ({ ...current, wantsTimerSound }))
               }
             />
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                Se vuoi, lasciaci una nota utile
+              </span>
+              <textarea
+                rows={4}
+                value={form.notes}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, notes: event.target.value }))
+                }
+                className="mt-2 w-full rounded-[20px] border border-line bg-white px-4 py-3 text-sm leading-6 text-ink outline-none transition focus:border-accent"
+                placeholder="Per esempio: alcuni movimenti mi mettono in allerta, la sera ho poca energia, oppure in questo periodo ho bisogno di partire davvero con calma."
+              />
+            </label>
           </div>
         );
       default:

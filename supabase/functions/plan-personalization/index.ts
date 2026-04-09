@@ -450,7 +450,7 @@ async function tryOpenAIPlan(input: Record<string, unknown>): Promise<PlannerOut
         {
           role: "system",
           content:
-            "Sei il motore di pianificazione di Mirya. Generi piani di allenamento femminili per casa, semplici, prudenti, progressivi e concreti. Non sei un medico, non fai diagnosi, non prometti trasformazioni rapide e non scrivi testo vago. Devi restituire solo JSON valido che rispetta lo schema richiesto. Il piano deve essere particolarmente accurato nei casi di donna molto magra con poco tono, sensazione di flaccidita, bisogno di ricomposizione o ricostruzione del tono. Usa soltanto exercise_id ammessi."
+            "Sei il motore di pianificazione di Mirya. Generi piani di allenamento femminili per casa, semplici, prudenti, progressivi e concreti. Non sei un medico, non fai diagnosi, non prometti trasformazioni rapide e non scrivi testo vago. Devi restituire solo JSON valido che rispetta lo schema richiesto. Ogni testo mostrabile in app deve essere in italiano naturale, senza underscore, senza chiavi tecniche, senza etichette interne e senza tono da bodybuilding. Il piano deve essere particolarmente accurato nei casi di donna molto magra con poco tono, sensazione di flaccidita, bisogno di ricomposizione o ricostruzione del tono. Usa soltanto exercise_id ammessi."
         },
         {
           role: "user",
@@ -825,56 +825,124 @@ function sanitizePlannerOutput(value: unknown, input: Record<string, any>): Plan
     return {
       day_index: index,
       scheduled_for: scheduledDates.dateByIndex[index],
-      label: typeof candidate.label === "string" ? candidate.label : scheduledDates.labelByIndex[index],
-      title: typeof candidate.title === "string" ? candidate.title : candidate.session_kind === "recovery" ? "Recupero guidato" : resolveWorkoutTitle(focusKey),
-      focus: typeof candidate.focus === "string" ? candidate.focus : formatFocus(focusKey),
+      label: humanizePlannerText(
+        typeof candidate.label === "string"
+          ? candidate.label
+          : scheduledDates.labelByIndex[index]
+      ),
+      title: humanizePlannerText(
+        typeof candidate.title === "string"
+          ? candidate.title
+          : candidate.session_kind === "recovery"
+            ? "Recupero guidato"
+            : resolveWorkoutTitle(focusKey)
+      ),
+      focus: humanizePlannerText(
+        typeof candidate.focus === "string" ? candidate.focus : formatFocus(focusKey)
+      ),
       session_kind: candidate.session_kind === "recovery" ? "recovery" : "workout",
       estimated_duration_minutes: typeof candidate.estimated_duration_minutes === "number" ? candidate.estimated_duration_minutes : onboarding.preferred_minutes,
-      coach_note: typeof candidate.coach_note === "string" ? candidate.coach_note : buildWorkoutCoachNote(onboarding, input.deepProfile),
-      caution_notes: Array.isArray(candidate.caution_notes) ? candidate.caution_notes.filter((item: unknown): item is string => typeof item === "string") : cautionFlags,
+      coach_note: humanizePlannerText(
+        typeof candidate.coach_note === "string"
+          ? candidate.coach_note
+          : buildWorkoutCoachNote(onboarding, input.deepProfile)
+      ),
+      caution_notes: Array.isArray(candidate.caution_notes)
+        ? candidate.caution_notes
+            .filter((item: unknown): item is string => typeof item === "string")
+            .map(humanizePlannerText)
+        : cautionFlags.map(humanizePlannerText),
       exercises: sanitizeExercises(candidate.exercises, focusKey, onboarding)
     };
   });
 
   return {
     profile_summary: {
-      main_goal: typeof profileSummary.main_goal === "string" ? profileSummary.main_goal : formatBodyGoal(onboarding.primary_body_goal),
+      main_goal:
+        typeof profileSummary.main_goal === "string"
+          ? humanizePlannerText(profileSummary.main_goal)
+          : formatBodyGoal(onboarding.primary_body_goal),
       computed_body_goal: typeof profileSummary.computed_body_goal === "string" ? profileSummary.computed_body_goal : resolveComputedBodyGoal(onboarding),
-      secondary_goals: readStringArray(profileSummary.secondary_goals),
-      training_level: typeof profileSummary.training_level === "string" ? profileSummary.training_level : String(onboarding.perceived_level).replaceAll("_", " "),
-      weekly_availability: typeof profileSummary.weekly_availability === "string" ? profileSummary.weekly_availability : `${onboarding.days_per_week} sessioni da ${onboarding.preferred_minutes} minuti`,
-      focus_areas: readStringArray(profileSummary.focus_areas),
-      notes: readStringArray(profileSummary.notes)
+      secondary_goals: readStringArray(profileSummary.secondary_goals).map(humanizePlannerText),
+      training_level:
+        typeof profileSummary.training_level === "string"
+          ? humanizePlannerText(profileSummary.training_level)
+          : formatTextValue(String(onboarding.perceived_level)),
+      weekly_availability:
+        typeof profileSummary.weekly_availability === "string"
+          ? humanizePlannerText(profileSummary.weekly_availability)
+          : `${onboarding.days_per_week} sessioni da ${onboarding.preferred_minutes} minuti`,
+      focus_areas: readStringArray(profileSummary.focus_areas).map(humanizePlannerText),
+      notes: readStringArray(profileSummary.notes).map(humanizePlannerText)
     },
     plan_overview: {
-      phase_name: typeof planOverview.phase_name === "string" ? planOverview.phase_name : resolvePhaseName(onboarding, (input.sessions ?? []).length),
+      phase_name:
+        typeof planOverview.phase_name === "string"
+          ? humanizePlannerText(planOverview.phase_name)
+          : resolvePhaseName(onboarding, (input.sessions ?? []).length),
       phase_duration_weeks: typeof planOverview.phase_duration_weeks === "number" ? planOverview.phase_duration_weeks : 4,
       weekly_sessions: typeof planOverview.weekly_sessions === "number" ? planOverview.weekly_sessions : onboarding.days_per_week,
       session_duration_minutes: typeof planOverview.session_duration_minutes === "number" ? planOverview.session_duration_minutes : onboarding.preferred_minutes,
-      intensity: typeof planOverview.intensity === "string" ? planOverview.intensity : resolveIntensity(onboarding),
-      strategy_explanation: typeof planOverview.strategy_explanation === "string" ? planOverview.strategy_explanation : "Partiamo con una base sostenibile e la facciamo evolvere solo se il corpo risponde bene.",
-      realistic_expectations: readStringArray(planOverview.realistic_expectations)
+      intensity:
+        typeof planOverview.intensity === "string"
+          ? humanizePlannerText(planOverview.intensity)
+          : resolveIntensity(onboarding),
+      strategy_explanation:
+        typeof planOverview.strategy_explanation === "string"
+          ? humanizePlannerText(planOverview.strategy_explanation)
+          : "Partiamo con una base sostenibile e la facciamo evolvere solo se il corpo risponde bene.",
+      realistic_expectations: readStringArray(planOverview.realistic_expectations).map(
+        humanizePlannerText
+      )
     },
     weekly_plan: normalizedWeeklyPlan,
-    phase_goal: typeof raw.phase_goal === "string" ? raw.phase_goal : buildPhaseGoal(onboarding, resolveComputedBodyGoal(onboarding)),
-    phase_focus: typeof raw.phase_focus === "string" ? raw.phase_focus : formatFocus(focusKey),
-    weekly_structure: readStringArray(raw.weekly_structure),
-    current_phase: typeof raw.current_phase === "string" ? raw.current_phase : "base_guidata",
-    progression_strategy: typeof raw.progression_strategy === "string" ? raw.progression_strategy : "Prima base e controllo, poi progressione misurata.",
-    progression_reason: typeof raw.progression_reason === "string" ? raw.progression_reason : "Serve un inizio coerente con il tuo punto di partenza, non un carico troppo aggressivo.",
-    plan_explanation: typeof raw.plan_explanation === "string" ? raw.plan_explanation : buildPlanExplanation(onboarding, input.deepProfile, resolveComputedBodyGoal(onboarding)),
-    realistic_expected_outcomes: readStringArray(raw.realistic_expected_outcomes),
+    phase_goal:
+      typeof raw.phase_goal === "string"
+        ? humanizePlannerText(raw.phase_goal)
+        : buildPhaseGoal(onboarding, resolveComputedBodyGoal(onboarding)),
+    phase_focus:
+      typeof raw.phase_focus === "string"
+        ? humanizePlannerText(raw.phase_focus)
+        : formatFocus(focusKey),
+    weekly_structure: readStringArray(raw.weekly_structure).map(humanizePlannerText),
+    current_phase:
+      typeof raw.current_phase === "string"
+        ? humanizePlannerText(raw.current_phase)
+        : "base guidata",
+    progression_strategy:
+      typeof raw.progression_strategy === "string"
+        ? humanizePlannerText(raw.progression_strategy)
+        : "Prima base e controllo, poi progressione misurata.",
+    progression_reason:
+      typeof raw.progression_reason === "string"
+        ? humanizePlannerText(raw.progression_reason)
+        : "Serve un inizio coerente con il tuo punto di partenza, non un carico troppo aggressivo.",
+    plan_explanation:
+      typeof raw.plan_explanation === "string"
+        ? humanizePlannerText(raw.plan_explanation)
+        : buildPlanExplanation(onboarding, input.deepProfile, resolveComputedBodyGoal(onboarding)),
+    realistic_expected_outcomes: readStringArray(raw.realistic_expected_outcomes).map(
+      humanizePlannerText
+    ),
     support_tips: {
-      nutrition: readStringArray(raw.support_tips?.nutrition),
-      recovery: readStringArray(raw.support_tips?.recovery),
-      consistency: readStringArray(raw.support_tips?.consistency)
+      nutrition: readStringArray(raw.support_tips?.nutrition).map(humanizePlannerText),
+      recovery: readStringArray(raw.support_tips?.recovery).map(humanizePlannerText),
+      consistency: readStringArray(raw.support_tips?.consistency).map(humanizePlannerText)
     },
-    motivational_message: typeof raw.motivational_message === "string" ? raw.motivational_message : "Hai gia una struttura chiara: adesso conta solo seguirla un passo alla volta.",
-    caution_flags: readStringArray(raw.caution_flags).length > 0 ? readStringArray(raw.caution_flags) : cautionFlags,
-    adjustments: readStringArray(raw.adjustments),
+    motivational_message:
+      typeof raw.motivational_message === "string"
+        ? humanizePlannerText(raw.motivational_message)
+        : "Hai già una struttura chiara: adesso conta solo seguirla un passo alla volta.",
+    caution_flags:
+      readStringArray(raw.caution_flags).length > 0
+        ? readStringArray(raw.caution_flags).map(humanizePlannerText)
+        : cautionFlags.map(humanizePlannerText),
+    adjustments: readStringArray(raw.adjustments).map(humanizePlannerText),
     reassessment: {
       days_until_checkin: typeof raw.reassessment?.days_until_checkin === "number" ? raw.reassessment.days_until_checkin : 14,
-      checkin_focus: readStringArray(raw.reassessment?.checkin_focus)
+      checkin_focus: readStringArray(raw.reassessment?.checkin_focus).map(
+        humanizePlannerText
+      )
     }
   };
 }
@@ -905,12 +973,23 @@ function sanitizeExercises(rawExercises: unknown, focusKey: string, onboarding: 
             ? raw.duration_seconds_estimate
             : inferDurationFromDose(typeof raw.reps === "string" ? raw.reps : exercise.defaultReps),
         rest_seconds: typeof raw.rest_seconds === "number" ? raw.rest_seconds : 20,
-        notes: typeof raw.notes === "string" ? raw.notes : "Muoviti con controllo e fermati se perdi qualita del gesto.",
-        easier_option: typeof raw.easier_option === "string" ? raw.easier_option : exercise.easierOption,
-        body_area: typeof raw.body_area === "string" ? raw.body_area : exercise.bodyArea,
+        notes:
+          typeof raw.notes === "string"
+            ? humanizePlannerText(raw.notes)
+            : "Muoviti con controllo e fermati se perdi qualità del gesto.",
+        easier_option:
+          typeof raw.easier_option === "string"
+            ? humanizePlannerText(raw.easier_option)
+            : exercise.easierOption,
+        body_area:
+          typeof raw.body_area === "string"
+            ? humanizePlannerText(raw.body_area)
+            : exercise.bodyArea,
         caution:
           raw.caution === null || typeof raw.caution === "string"
             ? raw.caution
+              ? humanizePlannerText(raw.caution)
+              : raw.caution
             : exercise.caution ?? null
       } satisfies PlannerExerciseOutput;
     });
@@ -932,6 +1011,7 @@ function buildPlannerContext(input: Record<string, unknown>) {
       "Non fare promesse irreali e non dare consigli medici.",
       "Considera bene il caso di persona magra ma con poco tono o flaccidita diffusa.",
       "Se il quadro suggerisce piu ricomposizione o ricostruzione del tono che dimagrimento, rifletti questo nella strategia.",
+      "Non usare mai underscore, chiavi tecniche o etichette interne nel testo finale.",
       "Usa solo exercise_id ammessi."
     ],
     allowed_exercises: exerciseIds.map((id) => ({
@@ -942,6 +1022,7 @@ function buildPlannerContext(input: Record<string, unknown>) {
     })),
     user_context: {
       onboarding,
+      computed_body_goal_hint: resolveComputedBodyGoal(onboarding),
       deep_profile: deepProfile,
       latest_reassessment: reassessment,
       recent_sessions: sessions.slice(0, 8),
@@ -976,7 +1057,9 @@ function buildFallbackExercises(goal: string, preferredMinutes: number, gentleSt
 }
 
 function buildSummaryText(summary: PlannerOutput["profile_summary"]) {
-  return `${summary.main_goal}. Focus su ${summary.focus_areas.join(", ")}. Disponibilita reale: ${summary.weekly_availability}.`;
+  return `${humanizePlannerText(summary.main_goal)}. Focus su ${summary.focus_areas
+    .map(humanizePlannerText)
+    .join(", ")}. Disponibilità reale: ${humanizePlannerText(summary.weekly_availability)}.`;
 }
 
 function resolveScheduledDates(preferredDays: unknown, daysPerWeek: number) {
@@ -1013,23 +1096,73 @@ function resolveWorkoutTitle(goal: string) {
 }
 
 function formatFocus(goal: string) {
-  return goal.replaceAll("_", " ");
+  return formatTextValue(goal);
 }
 
 function formatFocusArea(value: string) {
-  return value.replaceAll("_", " ");
+  return formatTextValue(value);
 }
 
 function formatBodyGoal(value: string) {
-  return value.replaceAll("_", " ");
+  return formatTextValue(value);
 }
 
 function formatSecondaryGoal(value: string) {
-  return value.replaceAll("_", " ");
+  return formatTextValue(value);
 }
 
 function resolveComputedBodyGoal(onboarding: Record<string, any>) {
   return typeof onboarding.computed_body_goal === "string" ? onboarding.computed_body_goal : "toning";
+}
+
+const inlineTokenLabels: Record<string, string> = {
+  glutei_gambe: "glutei e gambe",
+  pancia_core: "addome profondo e stabilità",
+  addome_core: "addome profondo e stabilità",
+  tonicita_generale: "tonificazione generale",
+  total_body: "tonificazione generale",
+  total_body_leggero: "tonificazione generale",
+  ripartenza_dolce: "ripartenza dolce",
+  dimagrire: "dimagrire",
+  massa_muscolare: "aumentare la massa muscolare",
+  tonicita_rassodare: "aumentare tonicità e rassodare",
+  aumentare_peso_sano: "aumentare di peso in modo sano",
+  ricomposizione_corporea: "ricomposizione corporea",
+  fat_loss: "riduzione graduale del peso",
+  muscle_gain: "aumento della massa muscolare",
+  toning: "tonificazione",
+  recomposition: "ricomposizione corporea",
+  tone_rebuild_for_lean_body: "ricostruzione del tono in un corpo già asciutto",
+  molto_fuori_allenamento: "molto fuori allenamento",
+  intermedio_leggero: "intermedio leggero",
+  molto_sedentaria: "molto sedentaria",
+  abbastanza_attiva: "abbastanza attiva",
+  molto_in_movimento: "molto in movimento",
+  medio_alto: "medio-alto",
+  abbastanza_buona: "abbastanza buona",
+  alcuni_spazi: "alcuni spazi",
+  piu_dolce: "più dolce",
+  piu_tonificante: "più tonificante",
+  piu_posturale: "più posturale",
+  piu_energizzante: "più energizzante"
+};
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function humanizePlannerText(value: string) {
+  let next = value;
+
+  Object.entries(inlineTokenLabels).forEach(([token, label]) => {
+    next = next.replace(new RegExp(`\\b${escapeRegExp(token)}\\b`, "gi"), label);
+  });
+
+  return next.replace(/\s+/g, " ").trim();
+}
+
+function formatTextValue(value: string) {
+  return humanizePlannerText(value);
 }
 
 function resolvePhaseName(onboarding: Record<string, any>, sessionsCount: number) {
@@ -1046,8 +1179,8 @@ function resolveIntensity(onboarding: Record<string, any>) {
 
 function buildProfileNotes(onboarding: Record<string, any>, deepProfile: Record<string, any> | null) {
   const notes = [
-    `Energia media ${String(onboarding.energy_level).replaceAll("_", " ")}.`,
-    `Stress ${String(onboarding.stress_level ?? "medio").replaceAll("_", " ")}.`,
+    `Energia media ${formatTextValue(String(onboarding.energy_level))}.`,
+    `Stress ${formatTextValue(String(onboarding.stress_level ?? "medio"))}.`,
     `Costanza percepita ${onboarding.consistency_score}/5.`
   ];
   if (deepProfile?.relevant_interventions) notes.push(String(deepProfile.relevant_interventions));
@@ -1057,52 +1190,52 @@ function buildProfileNotes(onboarding: Record<string, any>, deepProfile: Record<
 
 function buildPhaseGoal(onboarding: Record<string, any>, computedGoal: string) {
   if (computedGoal === "tone_rebuild_for_lean_body") {
-    return "Ricostruire tono, stabilita e presenza muscolare senza impostare il lavoro come semplice dimagrimento.";
+    return "Ricostruire tono, stabilità e presenza muscolare senza impostare il lavoro come semplice dimagrimento.";
   }
   if (computedGoal === "fat_loss") {
-    return "Migliorare tono e spesa muscolare con una base sostenibile, senza stressare recupero e aderenza.";
+    return "Migliorare tono e lavoro muscolare con una base sostenibile, senza stressare recupero e aderenza.";
   }
   if (computedGoal === "muscle_gain") {
-    return "Creare una base di lavoro che sostenga piu tono e piu presenza muscolare nel tempo.";
+    return "Creare una base di lavoro che sostenga più tono e più presenza muscolare nel tempo.";
   }
   if (computedGoal === "recomposition") {
     return "Lavorare su tono, forma e composizione corporea con un ingresso graduale ma concreto.";
   }
-  return `Costruire tono e controllo su ${formatFocus(onboarding.focus_preference ?? "tonicita_generale")} senza chiedere troppo troppo presto.`;
+  return `Costruire tono e controllo su ${formatFocus(onboarding.focus_preference ?? "tonicita_generale")} senza chiedere troppo, troppo presto.`;
 }
 
 function buildWeeklyStructure(onboarding: Record<string, any>) {
   return [
     `${onboarding.days_per_week} sedute guidate a settimana da ${onboarding.preferred_minutes} minuti.`,
-    "Un focus principale chiaro, senza perdere di vista stabilita e tono generale.",
-    "Giornate di recupero o mobilita per proteggere continuita e qualita del gesto.",
+    "Un focus principale chiaro, senza perdere di vista stabilità e tono generale.",
+    "Giornate di recupero o mobilità per proteggere continuità e qualità del gesto.",
     "Progressione iniziale misurata su energia, costanza reale e segnali del corpo."
   ];
 }
 
 function buildRealisticOutcomes(onboarding: Record<string, any>, deepProfile: Record<string, any> | null) {
   const items = [
-    "Maggiore continuita nelle settimane e meno sensazione di ricominciare da zero.",
-    "Piu controllo del movimento e migliore percezione del tono generale.",
-    "Una base piu stabile per aumentare gradualmente il lavoro senza irrigidirti."
+    "Maggiore continuità nelle settimane e meno sensazione di ricominciare da zero.",
+    "Più controllo del movimento e migliore percezione del tono generale.",
+    "Una base più stabile per aumentare gradualmente il lavoro senza irrigidirti."
   ];
   if ((onboarding.focus_areas ?? []).includes("glutei")) {
-    items.push("Glutei piu presenti nei movimenti base e nella percezione del sostegno.");
+    items.push("Glutei più presenti nei movimenti base e nella percezione del sostegno.");
   }
   if ((onboarding.focus_areas ?? []).includes("postura") || deepProfile?.posture_perception) {
-    items.push("Meno rigidita e una postura un po piu aperta nella giornata.");
+    items.push("Meno rigidità e una postura un po' più aperta nella giornata.");
   }
   return items;
 }
 
 function buildNutritionTips(onboarding: Record<string, any>, deepProfile: Record<string, any> | null) {
   const items = [
-    "Evita di saltare spesso i pasti: regolarita e recupero si aiutano a vicenda.",
+    "Evita di saltare spesso i pasti: regolarità e recupero si aiutano a vicenda.",
     "Dai spazio a una quota proteica semplice e sostenibile nella giornata.",
-    "Nei giorni piu pieni prova a non arrivare al workout completamente scarica."
+    "Nei giorni più pieni prova a non arrivare al workout completamente scarica."
   ];
   if (onboarding.low_water_intake || deepProfile?.hydration_pattern === "bassa") {
-    items.unshift("Ricordati di bere con una certa continuita, anche a piccoli appoggi durante la giornata.");
+    items.unshift("Ricordati di bere con una certa continuità, anche a piccoli appoggi durante la giornata.");
   }
   return items;
 }
@@ -1110,10 +1243,10 @@ function buildNutritionTips(onboarding: Record<string, any>, deepProfile: Record
 function buildRecoveryTips(onboarding: Record<string, any>, deepProfile: Record<string, any> | null) {
   const items = [
     "Nei giorni stanchi resta sul ritmo guidato, senza provare ad aggiungere lavoro extra.",
-    "Se un movimento ti irrigidisce, riduci ampiezza o torna alla variante piu facile."
+    "Se un movimento ti irrigidisce, riduci ampiezza o torna alla variante più facile."
   ];
   if (deepProfile?.sensitivities?.includes?.("schiena")) {
-    items.push("Quando la schiena e sensibile, lavora con lentezza e cerca meno ampiezza.");
+    items.push("Quando la schiena è sensibile, lavora con lentezza e cerca meno ampiezza.");
   }
   return items;
 }
@@ -1121,7 +1254,7 @@ function buildRecoveryTips(onboarding: Record<string, any>, deepProfile: Record<
 function buildConsistencyTips(onboarding: Record<string, any>) {
   return [
     `Proteggi prima di tutto ${onboarding.days_per_week} appuntamenti realistici, non una settimana perfetta.`,
-    "Se l'energia cala, fai comunque la versione breve: la continuita conta piu del volume.",
+    "Se l'energia cala, fai comunque la versione breve: la continuità conta più del volume.",
     "Non cambiare sessione ogni volta: lascia che il percorso faccia il suo lavoro."
   ];
 }
@@ -1134,29 +1267,29 @@ function buildPlanExplanation(
   const focus = (onboarding.focus_areas ?? []).map(formatFocusArea).join(", ");
   const whyNotStrong =
     onboarding.gentle_start || onboarding.energy_level === "bassa" || onboarding.energy_level === "molto_bassa"
-      ? "Nel tuo caso non avrebbe senso partire forte, perche il primo obiettivo e creare continuita e controllo senza farti mollare per fatica."
-      : "Anche se c'e margine per sentire lavoro, partire troppo forte non aiuterebbe a costruire un tono piu stabile nel tempo.";
+      ? "Nel tuo caso non avrebbe senso partire forte, perché il primo obiettivo è creare continuità e controllo senza farti mollare per fatica."
+      : "Anche se c'è margine per sentire lavoro, partire troppo forte non aiuterebbe a costruire un tono più stabile nel tempo.";
   const bodyGoalLine =
     computedGoal === "tone_rebuild_for_lean_body"
-      ? "Qui il punto non e dimagrire di piu, ma ricostruire tono e presenza muscolare in un corpo gia tendenzialmente asciutto."
+      ? "Qui il punto non è dimagrire di più, ma ricostruire tono e presenza muscolare in un corpo già tendenzialmente asciutto."
       : computedGoal === "recomposition"
-        ? "Qui lavoriamo piu su ricomposizione e qualita del tessuto che su semplice perdita di peso."
+        ? "Qui lavoriamo più su ricomposizione e qualità del tessuto che su semplice perdita di peso."
         : "";
   const sensitiveLine = deepProfile?.relevant_interventions
-    ? "Terremo presenti anche alcuni dettagli corporei che hai segnalato, cosi il piano resta prudente ma non timido."
-    : "Se in seguito vorrai aggiungere altri dettagli, useremo anche quelli per rendere il percorso ancora piu preciso.";
+    ? "Terremo presenti anche alcuni dettagli corporei che hai segnalato, così il piano resta prudente ma non timido."
+    : "Se in seguito vorrai aggiungere altri dettagli, useremo anche quelli per rendere il percorso ancora più preciso.";
 
-  return `Perfetto. In base ai dati che ci hai dato, partiremo con una fase iniziale orientata a costruire base, controllo e costanza. Nelle prime settimane lavoreremo soprattutto su ${focus || formatFocus(onboarding.focus_preference ?? "tonicita_generale")}, con un ritmo realistico per la tua settimana. ${whyNotStrong} ${bodyGoalLine} L'obiettivo iniziale non e inseguire una trasformazione lampo, ma creare un lavoro che inizi a darti piu sostegno, piu tono e una percezione migliore del corpo. ${sensitiveLine}`.trim();
+  return `Perfetto. In base ai dati che ci hai dato, partiremo con una fase iniziale orientata a costruire base, controllo e costanza. Nelle prime settimane lavoreremo soprattutto su ${focus || formatFocus(onboarding.focus_preference ?? "tonicita_generale")}, con un ritmo realistico per la tua settimana. ${whyNotStrong} ${bodyGoalLine} L'obiettivo iniziale non è inseguire una trasformazione lampo, ma creare un lavoro che inizi a darti più sostegno, più tono e una percezione migliore del corpo. ${sensitiveLine}`.trim();
 }
 
 function buildWorkoutCoachNote(onboarding: Record<string, any>, deepProfile: Record<string, any> | null) {
   if (deepProfile?.training_preference === "piu_posturale") {
-    return "Oggi conta piu la qualita del gesto che la velocita. Cerca controllo, respiro e appoggi stabili.";
+    return "Oggi conta più la qualità del gesto che la velocità. Cerca controllo, respiro e appoggi stabili.";
   }
   if (onboarding.energy_level === "molto_bassa" || onboarding.energy_level === "bassa") {
-    return "Resta su un ritmo morbido: l'obiettivo e attivarti bene senza svuotarti.";
+    return "Resta su un ritmo morbido: l'obiettivo è attivarti bene senza svuotarti.";
   }
-  return "Segui la sequenza cosi com'e: il lavoro di oggi e gia dosato per farti sentire tono senza sovraccaricarti.";
+  return "Segui la sequenza così com'è: il lavoro di oggi è già dosato per farti sentire tono senza sovraccaricarti.";
 }
 
 function buildGlobalCautions(

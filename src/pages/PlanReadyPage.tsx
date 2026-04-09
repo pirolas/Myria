@@ -1,6 +1,7 @@
-﻿import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
+import { planReadyCopy } from "@/copy/plan";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
 import { getTrialStatusCopy } from "@/lib/mirya";
 
@@ -58,6 +59,16 @@ export function PlanReadyPage() {
         </div>
       </section>
 
+      <section className="surface px-5 py-5">
+        <div className="text-base font-semibold text-ink">{planReadyCopy.sincerityTitle}</div>
+        <p className="mt-3 text-sm leading-7 text-muted">{planReadyCopy.sincerityBody}</p>
+      </section>
+
+      <section className="surface px-5 py-5">
+        <div className="text-base font-semibold text-ink">{planReadyCopy.closingTitle}</div>
+        <p className="mt-3 text-sm leading-7 text-muted">{planReadyCopy.closingBody}</p>
+      </section>
+
       <div className="flex gap-3">
         <Link to="/plan/story" className="flex-1">
           <Button variant="secondary" fullWidth>
@@ -73,7 +84,3 @@ export function PlanReadyPage() {
     </div>
   );
 }
-
-
-
-

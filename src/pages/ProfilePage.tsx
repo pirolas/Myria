@@ -1,4 +1,4 @@
-﻿import { BellRing, ChevronRight, Crown, LogOut, Volume2, VolumeX } from "lucide-react";
+import { BellRing, ChevronRight, Crown, LogOut, Volume2, VolumeX } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import {
@@ -8,16 +8,19 @@ import {
   goalLabels,
   levelLabels,
   limitationLabels,
-  lifestyleLabels,
-  primaryBodyGoalLabels,
-  secondaryObjectiveLabels,
-  sleepQualityLabels,
-  stressLabels,
-  timePreferenceLabels,
-  weeklyAvailabilityLabels
+  primaryBodyGoalLabels
 } from "@/data/content";
 import { useAuth } from "@/hooks/useAuth";
 import { useMiryaApp } from "@/hooks/useMiryaApp";
+import {
+  formatComputedBodyGoalLabelValue,
+  formatLifestyleLabelValue,
+  formatNaturalList,
+  formatSleepQualityLabelValue,
+  formatStressLabelValue,
+  formatTimePreferenceLabelValue,
+  formatWeeklyAvailabilityLabelValue
+} from "@/lib/formatters";
 import { getTrialStatusCopy } from "@/lib/mirya";
 
 export function ProfilePage() {
@@ -45,8 +48,8 @@ export function ProfilePage() {
           Un profilo semplice, costruito per guidarti meglio.
         </h1>
         <p className="mt-4 text-sm leading-7 text-muted">
-          Qui rivedi le tue preferenze, il focus attuale e le impostazioni utili
-          alla beta.
+          Qui rivedi le tue preferenze, la lettura del tuo momento e le impostazioni
+          utili alla beta.
         </p>
       </section>
 
@@ -59,25 +62,34 @@ export function ProfilePage() {
             ["Livello percepito", levelLabels[onboarding.perceivedLevel]],
             ["Obiettivo principale", primaryBodyGoalLabels[onboarding.primaryBodyGoal]],
             [
+              "Lettura corporea",
+              formatComputedBodyGoalLabelValue(onboarding.computedBodyGoal)
+            ],
+            [
               "Obiettivi secondari",
-              onboarding.secondaryObjectives.map((goal) => secondaryObjectiveLabels[goal]).join(", ")
+              formatNaturalList(
+                onboarding.secondaryObjectives.map((goal) => secondaryObjectiveToLabel(goal))
+              )
             ],
             [
               "Focus ricavato dal profilo",
-              onboarding.focusAreas.map((focus) => focusAreaLabels[focus]).join(", ")
+              formatNaturalList(onboarding.focusAreas.map((focus) => focusAreaLabels[focus]))
             ],
             ["Focus del percorso", goalLabels[onboarding.focusPreference]],
             ["Ritmo", `${onboarding.daysPerWeek} giorni a settimana`],
             ["Durata preferita", `${onboarding.preferredMinutes} minuti`],
             ["Energia media", energyLabels[onboarding.energyLevel]],
-            ["Stile di vita", lifestyleLabels[onboarding.lifestyle]],
-            ["Sonno percepito", sleepQualityLabels[onboarding.sleepQuality]],
-            ["Stress percepito", stressLabels[onboarding.stressLevel]],
+            ["Stile di vita", formatLifestyleLabelValue(onboarding.lifestyle)],
+            ["Sonno percepito", formatSleepQualityLabelValue(onboarding.sleepQuality)],
+            ["Stress percepito", formatStressLabelValue(onboarding.stressLevel)],
             [
-              "Disponibilita reale",
-              weeklyAvailabilityLabels[onboarding.weeklyAvailability]
+              "Disponibilità reale",
+              formatWeeklyAvailabilityLabelValue(onboarding.weeklyAvailability)
             ],
-            ["Orario preferito", timePreferenceLabels[onboarding.preferredTimeOfDay]],
+            [
+              "Orario preferito",
+              formatTimePreferenceLabelValue(onboarding.preferredTimeOfDay)
+            ],
             [
               "Partenza",
               onboarding.gentleStart ? "Molto delicata" : "Delicata ma attiva"
@@ -88,7 +100,7 @@ export function ProfilePage() {
               className="flex items-center justify-between gap-4 rounded-[22px] border border-line bg-white/78 px-4 py-4"
             >
               <div className="text-sm text-muted">{label}</div>
-              <div className="text-sm font-semibold text-ink">{value}</div>
+              <div className="text-right text-sm font-semibold text-ink">{value}</div>
             </div>
           ))}
         </div>
@@ -235,4 +247,17 @@ export function ProfilePage() {
   );
 }
 
-
+function secondaryObjectiveToLabel(value: string) {
+  return {
+    glutei_piu_sodi: "Glutei più sodi",
+    gambe_piu_toniche: "Gambe più toniche",
+    addome_piu_stabile: "Addome più stabile",
+    postura_migliore: "Postura migliore",
+    piu_energia: "Più energia",
+    meno_flaccidita: "Sentirti meno flaccida",
+    piu_forza: "Sentirti più forte",
+    maggiore_costanza: "Maggiore costanza",
+    ridurre_rigidita: "Ridurre rigidità",
+    migliorare_mobilita: "Migliorare mobilità"
+  }[value] ?? value;
+}
